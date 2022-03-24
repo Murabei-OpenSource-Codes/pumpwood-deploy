@@ -1,0 +1,4 @@
+simplejson
+pandas
+python-slugify
+jinja2
