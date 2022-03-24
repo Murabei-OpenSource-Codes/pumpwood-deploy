@@ -1,0 +1,68 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: crawler-cryptocurrency-scheduler
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        type: crawler-cryptocurrency-scheduler
+    spec:
+      imagePullSecrets:
+        - name: dockercfg
+      volumes:
+      - name: bucket-key
+        secret:
+          secretName: bucket-key
+      containers:
+      - name: crawler-cryptocurrency-scheduler
+        image: {repository}/scheduler-worker:{version}
+        imagePullPolicy: Always
+        resources:
+          requests:
+            cpu: "1m"
+        volumeMounts:
+          - name: bucket-key
+            readOnly: true
+            mountPath: /etc/secrets
+        env:
+        # Config
+        - name: SCHEDULER_JOB_CLASS
+          value: CryptoCurrencySchedulerJob
+        - name: SCHEDULER_QUEUE_CLASS
+          value: CryptoCurrencySchedulerQueue
+
+        #Auth and Storage
+        - name: AUTH_SERVER
+          value: "http://haproxy-load-balancer:80/"
+
+        # Scheduler RABBITMQ
+        - name: RABBITMQ_QUEUE
+          queue: "crawler-cryptocurrency-scheduler"
+        - name: RABBITMQ_HOST
+          value: 'rabbitmq-main'
+        - name: RABBITMQ_USERNAME
+          valueFrom:
+            secretKeyRef:
+              name: rabbitmq-main-secrets
+              key: username
+        - name: RABBITMQ_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: rabbitmq-main-secrets
+              key: password
+
+        # Microsservice
+        - name: MICROSERVICE_URL
+          value: 'http://haproxy-load-balancer:80/'
+        - name: MICROSERVICE_USERNAME
+          value: microservice-crawler-cryptocurrency
+        - name: MICROSERVICE_PASSWORD
+          valueFrom:
+              secretKeyRef:
+                name: crawler-cryptocurrency
+                key: microservice_password
+
+        ports:
+        - containerPort: 5000

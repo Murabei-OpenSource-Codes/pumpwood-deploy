@@ -1,0 +1,20 @@
+apiVersion : "v1"
+kind: Service
+metadata:
+  name: loadbalancer-crawler-facebook-ads-postgres
+  labels:
+    type: loadbalancer-db
+    db: crawler-facebook-ads-postgres
+spec:
+  type: LoadBalancer
+  selector:
+    type: db
+    db: crawler-facebook-ads-postgres
+  ports:
+    - port: 5432
+      targetPort: 5432
+  loadBalancerIP: {{ postgres_public_ip }}
+  loadBalancerSourceRanges:
+    {%- for ip in firewall_ips %}
+      - {{ip}}
+    {%- endfor %}

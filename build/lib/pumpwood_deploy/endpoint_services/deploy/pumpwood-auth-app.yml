@@ -1,0 +1,45 @@
+apiVersion : "v1"
+kind: Service
+metadata:
+  name: pumpwood-auth-app
+  labels:
+    type: pumpwood-auth-app
+spec:
+  type: ClusterIP
+  ports:
+    - port: 80
+      targetPort: 5000
+  selector:
+    type: pumpwood-auth-app
+---
+apiVersion : "v1"
+kind: Service
+metadata:
+  name: pumpwood-auth-app-admin-gui
+  labels:
+    type: pumpwood-auth-app-admin-gui
+    app: auth
+    function: admin-gui
+spec:
+  type: ClusterIP
+  ports:
+    - port: 80
+      targetPort: 5000
+  selector:
+    type: pumpwood-auth-app
+---
+apiVersion : "v1"
+kind: Service
+metadata:
+  name: pumpwood-auth-app-admin-static
+  labels:
+    type: pumpwood-auth-app-admin-static
+    app: auth
+    function: admin-static
+spec:
+  type: ClusterIP
+  ports:
+    - port: 80
+      targetPort: 5000
+  selector:
+    type: pumpwood-auth-static

@@ -1,0 +1,18 @@
+apiVersion : "v1"
+kind: Service
+metadata:
+  name: loadbalancer-nginx-ssl
+  labels:
+    type: nginx-ssl
+spec:
+  type: LoadBalancer
+  ports:
+    - port: 443
+      targetPort: 443
+  selector:
+    type: nginx-ssl
+  loadBalancerIP: {{ public_ip }}
+  loadBalancerSourceRanges:
+    {%- for ip in firewall_ips %}
+      - {{ip}}
+    {%- endfor %}

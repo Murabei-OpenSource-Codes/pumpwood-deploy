@@ -1,0 +1,13 @@
+apiVersion : "v1"
+kind: Service
+metadata:
+  name: google-adwords-queue-manager
+  labels:
+    type: google-adwords-queue-manager
+spec:
+  type: ClusterIP
+  ports:
+    - port: 80
+      targetPort: 5000
+  selector:
+    type: google-adwords-queue-manager

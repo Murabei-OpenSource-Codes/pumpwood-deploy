@@ -1,0 +1,74 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: facebook-graph-queue-manager
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        type: facebook-graph-queue-manager
+    spec:
+      volumes:
+      - name: bucket-key
+        secret:
+          secretName: bucket-key
+      containers:
+      - name: facebook-graph-queue-manager
+        image: {repository}/facebook-graph-crawler:{version}
+        imagePullPolicy: Always
+        #bucket-key
+        volumeMounts:
+          - name: bucket-key
+            readOnly: true
+            mountPath: /etc/secrets
+        env:
+        #Debug
+        - name: APP_DEBUG
+          value: "False"
+        #Database
+        - name: DB_HOST
+          value: postgres-facebook-graph
+        - name: DB_PORT
+          value: "5432"
+        - name: DB_DATABASE
+          value: "crawler"
+        - name: DB_DIALECT
+          value: "postgres"
+        #Auth
+        - name: AUTH_SERVER
+          value: "http://haproxy-load-balancer:80/"
+        #RabbitMQ
+        - name: RABBITMQ_QUEUE
+          value: "facebook-graph-api"
+        - name: RABBITMQ_HOST
+          value: "rabbitmq-main"
+        - name: RABBITMQ_PORT
+          value: "5672"
+        #Google Storage
+        - name: GOOGLE_APPLICATION_CREDENTIALS
+          value: "/etc/secrets/key-storage.json"
+        #Facebook Secrets
+        - name: DB_USERNAME
+          valueFrom:
+            secretKeyRef:
+              name: facebook-graph
+              key: db_username
+        - name: DB_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: facebook-graph
+              key: db_password
+        #RABBITMQ
+        - name: RABBITMQ_USERNAME
+          valueFrom:
+            secretKeyRef:
+              name: rabbitmq-main-secrets
+              key: username
+        - name: RABBITMQ_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: rabbitmq-main-secrets
+              key: password
+        ports:
+        - containerPort: 5000

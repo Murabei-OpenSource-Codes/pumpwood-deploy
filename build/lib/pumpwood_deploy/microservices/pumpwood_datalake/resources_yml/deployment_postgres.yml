@@ -1,0 +1,50 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: postgres-pumpwood-datalake
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        type: db
+        db: postgres-pumpwood-datalake
+    spec:
+      volumes:
+      - name: pumpwood-datalake-data
+        persistentVolumeClaim:
+          claimName: postgres-pumpwood-datalake
+      - name: postgres-init-configmap
+        configMap:
+          name: postgres-init-configmap
+      - name: secrets
+        secret:
+          secretName: pumpwood-datalake
+      containers:
+      - name: postgres-pumpwood-datalake
+        image: postgres:10.3
+        imagePullPolicy: Always
+        resources:
+          requests:
+            cpu: "1m"
+          limits:
+            cpu: "3"
+        env:
+        - name: POSTGRES_USER
+          value: pumpwood
+        - name: POSTGRES_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: pumpwood-datalake
+              key: db_password
+        - name: PGDATA
+          value: /var/lib/postgresql/data/pgdata
+
+        volumeMounts:
+        - name: pumpwood-datalake-data
+          mountPath: /var/lib/postgresql/data/
+        - name: postgres-init-configmap
+          mountPath: /docker-entrypoint-initdb.d/
+        - name: secrets
+          mountPath: /etc/secrets
+          readOnly: true

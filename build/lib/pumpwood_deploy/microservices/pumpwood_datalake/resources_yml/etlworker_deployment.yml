@@ -1,0 +1,84 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: pumpwood-datalake-etl-worker
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        type: pumpwood-datalake-etl-worker
+    spec:
+      imagePullSecrets:
+        - name: dockercfg
+      volumes:
+      - name: bucket-key
+        secret:
+          secretName: bucket-key
+      containers:
+      - name: pumpwood-datalake-etl-worker
+        image: {repository}/pumpwood-pusher:{version}
+        imagePullPolicy: Always
+        resources:
+          requests:
+            cpu: "1m"
+        volumeMounts:
+          - name: bucket-key
+            readOnly: true
+            mountPath: /etc/secrets
+        env:
+        # SETUP
+        - name: JOB_MODEL_CLASS
+          value: "DatalakeETLJob"
+        - name: QUEUE_MODEL_CLASS
+          value: "DatalakeETLQueue"
+
+        # DATABASE
+        - name: DB_HOST
+          value: "postgres-pumpwood-datalake"
+        - name: DB_USERNAME
+          value: pumpwood
+        - name: DB_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: pumpwood-datalake
+              key: db_password
+
+        # Google
+        - name: GOOGLE_APPLICATION_CREDENTIALS
+          value: "/etc/secrets/key-storage.json"
+        - name: STORAGE_BUCKET_NAME
+          value: {bucket_name}
+        - name: STORAGE_TYPE
+          value: 'google_bucket'
+        - name: STORAGE_BASE_PATH
+          value: 'pumpwood_database'
+
+        # RABBITMQ
+        - name: RABBITMQ_HOST
+          value: "rabbitmq-main"
+        - name: RABBITMQ_QUEUE
+          value: "datalake-etl-worker"
+        - name: RABBITMQ_USERNAME
+          valueFrom:
+            secretKeyRef:
+              name: rabbitmq-main-secrets
+              key: username
+        - name: RABBITMQ_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: rabbitmq-main-secrets
+              key: password
+
+        # Microsservice
+        - name: MICROSERVICE_NAME
+          value: 'pumpwood-datalake-etlworker'
+        - name: MICROSERVICE_URL
+          value: 'http://haproxy-load-balancer/'
+        - name: MICROSERVICE_USERNAME
+          value: microservice-datalake
+        - name: MICROSERVICE_PASSWORD
+          valueFrom:
+              secretKeyRef:
+                name: pumpwood-datalake
+                key: microservice_password

@@ -1,0 +1,47 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: pumpwood-auth-app
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        type: pumpwood-auth-app
+        function: auth
+    spec:
+      volumes:
+      - name: secrets
+        secret:
+          secretName: pumpwood-auth
+      imagePullSecrets:
+        - name: dockercfg
+      containers:
+      - name: pumpwood-auth-app
+        image: {repository}/pumpwood-auth-app:{version}
+        imagePullPolicy: Always
+        resources:
+          requests:
+            cpu: "10m"
+        env:
+        - name: APP_DEBUG
+          value: "False"
+        - name: DJANGO_DB_HOST
+          value: postgres-pumpwood-auth
+        - name: DJANGO_DB_PASS
+          valueFrom:
+            secretKeyRef:
+              name: pumpwood-auth
+              key: db_password
+        - name: EMAIL_HOST_USER
+          valueFrom:
+            secretKeyRef:
+              name: pumpwood-auth
+              key: email_host_user
+        - name: EMAIL_HOST_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: pumpwood-auth
+              key: email_host_password
+        ports:
+        - containerPort: 8000

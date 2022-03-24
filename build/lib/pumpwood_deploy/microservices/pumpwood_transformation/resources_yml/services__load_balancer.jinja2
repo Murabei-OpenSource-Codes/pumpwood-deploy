@@ -1,0 +1,20 @@
+apiVersion : "v1"
+kind: Service
+metadata:
+  name: loadbalancer-postgres-pumpwood-transformation
+  labels:
+    type: loadbalancer-db
+    db: postgres-pumpwood-transformation
+spec:
+  type: LoadBalancer
+  ports:
+    - port: 7000
+      targetPort: 5432
+  selector:
+    type: db
+    db: postgres-pumpwood-transformation
+  loadBalancerIP: {{ postgres_public_ip }}
+  loadBalancerSourceRanges:
+    {%- for ip in firewall_ips %}
+      - {{ip}}
+    {%- endfor %}

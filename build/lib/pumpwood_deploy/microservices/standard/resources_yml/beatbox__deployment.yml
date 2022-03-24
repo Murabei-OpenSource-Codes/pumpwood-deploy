@@ -1,0 +1,45 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: beatbox
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        type: queue
+        queue: beatbox
+    spec:
+      imagePullSecrets:
+        - name: dockercfg
+      volumes:
+      - name: beatbox-configmap
+        configMap:
+          name: beatbox-configmap
+      restartPolicy: Always
+      containers:
+      - name: beatbox
+        imagePullPolicy: Always
+        resources:
+          requests:
+            cpu: "10m"
+        image: gcr.io/repositorio-geral-170012/beatbox:{version}
+        env:
+        # Microsservice
+        - name: MICROSERVICE_NAME
+          value: 'pumpwood-beatbox'
+        - name: MICROSERVICE_URL
+          value: 'http://haproxy-load-balancer/'
+        - name: MICROSERVICE_USERNAME
+          valueFrom:
+            secretKeyRef:
+              name: beatbox
+              key: username
+        - name: MICROSERVICE_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: beatbox
+              key: password
+        volumeMounts:
+        - name: beatbox-configmap
+          mountPath: /worker/endpoints

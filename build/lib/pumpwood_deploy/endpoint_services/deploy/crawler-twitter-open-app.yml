@@ -1,0 +1,13 @@
+apiVersion : "v1"
+kind: Service
+metadata:
+  name: crawler-twitter-open-app
+  labels:
+    type: crawler-twitter-open-app
+spec:
+  type: ClusterIP
+  ports:
+    - port: 80
+      targetPort: 5000
+  selector:
+    type: crawler-twitter-open-app
