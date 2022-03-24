@@ -1,0 +1,14 @@
+apiVersion : "v1"
+kind: Service
+metadata:
+  name: haproxy-load-balancer
+  labels:
+    type: haproxy-load-balancer
+spec:
+  type: ClusterIP
+  ports:
+    - name: services
+      port: 80
+      targetPort: 80
+  selector:
+    type: haproxy-load-balancer

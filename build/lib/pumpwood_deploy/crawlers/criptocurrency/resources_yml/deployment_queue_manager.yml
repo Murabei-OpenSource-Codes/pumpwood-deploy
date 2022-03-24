@@ -1,0 +1,83 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: crawler-cryptocurrency-app
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        type: crawler-cryptocurrency-app
+    spec:
+      imagePullSecrets:
+        - name: dockercfg
+      volumes:
+      - name: bucket-key
+        secret:
+          secretName: bucket-key
+      containers:
+      - name: crawler-cryptocurrency-app
+        image: {repository}/crawler-cryptocurrency-app:{version}
+        imagePullPolicy: Always
+        resources:
+          requests:
+            cpu: "1m"
+        volumeMounts:
+          - name: bucket-key
+            readOnly: true
+            mountPath: /etc/secrets
+        env:
+        # Config
+        - name: APP_DEBUG
+          value: "False"
+        - name: WORKERS_TIMEOUT
+          value: "{workers_timeout}"
+
+        #Auth and Storage
+        - name: AUTH_SERVER
+          value: "http://haproxy-load-balancer:80/"
+        - name: GOOGLE_APPLICATION_CREDENTIALS
+          value: "/etc/secrets/key-storage.json"
+        - name: STORAGE_BUCKET_NAME
+          value: "{bucket_name}"
+        - name: STORAGE_TYPE
+          value: 'google_bucket'
+        - name: STORAGE_BASE_PATH
+          value: 'crawler_cryptocurrency'
+
+        # Database
+        - name: DB_HOST
+          value: crawler-cryptocurrency-postgres
+        - name: DB_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: crawler-cryptocurrency
+              key: db_password
+
+        # Puller RABBITMQ
+        - name: RABBITMQ_HOST
+          value: 'rabbitmq-main'
+        - name: RABBITMQ_USERNAME
+          valueFrom:
+            secretKeyRef:
+              name: rabbitmq-main-secrets
+              key: username
+        - name: RABBITMQ_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: rabbitmq-main-secrets
+              key: password
+
+        # Microsservice
+        - name: MICROSERVICE_URL
+          value: 'http://haproxy-load-balancer:80/'
+        - name: MICROSERVICE_USERNAME
+          value: microservice-crawler-cryptocurrency
+        - name: MICROSERVICE_PASSWORD
+          valueFrom:
+              secretKeyRef:
+                name: crawler-cryptocurrency
+                key: microservice_password
+
+        ports:
+        - containerPort: 5000

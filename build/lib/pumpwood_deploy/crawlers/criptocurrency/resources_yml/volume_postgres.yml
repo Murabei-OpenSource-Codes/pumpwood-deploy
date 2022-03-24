@@ -1,0 +1,27 @@
+kind: PersistentVolume
+apiVersion: v1
+metadata:
+  name: crawler-cryptocurrency-postgres
+  labels:
+    usage: crawler-cryptocurrency-postgres
+spec:
+  accessModes:
+    - ReadWriteOnce
+  capacity:
+    storage: {disk_size}
+  storageClassName: standard
+  gcePersistentDisk:
+    fsType: ext4
+    pdName: {disk_name}
+---
+kind: PersistentVolumeClaim
+apiVersion: v1
+metadata:
+  name: crawler-cryptocurrency-postgres
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: {disk_size}
+  volumeName: crawler-cryptocurrency-postgres

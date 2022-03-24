@@ -1,0 +1,90 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: facebook-graph-worker
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        type: facebook-graph-worker
+    spec:
+      volumes:
+      - name: bucket-key
+        secret:
+          secretName: bucket-key
+      containers:
+      - name: facebook-graph-worker
+        image: {repository}/facebook-open-worker:{version}
+        imagePullPolicy: Always
+        volumeMounts:
+          - name: bucket-key
+            readOnly: true
+            mountPath: /etc/secrets
+        env:
+        - name: DB_HOST
+          value: postgres-facebook-graph
+        - name: DB_PORT
+          value: "5432"
+        - name: DB_DATABASE
+          value: "crawler"
+        - name: DB_DIALECT
+          value: "postgres"
+        - name: AUTH_SERVER
+          value: "http://haproxy-load-balancer:80/"
+        - name: RABBITMQ_QUEUE
+          value: "facebook-graph-api"
+        - name: RABBITMQ_HOST
+          value: "rabbitmq-main"
+        - name: RABBITMQ_PORT
+          value: "5672"
+        - name: GOOGLE_APPLICATION_CREDENTIALS
+          value: "/etc/secrets/key-storage.json"
+        #DATABASE
+        - name: DB_USERNAME
+          valueFrom:
+            secretKeyRef:
+              name: facebook-graph
+              key: db_username
+        - name: DB_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: facebook-graph
+              key: db_password
+        #RABBITMQ
+        - name: RABBITMQ_USERNAME
+          valueFrom:
+            secretKeyRef:
+              name: rabbitmq-main-secrets
+              key: username
+        - name: RABBITMQ_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: rabbitmq-main-secrets
+              key: password
+        #Microsservice
+        - name: MICROSERVICE_NAME
+          value: 'facebook-graph-worker'
+        - name: MICROSERVICE_URL
+          value: 'http://haproxy-load-balancer:80'
+        - name: MICROSERVICE_USERNAME
+          valueFrom:
+              secretKeyRef:
+                name: facebook-graph
+                key: microservice_username
+        - name: MICROSERVICE_PASSWORD
+          valueFrom:
+              secretKeyRef:
+                name: facebook-graph
+                key: microservice_password
+        #Facebook
+        - name: FACEBOOK_APP_ID
+          valueFrom:
+              secretKeyRef:
+                name: facebook-graph
+                key: facebook_app_id
+        - name: FACEBOOK_APP_SECRET
+          valueFrom:
+              secretKeyRef:
+                name: facebook-graph
+                key: facebook_app_secret

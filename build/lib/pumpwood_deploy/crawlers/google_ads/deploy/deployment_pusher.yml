@@ -1,0 +1,88 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: crawler-google-ads-pusher
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        type: crawler-google-ads-pusher
+    spec:
+      imagePullSecrets:
+        - name: dockercfg
+      volumes:
+      - name: bucket-key
+        secret:
+          secretName: bucket-key
+      containers:
+      - name: google-ads-pusher
+        image: {repository}/crawler-google-ads-pusher:{version}
+        imagePullPolicy: Always
+        volumeMounts:
+        - name: bucket-key
+          readOnly: true
+          mountPath: /etc/secrets
+        env:
+        # Testing
+        - name: WORKERSCRIPT
+          value: start_worker
+
+        #Auth and Storage
+        - name: AUTH_SERVER
+          value: "http://haproxy-load-balancer:80/"
+        - name: GOOGLE_APPLICATION_CREDENTIALS
+          value: "/etc/secrets/key-storage.json"
+        - name: STORAGE_BUCKET_NAME
+          value: "{bucket_name}"
+        - name: STORAGE_TYPE
+          value: 'google_bucket'
+
+        # Database
+        - name: DB_HOST
+          value: crawler-google-ads-postgres
+        - name: DB_PORT
+          value: "5432"
+        - name: DB_DATABASE
+          value: "crawler"
+        - name: DB_DIALECT
+          value: "postgres"
+        - name: DB_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: crawler-google-ads
+              key: db_password
+
+        # Pusher RABBITMQ
+        - name: PUSHER_RABBITMQ_QUEUE
+          value: 'crawler-google-ads-pusher'
+        - name: PUSHER_RABBITMQ_HOST
+          value: 'rabbitmq-main'
+        - name: PUSHER_RABBITMQ_PORT
+          value: '5672'
+        - name: PUSHER_RABBITMQ_USERNAME
+          valueFrom:
+            secretKeyRef:
+              name: rabbitmq-main-secrets
+              key: username
+        - name: PUSHER_RABBITMQ_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: rabbitmq-main-secrets
+              key: password
+
+        # Microsservice
+        - name: MICROSERVICE_NAME
+          value: 'crawler-google-ads'
+        - name: MICROSERVICE_URL
+          value: 'http://haproxy-load-balancer:80/'
+        - name: MICROSERVICE_USERNAME
+          valueFrom:
+              secretKeyRef:
+                name: crawler-google-ads
+                key: microservice_username
+        - name: MICROSERVICE_PASSWORD
+          valueFrom:
+              secretKeyRef:
+                name: crawler-google-ads
+                key: microservice_password

@@ -1,0 +1,13 @@
+apiVersion : "v1"
+kind: Service
+metadata:
+  name: pumpwood-transformation-app
+  labels:
+    type: pumpwood-transformation-app
+spec:
+  type: ClusterIP
+  ports:
+    - port: 80
+      targetPort: 5000
+  selector:
+    type: pumpwood-transformation-app

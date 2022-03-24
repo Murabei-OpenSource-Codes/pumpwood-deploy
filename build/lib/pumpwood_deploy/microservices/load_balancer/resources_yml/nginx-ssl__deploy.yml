@@ -1,0 +1,32 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nginx-ssl
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        type: nginx-ssl
+    spec:
+      imagePullSecrets:
+        - name: dockercfg
+      volumes:
+      - name: secrets
+        secret:
+          secretName: nginx-ssl
+      containers:
+      - name: nginx-ssl
+        image: gcr.io/repositorio-geral-170012/pumpwood-nginx-ssl-gateway:{version}
+        imagePullPolicy: Always
+        env:
+        - name: ENABLE_SSL
+          value: "true"
+        - name: TARGET_SERVICE
+          value: haproxy-load-balancer
+        - name: SERVER_NAME
+          value: {server_name}
+        volumeMounts:
+        - name: secrets
+          mountPath: /etc/secrets
+          readOnly: true

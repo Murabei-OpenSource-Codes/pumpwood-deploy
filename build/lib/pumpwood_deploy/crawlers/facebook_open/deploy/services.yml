@@ -1,0 +1,16 @@
+apiVersion : "v1"
+kind: Service
+metadata:
+  name: postgres-facebook-graph
+  labels:
+    type: db
+    db: postgres-facebook-graph
+spec:
+  type: LoadBalancer
+  ports:
+    - port: 5432
+      targetPort: 5432
+  loadBalancerIP: {postgres_public_ip}
+  selector:
+    type: db
+    db: postgres-facebook-graph

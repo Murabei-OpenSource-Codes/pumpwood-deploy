@@ -1,0 +1,50 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: crawler-facebook-ads-postgres
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        type: db
+        db: crawler-facebook-ads-postgres
+    spec:
+      volumes:
+      - name: crawler-facebook-ads-data
+        persistentVolumeClaim:
+          claimName: crawler-facebook-ads-postgres
+      - name: postgres-init-configmap
+        configMap:
+          name: postgres-init-configmap
+      - name: secrets
+        secret:
+          secretName: crawler-facebook-ads
+      containers:
+      - name: crawler-facebook-ads-postgres
+        image: postgres:10.3
+        imagePullPolicy: Always
+        resources:
+          limits:
+            cpu: "2"
+        env:
+        - name: POSTGRES_USER
+          valueFrom:
+            secretKeyRef:
+              name: crawler-facebook-ads
+              key: db_username
+        - name: POSTGRES_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: crawler-facebook-ads
+              key: db_password
+        - name: PGDATA
+          value: /var/lib/postgresql/data/pgdata
+        volumeMounts:
+        - name: crawler-facebook-ads-data
+          mountPath: /var/lib/postgresql/data/
+        - name: postgres-init-configmap
+          mountPath: /docker-entrypoint-initdb.d/
+        - name: secrets
+          mountPath: /etc/secrets
+          readOnly: true

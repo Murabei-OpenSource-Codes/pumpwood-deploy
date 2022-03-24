@@ -1,0 +1,100 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: crawler-nbs-tetris-puller
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        type: crawler-nbs-tetris-puller
+    spec:
+      imagePullSecrets:
+        - name: dockercfg
+      volumes:
+      - name: bucket-key
+        secret:
+          secretName: bucket-key
+      containers:
+      - name: crawler-nbs-tetris-puller
+        image: {repository}/crawler-nbs-tetris-puller:{version}
+        imagePullPolicy: Always
+        volumeMounts:
+          - name: bucket-key
+            readOnly: true
+            mountPath: /etc/secrets
+        env:
+        # Testing
+        - name: WORKERSCRIPT
+          value: start_worker
+        #DATABASE
+        - name: DB_HOST
+          value: crawler-nbs-tetris-postgres
+        - name: DB_PORT
+          value: "5432"
+        - name: DB_DATABASE
+          value: "crawler"
+        - name: DB_DIALECT
+          value: "postgres"
+        - name: DB_USERNAME
+          valueFrom:
+            secretKeyRef:
+              name: crawler-nbs-tetris
+              key: db_username
+        - name: DB_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: crawler-nbs-tetris
+              key: db_password
+
+        #Auth and Storage
+        - name: AUTH_SERVER
+          value: "http://haproxy-load-balancer:80/"
+        - name: GOOGLE_APPLICATION_CREDENTIALS
+          value: "/etc/secrets/key-storage.json"
+        - name: STORAGE_BUCKET_NAME
+          value: "{bucket_name}"
+        - name: STORAGE_TYPE
+          value: 'google_bucket'
+        - name: STORAGE_BASE_PATH
+          value: 'crawler_nbstetris'
+
+        #RABBITMQ
+        - name: PULLER_RABBITMQ_QUEUE
+          value: "crawler-nbs-tetris-puller"
+        - name: PULLER_RABBITMQ_HOST
+          value: "rabbitmq-main"
+        - name: PULLER_RABBITMQ_PORT
+          value: "5672"
+        - name: PULLER_RABBITMQ_USERNAME
+          valueFrom:
+            secretKeyRef:
+              name: rabbitmq-main-secrets
+              key: username
+        - name: PULLER_RABBITMQ_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: rabbitmq-main-secrets
+              key: password
+        #Microsservice
+        - name: MICROSERVICE_NAME
+          value: 'crawler-nbs-tetris-puller'
+        - name: MICROSERVICE_URL
+          value: 'http://haproxy-load-balancer:80/'
+        - name: MICROSERVICE_USERNAME
+          valueFrom:
+              secretKeyRef:
+                name: crawler-nbs-tetris
+                key: microservice_username
+        - name: MICROSERVICE_PASSWORD
+          valueFrom:
+              secretKeyRef:
+                name: crawler-nbs-tetris
+                key: microservice_password
+
+        # NBS Tetris
+        - name: TETRIS_TOKEN
+          valueFrom:
+            secretKeyRef:
+              name: crawler-nbs-tetris
+              key: tetris_token

@@ -1,0 +1,75 @@
+kind: PersistentVolume
+apiVersion: v1
+metadata:
+  name: postgres-facebook-graph
+  labels:
+    usage: postgres-facebook-graph
+spec:
+  accessModes:
+    - ReadWriteOnce
+  capacity:
+    storage: {disk_size}
+  storageClassName: standard
+  gcePersistentDisk:
+    fsType: ext4
+    pdName: {disk_name}
+---
+kind: PersistentVolumeClaim
+apiVersion: v1
+metadata:
+  name: postgres-facebook-graph
+spec:
+  accessModes:
+    - ReadWriteOnce 
+  resources:
+    requests:
+      storage: 50Gi
+  volumeName: postgres-facebook-graph
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: postgres-facebook-graph
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        type: db
+        db: postgres-facebook-graph
+    spec:
+      volumes:
+      - name: facebook-graph-data
+        persistentVolumeClaim:
+          claimName: postgres-facebook-graph
+      - name: postgres-init-configmap
+        configMap:
+          name: postgres-init-configmap
+      - name: secrets
+        secret:
+          secretName: facebook-graph
+      containers:
+      - name: postgres-facebook-graph
+        image: postgres:9.6
+        imagePullPolicy: Always
+        env:
+        - name: POSTGRES_USER
+          valueFrom:
+            secretKeyRef:
+              name: facebook-graph
+              key: db_username
+        - name: POSTGRES_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: facebook-graph
+              key: db_password
+        - name: POSTGRES_DB
+          value: crawler
+        volumeMounts:
+        - name: facebook-graph-data
+          mountPath: /var/lib/postgresql/data/
+        - name: postgres-init-configmap
+          mountPath: /docker-entrypoint-initdb.d/
+        - name: secrets
+          mountPath: /etc/secrets
+          readOnly: true
