@@ -15,8 +15,7 @@ class PumpWoodDatalakeMicroservice:
     """PumpWoodDatalakeMicroservice."""
 
     def __init__(self, db_password: str, microservice_password: str,
-                 bucket_name: str,
-                 version_app: str, version_worker: str,
+                 bucket_name: str, version_app: str, version_worker: str,
                  disk_name: str = None, disk_size: str = None,
                  postgres_public_ip: str = None, firewall_ips: list = None,
                  repository: str = "gcr.io/repositorio-geral-170012",
