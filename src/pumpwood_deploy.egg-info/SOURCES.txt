@@ -14,10 +14,6 @@ src/pumpwood_deploy/crawlers/criptocurrency/__init__.py
 src/pumpwood_deploy/crawlers/criptocurrency/deploy.py
 src/pumpwood_deploy/crawlers/criptocurrency/resources/__init__.py
 src/pumpwood_deploy/crawlers/criptocurrency/resources/yml__resources.py
-src/pumpwood_deploy/decision_models/__init__.py
-src/pumpwood_deploy/decision_models/deploy.py
-src/pumpwood_deploy/decision_models/resources_yml/__init__.py
-src/pumpwood_deploy/decision_models/resources_yml/yml_resources.py
 src/pumpwood_deploy/kubernets/__init__.py
 src/pumpwood_deploy/kubernets/kubernets.py
 src/pumpwood_deploy/microservices/__init__.py
