@@ -20,11 +20,8 @@ class ApiGateway:
 
         Args:
             gateway_public_ip(str): Set the IP for the ApiGateway.
-            kong_db_disk_name(str): Set the name of the disk for Kong Postgres.
-            kong_db_disk_size(str): Set the size claimed from the Kong Postgres
-                disk.
-            email_contact (str): Contact email for let's encript.
-            nginx_ssl_version (str): Version of the Nginx SSL api-gateway.
+            email_contact(str): E-mail contact for let's encript.
+            version (str): Version of the API gateway.
 
         Kwargs:
             server_name (str): DNS name for the server.
@@ -74,13 +71,14 @@ class ApiGatewaySecretsSSL:
         Build deployment files for the Kong ApiGateway.
 
         Args:
-            gateway_public_ip(str): Set the IP for the ApiGateway.
-            kong_db_disk_name(str): Set the name of the disk for Kong Postgres.
-            kong_db_disk_size(str): Set the size claimed from the Kong Postgres
-                disk.
-            email_contact (str): Contact email for let's encript.
-            nginx_ssl_version (str): Version of the Nginx SSL api-gateway.
-
+            gateway_public_ip (str): Set the IP for the ApiGateway.
+            version (str): Version of the API gateway.
+            ssl_secret_path (str): Path for the Google Credential to access
+                the secret with the SSL credentials.
+            google_project_id (str): Project ID that stores the SSL
+                credentials.
+            secret_id (str): Name of the secret that stores the SSL
+                credentials.
         Kwargs:
             server_name (str): DNS name for the server.
             health_check_url (str): Url for the health checks.

@@ -151,7 +151,7 @@ class PumpWoodSchedulerMicroservice:
                 firewall_ips=self.firewall_ips)
             list_return.append({
                 'type': 'services',
-                'name': 'pumpwood_datalake__services_loadbalancer',
+                'name': 'pumpwood_scheduler__services_loadbalancer',
                 'content': svcs__load_balancer_text, 'sleep': 0})
 
         return list_return
