@@ -12,7 +12,8 @@ from .resources.yml__resources import (
 class PumpWoodDescriptionMatcherMicroservice:
     """PumpWoodDatalakeMicroservice."""
 
-    def __init__(self, db_password: str, microservice_password: str,
+    def __init__(self, db_password: str,
+                 microservice_password: str,
                  bucket_name: str, version_app: str,
                  disk_name: str = None, disk_size: str = None,
                  postgres_public_ip: str = None, firewall_ips: list = None,
@@ -84,8 +85,13 @@ class PumpWoodDescriptionMatcherMicroservice:
         self.test_db_version = test_db_version
         self.test_db_repository = test_db_repository
 
-    def create_deployment_file(self):
-        """create_deployment_file."""
+    def create_deployment_file(self, kube_client):
+        """
+        Create deployment file.
+
+        Args:
+            kube_client: Client to communicate with Kubernets cluster.
+        """
         secrets_text_formated = secrets.format(
             db_password=self._db_password,
             microservice_password=self._microservice_password,
@@ -100,9 +106,10 @@ class PumpWoodDescriptionMatcherMicroservice:
                 repository=self.test_db_repository,
                 version=self.test_db_version)
         else:
-            volume_postgres_text_f = volume_postgres.format(
-                disk_size=self.disk_size,
-                disk_name=self.disk_name)
+            volume_postgres_text_f = kube_client.create_volume_yml(
+                disk_name=self.disk_size,
+                disk_size=self.disk_name,
+                volume_claim_name="postgres-pumpwood-description-matcher")
             deployment_postgres_text_f = deployment_postgres
 
         deployment_text_frmtd = \

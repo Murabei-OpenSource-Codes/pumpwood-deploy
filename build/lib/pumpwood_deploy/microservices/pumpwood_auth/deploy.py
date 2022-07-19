@@ -6,7 +6,7 @@ from pumpwood_deploy.microservices.postgres.postgres import \
 from jinja2 import Template
 from .resources.yml__resources import (
     auth_admin_static, app_deployment, deployment_postgres, secrets,
-    services__load_balancer, volume_postgres, test_postgres)
+    services__load_balancer, test_postgres)
 
 
 class PumpWoodAuthMicroservice:
@@ -81,8 +81,13 @@ class PumpWoodAuthMicroservice:
         self.test_db_version = test_db_version
         self.test_db_repository = test_db_repository
 
-    def create_deployment_file(self):
-        """Create_deployment_file."""
+    def create_deployment_file(self, kube_client):
+        """
+        Create_deployment_file.
+
+        Args:
+          kube_client: Client to communicate with Kubernets cluster.
+        """
         secrets_text_f = secrets.format(
             db_password=self._db_password,
             microservice_password=self._microservice_password,
@@ -109,9 +114,10 @@ class PumpWoodAuthMicroservice:
                 repository=self.test_db_repository,
                 version=self.test_db_version)
         else:
-            volume_postgres_text_f = volume_postgres.format(
-                disk_size=self.disk_size,
-                disk_name=self.disk_name)
+            volume_postgres_text_f = kube_client.create_volume_yml(
+                disk_name=self.disk_size,
+                disk_size=self.disk_name,
+                volume_claim_name="postgres-pumpwood-auth")
             deployment_postgres_text_f = deployment_postgres
 
         if volume_postgres_text_f is not None:

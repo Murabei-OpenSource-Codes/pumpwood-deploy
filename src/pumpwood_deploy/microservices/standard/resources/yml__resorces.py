@@ -81,6 +81,45 @@ data:
   password: {password}
 """
 
+storage_config_map = """
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: storage
+data:
+  storage_type: "{storage_type}"
+"""
+
+azure__storage_key_secrets = """
+apiVersion: v1
+kind: Secret
+metadata:
+  name: azure--storage-key
+type: Opaque
+data:
+  azure_storage_connection_string: {azure_storage_connection_string}
+"""
+
+gcp__storage_key_secrets = """
+apiVersion: v1
+kind: Secret
+metadata:
+  name: gcp--storage-key
+type: Opaque
+data:
+  empty: bm90X2NvbmZpZ3VyZWQ=
+"""
+
+aws__storage_key_secrets = """
+apiVersion: v1
+kind: Secret
+metadata:
+  name: aws--storage-key
+type: Opaque
+data:
+  aws_access_key_id: {aws_access_key_id}
+  aws_secret_access_key: {aws_secret_access_key}
+"""
 
 model_secrets = """
 apiVersion: v1
@@ -90,37 +129,6 @@ metadata:
 type: Opaque
 data:
   password: {password}
-"""
-
-
-kong_postgres_volume = """
-kind: PersistentVolume
-apiVersion: v1
-metadata:
-  name: {disk_name}
-  labels:
-    usage: {disk_name}
-spec:
-  accessModes:
-    - ReadWriteOnce
-  capacity:
-    storage: {disk_size}
-  storageClassName: standard
-  gcePersistentDisk:
-    fsType: ext4
-    pdName: {disk_name}
----
-kind: PersistentVolumeClaim
-apiVersion: v1
-metadata:
-  name: postgres-kong-database
-spec:
-  accessModes:
-    - ReadWriteOnce
-  resources:
-    requests:
-      storage: {disk_size}
-  volumeName: {disk_name}
 """
 
 kong_postgres_deployment = """
@@ -201,7 +209,7 @@ spec:
         - name: dockercfg
       containers:
       - name: apigateway-kong
-        image: gcr.io/repositorio-geral-170012/gateway-loadbalancer-kong:0.1
+        image: {repository}/gateway-loadbalancer-kong:0.1
         imagePullPolicy: Always
         resources:
           requests:

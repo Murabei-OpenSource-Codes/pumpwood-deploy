@@ -1,6 +1,6 @@
 Metadata-Version: 2.1
 Name: pumpwood-deploy
-Version: 0.3
+Version: 0.4
 Summary: Package to assist deploy Pumpwood Systems on Kubenets
 Home-page: https://github.com/Murabei-OpenSource-Codes/pumpwood-deploy
 Author: Murabei Data Science

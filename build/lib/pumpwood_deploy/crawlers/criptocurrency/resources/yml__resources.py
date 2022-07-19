@@ -64,8 +64,12 @@ spec:
           value: "/etc/secrets/key-storage.json"
         - name: STORAGE_BUCKET_NAME
           value: {bucket_name}
+
         - name: STORAGE_TYPE
-          value: 'google_bucket'
+          valueFrom:
+            configMapKeyRef:
+              name: storage
+              key: storage_type
 
         # RABBITMQ ETL
         - name: RABBITMQ_HOST

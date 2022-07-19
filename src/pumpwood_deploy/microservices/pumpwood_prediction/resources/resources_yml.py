@@ -18,9 +18,9 @@ spec:
       imagePullSecrets:
         - name: dockercfg
       volumes:
-      - name: bucket-key
+      - name: gcp--storage-key
         secret:
-          secretName: bucket-key
+          secretName: gcp--storage-key
       containers:
       - name: pumpwood-prediction
         image: {repository}/pumpwood-prediction-app:{version}
@@ -29,7 +29,7 @@ spec:
           requests:
             cpu: "1m"
         volumeMounts:
-          - name: bucket-key
+          - name: gcp--storage-key
             readOnly: true
             mountPath: /etc/secrets
         ports:
@@ -72,13 +72,39 @@ spec:
             secretKeyRef:
               name: rabbitmq-main-secrets
               key: password
-        # Google
-        - name: GOOGLE_APPLICATION_CREDENTIALS
-          value: "/etc/secrets/key-storage.json"
+
+        ###########
+        # STORAGE #
         - name: STORAGE_BUCKET_NAME
           value: {bucket_name}
         - name: STORAGE_TYPE
-          value: 'google_bucket'
+          valueFrom:
+            configMapKeyRef:
+              name: storage
+              key: storage_type
+
+        # GCP
+        - name: GOOGLE_APPLICATION_CREDENTIALS
+          value: "/etc/secrets/key-storage.json"
+
+        # AZURE
+        - name: AZURE_STORAGE_CONNECTION_STRING
+          valueFrom:
+              secretKeyRef:
+                name: azure--storage-key
+                key: azure_storage_connection_string
+
+        # AWS
+        - name: AWS_ACCESS_KEY_ID
+          valueFrom:
+              secretKeyRef:
+                name: aws--storage-key
+                key: aws_access_key_id
+        - name: AWS_SECRET_ACCESS_KEY
+          valueFrom:
+              secretKeyRef:
+                name: aws--storage-key
+                key: aws_secret_access_key
 ---
 apiVersion : "v1"
 kind: Service
@@ -119,9 +145,9 @@ spec:
       imagePullSecrets:
         - name: dockercfg
       volumes:
-      - name: bucket-key
+      - name: gcp--storage-key
         secret:
-          secretName: bucket-key
+          secretName: gcp--storage-key
 
       containers:
       - name: pumpwood-prediction-dataloader-workers
@@ -131,7 +157,7 @@ spec:
           requests:
             cpu: "1m"
         volumeMounts:
-          - name: bucket-key
+          - name: gcp--storage-key
             readOnly: true
             mountPath: /etc/secrets
 
@@ -144,14 +170,6 @@ spec:
             secretKeyRef:
               name: pumpwood-prediction
               key: db_password
-
-        #Google
-        - name: GOOGLE_APPLICATION_CREDENTIALS
-          value: "/etc/secrets/key-storage.json"
-        - name: STORAGE_BUCKET_NAME
-          value: {bucket_name}
-        - name: STORAGE_TYPE
-          value: 'google_bucket'
 
         # RABBITMQ QUEUE
         - name: RABBITMQ_HOST
@@ -174,6 +192,39 @@ spec:
           value: "4"
         - name: CHUNK_SIZE
           value: "2000"
+
+        ###########
+        # STORAGE #
+        - name: STORAGE_BUCKET_NAME
+          value: {bucket_name}
+        - name: STORAGE_TYPE
+          valueFrom:
+            configMapKeyRef:
+              name: storage
+              key: storage_type
+
+        # GCP
+        - name: GOOGLE_APPLICATION_CREDENTIALS
+          value: "/etc/secrets/key-storage.json"
+
+        # AZURE
+        - name: AZURE_STORAGE_CONNECTION_STRING
+          valueFrom:
+              secretKeyRef:
+                name: azure--storage-key
+                key: azure_storage_connection_string
+
+        # AWS
+        - name: AWS_ACCESS_KEY_ID
+          valueFrom:
+              secretKeyRef:
+                name: aws--storage-key
+                key: aws_access_key_id
+        - name: AWS_SECRET_ACCESS_KEY
+          valueFrom:
+              secretKeyRef:
+                name: aws--storage-key
+                key: aws_secret_access_key
 """
 
 worker_rawdata = """
@@ -198,9 +249,9 @@ spec:
       imagePullSecrets:
         - name: dockercfg
       volumes:
-      - name: bucket-key
+      - name: gcp--storage-key
         secret:
-          secretName: bucket-key
+          secretName: gcp--storage-key
       containers:
       - name: pumpwood-prediction-rawdata-workers
         image: {repository}/pumpwood-prediction-rawdata-worker:{version}
@@ -209,7 +260,7 @@ spec:
           requests:
             cpu: "1m"
         volumeMounts:
-          - name: bucket-key
+          - name: gcp--storage-key
             readOnly: true
             mountPath: /etc/secrets
         env:
@@ -231,14 +282,6 @@ spec:
               name: pumpwood-prediction
               key: db_password
 
-        #Google
-        - name: GOOGLE_APPLICATION_CREDENTIALS
-          value: "/etc/secrets/key-storage.json"
-        - name: STORAGE_BUCKET_NAME
-          value: {bucket_name}
-        - name: STORAGE_TYPE
-          value: 'google_bucket'
-
         # RABBITMQ QUEUE
         - name: RABBITMQ_HOST
           value: "rabbitmq-main"
@@ -254,6 +297,39 @@ spec:
               secretKeyRef:
                 name: pumpwood-prediction
                 key: microservice_password
+
+        ###########
+        # STORAGE #
+        - name: STORAGE_BUCKET_NAME
+          value: {bucket_name}
+        - name: STORAGE_TYPE
+          valueFrom:
+            configMapKeyRef:
+              name: storage
+              key: storage_type
+
+        # GCP
+        - name: GOOGLE_APPLICATION_CREDENTIALS
+          value: "/etc/secrets/key-storage.json"
+
+        # AZURE
+        - name: AZURE_STORAGE_CONNECTION_STRING
+          valueFrom:
+              secretKeyRef:
+                name: azure--storage-key
+                key: azure_storage_connection_string
+
+        # AWS
+        - name: AWS_ACCESS_KEY_ID
+          valueFrom:
+              secretKeyRef:
+                name: aws--storage-key
+                key: aws_access_key_id
+        - name: AWS_SECRET_ACCESS_KEY
+          valueFrom:
+              secretKeyRef:
+                name: aws--storage-key
+                key: aws_secret_access_key
 """
 
 secrets = """

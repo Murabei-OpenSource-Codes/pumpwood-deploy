@@ -1,5 +1,4 @@
 """PumpWood DataLake Microservice Deploy."""
-
 import os
 import base64
 from pumpwood_deploy.microservices.postgres.postgres import \
@@ -7,7 +6,7 @@ from pumpwood_deploy.microservices.postgres.postgres import \
 from jinja2 import Template
 from .resources.resources_yml import (
     deployment_postgres, app_deployment, worker_deployment,
-    secrets, services__load_balancer, volume_postgres, test_postgres)
+    secrets, services__load_balancer, test_postgres)
 
 
 class PumpWoodEstimationMicroservice:
@@ -17,7 +16,8 @@ class PumpWoodEstimationMicroservice:
     .
     """
 
-    def __init__(self, db_password: str, microservice_password: str,
+    def __init__(self, db_password: str,
+                 microservice_password: str,
                  bucket_name: str, version_app: str,
                  version_worker: str,
                  disk_name: str = None, disk_size: str = None,
@@ -84,16 +84,18 @@ class PumpWoodEstimationMicroservice:
         self.test_db_version = test_db_version
         self.test_db_repository = test_db_repository
 
-    def create_deployment_file(self):
-        """create_deployment_file."""
+    def create_deployment_file(self, kube_client):
+        """
+        Create deployment file.
+
+        Args:
+            kube_client: Client to communicate with Kubernets cluster.
+        """
         secrets_text_formated = secrets.format(
             db_password=self._db_password,
             microservice_password=self._microservice_password,
             ssl_key=self._ssl_key,
             ssl_crt=self._ssl_crt)
-        volume_postgres_text_formated = volume_postgres.format(
-            disk_size=self.disk_size,
-            disk_name=self.disk_name)
 
         volume_postgres_text_f = None
         if self.test_db_version is not None:
@@ -101,9 +103,10 @@ class PumpWoodEstimationMicroservice:
                 repository=self.test_db_repository,
                 version=self.test_db_version)
         else:
-            volume_postgres_text_f = volume_postgres.format(
-                disk_size=self.disk_size,
-                disk_name=self.disk_name)
+            volume_postgres_text_f = kube_client.create_volume_yml(
+                disk_name=self.disk_size,
+                disk_size=self.disk_name,
+                volume_claim_name="postgres-pumpwood-estimation")
             deployment_postgres_text_f = deployment_postgres
 
         app_deployment_formated = \
@@ -122,7 +125,7 @@ class PumpWoodEstimationMicroservice:
             list_return = [
                 {'type': 'volume',
                  'name': 'pumpwood_estimation__volume',
-                 'content': volume_postgres_text_formated, 'sleep': 10}]
+                 'content': volume_postgres_text_f, 'sleep': 10}]
         else:
             list_return = []
 

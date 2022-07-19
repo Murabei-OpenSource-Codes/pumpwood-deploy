@@ -16,6 +16,8 @@ src/pumpwood_deploy/crawlers/criptocurrency/resources/__init__.py
 src/pumpwood_deploy/crawlers/criptocurrency/resources/yml__resources.py
 src/pumpwood_deploy/kubernets/__init__.py
 src/pumpwood_deploy/kubernets/kubernets.py
+src/pumpwood_deploy/kubernets/resources/__init__.py
+src/pumpwood_deploy/kubernets/resources/yml__resources.py
 src/pumpwood_deploy/microservices/__init__.py
 src/pumpwood_deploy/microservices/airflow/__init__.py
 src/pumpwood_deploy/microservices/airflow/deploy.py
@@ -69,7 +71,7 @@ src/pumpwood_deploy/microservices/pumpwood_transformation/deploy.py
 src/pumpwood_deploy/microservices/pumpwood_transformation/resources/__init__.py
 src/pumpwood_deploy/microservices/pumpwood_transformation/resources/resources_yml.py
 src/pumpwood_deploy/microservices/standard/__init__.py
-src/pumpwood_deploy/microservices/standard/standard.py
+src/pumpwood_deploy/microservices/standard/deploy.py
 src/pumpwood_deploy/microservices/standard/resources/__init__.py
 src/pumpwood_deploy/microservices/standard/resources/postgres_init_configmap.py
 src/pumpwood_deploy/microservices/standard/resources/yml__resorces.py
