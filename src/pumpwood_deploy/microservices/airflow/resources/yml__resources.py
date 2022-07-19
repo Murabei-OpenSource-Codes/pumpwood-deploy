@@ -20,9 +20,9 @@ spec:
       imagePullSecrets:
         - name: dockercfg
       volumes:
-      - name: bucket-key
+      - name: gcp--storage-key
         secret:
-          secretName: bucket-key
+          secretName: gcp--storage-key
       containers:
       - name: simple-airflow--webserver
         image: andrebaceti/simple-airflow:{version}
@@ -31,7 +31,7 @@ spec:
           requests:
             cpu: "1m"
         volumeMounts:
-          - name: bucket-key
+          - name: gcp--storage-key
             readOnly: true
             mountPath: /etc/secrets
         env:
@@ -73,14 +73,38 @@ spec:
               name: rabbitmq-main-secrets
               key: password
 
-        # GOOGLE
-        - name: GOOGLE_APPLICATION_CREDENTIALS
-          value: "/etc/secrets/key-storage.json"
+        ###########
+        # STORAGE #
         - name: STORAGE_BUCKET_NAME
           value: {bucket_name}
         - name: STORAGE_TYPE
-          value: 'google_bucket'
+          valueFrom:
+            configMapKeyRef:
+              name: storage
+              key: storage_type
 
+        # GCP
+        - name: GOOGLE_APPLICATION_CREDENTIALS
+          value: "/etc/secrets/key-storage.json"
+
+        # AZURE
+        - name: AZURE_STORAGE_CONNECTION_STRING
+          valueFrom:
+              secretKeyRef:
+                name: azure--storage-key
+                key: azure_storage_connection_string
+
+        # AWS
+        - name: AWS_ACCESS_KEY_ID
+          valueFrom:
+              secretKeyRef:
+                name: aws--storage-key
+                key: aws_access_key_id
+        - name: AWS_SECRET_ACCESS_KEY
+          valueFrom:
+              secretKeyRef:
+                name: aws--storage-key
+                key: aws_secret_access_key
         ports:
         - containerPort: 8080
 ---
@@ -126,9 +150,9 @@ spec:
       imagePullSecrets:
         - name: dockercfg
       volumes:
-      - name: bucket-key
+      - name: gcp--storage-key
         secret:
-          secretName: bucket-key
+          secretName: gcp--storage-key
       command: ["bash", "/app/start_airflow__scheduler.sh"]
       containers:
       - name: simple-airflow--scheduler
@@ -138,7 +162,7 @@ spec:
           requests:
             cpu: "1m"
         volumeMounts:
-          - name: bucket-key
+          - name: gcp--storage-key
             readOnly: true
             mountPath: /etc/secrets
         env:
@@ -180,13 +204,38 @@ spec:
               name: rabbitmq-main-secrets
               key: password
 
-        # GOOGLE
-        - name: GOOGLE_APPLICATION_CREDENTIALS
-          value: "/etc/secrets/key-storage.json"
+        ###########
+        # STORAGE #
         - name: STORAGE_BUCKET_NAME
           value: {bucket_name}
         - name: STORAGE_TYPE
-          value: 'google_bucket'
+          valueFrom:
+            configMapKeyRef:
+              name: storage
+              key: storage_type
+
+        # GCP
+        - name: GOOGLE_APPLICATION_CREDENTIALS
+          value: "/etc/secrets/key-storage.json"
+
+        # AZURE
+        - name: AZURE_STORAGE_CONNECTION_STRING
+          valueFrom:
+              secretKeyRef:
+                name: azure--storage-key
+                key: azure_storage_connection_string
+
+        # AWS
+        - name: AWS_ACCESS_KEY_ID
+          valueFrom:
+              secretKeyRef:
+                name: aws--storage-key
+                key: aws_access_key_id
+        - name: AWS_SECRET_ACCESS_KEY
+          valueFrom:
+              secretKeyRef:
+                name: aws--storage-key
+                key: aws_secret_access_key
 """
 
 worker_deployment = """
@@ -211,9 +260,9 @@ spec:
       imagePullSecrets:
         - name: dockercfg
       volumes:
-      - name: bucket-key
+      - name: gcp--storage-key
         secret:
-          secretName: bucket-key
+          secretName: gcp--storage-key
       command: ["bash", "/app/start_airflow__worker.sh"]
       containers:
       - name: simple-airflow--scheduler
@@ -223,7 +272,7 @@ spec:
           requests:
             cpu: "1m"
         volumeMounts:
-          - name: bucket-key
+          - name: gcp--storage-key
             readOnly: true
             mountPath: /etc/secrets
         env:
@@ -258,13 +307,38 @@ spec:
               name: rabbitmq-main-secrets
               key: password
 
-        # GOOGLE
-        - name: GOOGLE_APPLICATION_CREDENTIALS
-          value: "/etc/secrets/key-storage.json"
+        ###########
+        # STORAGE #
         - name: STORAGE_BUCKET_NAME
           value: {bucket_name}
         - name: STORAGE_TYPE
-          value: 'google_bucket'
+          valueFrom:
+            configMapKeyRef:
+              name: storage
+              key: storage_type
+
+        # GCP
+        - name: GOOGLE_APPLICATION_CREDENTIALS
+          value: "/etc/secrets/key-storage.json"
+
+        # AZURE
+        - name: AZURE_STORAGE_CONNECTION_STRING
+          valueFrom:
+              secretKeyRef:
+                name: azure--storage-key
+                key: azure_storage_connection_string
+
+        # AWS
+        - name: AWS_ACCESS_KEY_ID
+          valueFrom:
+              secretKeyRef:
+                name: aws--storage-key
+                key: aws_access_key_id
+        - name: AWS_SECRET_ACCESS_KEY
+          valueFrom:
+              secretKeyRef:
+                name: aws--storage-key
+                key: aws_secret_access_key
 """
 
 

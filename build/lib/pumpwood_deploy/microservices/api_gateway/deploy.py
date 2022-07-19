@@ -14,7 +14,8 @@ class ApiGateway:
     def __init__(self, gateway_public_ip: str, email_contact: str,
                  version: str,
                  health_check_url: str = "health-check/pumpwood-auth-app/",
-                 server_name: str = "not_set"):
+                 server_name: str = "not_set",
+                 repository: str = "gcr.io/repositorio-geral-170012"):
         """
         Build deployment files for the Kong ApiGateway.
 
@@ -27,6 +28,7 @@ class ApiGateway:
             server_name (str): DNS name for the server.
             health_check_url (str): Url for the health checks.
         """
+        self.repository = repository
         self.gateway_public_ip = gateway_public_ip
         self.server_name = server_name
         self.email_contact = email_contact
@@ -35,9 +37,15 @@ class ApiGateway:
 
         self.base_path = os.path.dirname(__file__)
 
-    def create_deployment_file(self):
-        """Create a deployment file."""
+    def create_deployment_file(self, kube_client):
+        """
+        Create_deployment_file.
+
+        Args:
+          kube_client: Client to communicate with Kubernets cluster.
+        """
         nginx_gateway_deployment__formated = nginx_gateway_deployment.format(
+            repository=self.repository,
             server_name=self.server_name,
             email_contact=self.email_contact,
             nginx_ssl_version=self.version,
@@ -66,7 +74,8 @@ class ApiGatewaySecretsSSL:
                  version: str, ssl_secret_path: str,
                  google_project_id: str, secret_id: str,
                  health_check_url: str = "health-check/pumpwood-auth-app/",
-                 server_name: str = "not_set"):
+                 server_name: str = "not_set",
+                 repository: str = "gcr.io/repositorio-geral-170012"):
         """
         Build deployment files for the Kong ApiGateway.
 
@@ -83,6 +92,7 @@ class ApiGatewaySecretsSSL:
             server_name (str): DNS name for the server.
             health_check_url (str): Url for the health checks.
         """
+        self.repository = repository
         self.gateway_public_ip = gateway_public_ip
         self.server_name = server_name
         self.ssl_secret_path = ssl_secret_path
@@ -96,6 +106,7 @@ class ApiGatewaySecretsSSL:
         """Create a deployment file."""
         nginx_gateway_deployment__formated = \
             nginx_gateway_secrets_deployment.format(
+                repository=self.repository,
                 server_name=self.server_name,
                 nginx_ssl_version=self.version,
                 health_check_url=self.health_check_url,

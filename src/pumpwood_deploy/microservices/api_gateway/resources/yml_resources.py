@@ -17,7 +17,7 @@ spec:
         - name: dockercfg
       containers:
       - name: apigateway-nginx
-        image: gcr.io/repositorio-geral-170012/pumpwood-nginx-ssl-gateway:{nginx_ssl_version}
+        image: {repository}/pumpwood-nginx-ssl-gateway:{nginx_ssl_version}
         imagePullPolicy: Always
         resources:
           requests:
@@ -59,7 +59,7 @@ spec:
           secretName: ssl-credentials-key
       containers:
       - name: apigateway-nginx
-        image: gcr.io/repositorio-geral-170012/pumpwood-nginx-ssl-secrets-gateway:{nginx_ssl_version}
+        image: {repository}/pumpwood-nginx-ssl-secrets-gateway:{nginx_ssl_version}
         imagePullPolicy: Always
         resources:
           requests:

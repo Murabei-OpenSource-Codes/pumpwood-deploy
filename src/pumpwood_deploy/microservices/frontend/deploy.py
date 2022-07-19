@@ -20,8 +20,13 @@ class PumpwoodFrontEndMicroservice:
             microservice_password.encode()).decode()
         self.base_path = os.path.dirname(__file__)
 
-    def create_deployment_file(self):
-        """create_deployment_file."""
+    def create_deployment_file(self, kube_client):
+        """
+        Create_deployment_file.
+
+        Args:
+          kube_client: Client to communicate with Kubernets cluster.
+        """
         deployment_text_f = deployment_yml.format(
             repository=self.repository,
             gateway_public_ip=self.gateway_public_ip,

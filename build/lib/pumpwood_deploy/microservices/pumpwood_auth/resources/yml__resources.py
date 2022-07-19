@@ -74,9 +74,9 @@ spec:
         secret:
           secretName: pumpwood-auth
       volumes:
-      - name: bucket-key
+      - name: gcp--storage-key
         secret:
-          secretName: bucket-key
+          secretName: gcp--storage-key
       containers:
       - name: pumpwood-auth-app
         image: {repository}/pumpwood-auth-app:{version}
@@ -85,7 +85,7 @@ spec:
           requests:
             cpu: "1m"
         volumeMounts:
-          - name: bucket-key
+          - name: gcp--storage-key
             readOnly: true
             mountPath: /etc/secrets
         ports:
@@ -110,14 +110,6 @@ spec:
             secretKeyRef:
               name: pumpwood-auth
               key: secret_key
-
-        # Google
-        - name: GOOGLE_APPLICATION_CREDENTIALS
-          value: "/etc/secrets/key-storage.json"
-        - name: STORAGE_BUCKET_NAME
-          value: {bucket_name}
-        - name: STORAGE_TYPE
-          value: 'google_bucket'
 
         # Database
         - name: DB_HOST
@@ -146,6 +138,39 @@ spec:
             secretKeyRef:
               name: pumpwood-auth
               key: email_host_password
+
+        ###########
+        # STORAGE #
+        - name: STORAGE_BUCKET_NAME
+          value: {bucket_name}
+        - name: STORAGE_TYPE
+          valueFrom:
+            configMapKeyRef:
+              name: storage
+              key: storage_type
+
+        # GCP
+        - name: GOOGLE_APPLICATION_CREDENTIALS
+          value: "/etc/secrets/key-storage.json"
+
+        # AZURE
+        - name: AZURE_STORAGE_CONNECTION_STRING
+          valueFrom:
+              secretKeyRef:
+                name: azure--storage-key
+                key: azure_storage_connection_string
+
+        # AWS
+        - name: AWS_ACCESS_KEY_ID
+          valueFrom:
+              secretKeyRef:
+                name: aws--storage-key
+                key: aws_access_key_id
+        - name: AWS_SECRET_ACCESS_KEY
+          valueFrom:
+              secretKeyRef:
+                name: aws--storage-key
+                key: aws_secret_access_key
 ---
 apiVersion : "v1"
 kind: Service
@@ -298,37 +323,6 @@ spec:
       - {{ip}}
     {%- endfor %}
 """
-
-volume_postgres = """
-kind: PersistentVolume
-apiVersion: v1
-metadata:
-  name: {disk_name}
-  labels:
-    usage: {disk_name}
-spec:
-  accessModes:
-    - ReadWriteOnce
-  capacity:
-    storage: {disk_size}
-  storageClassName: standard
-  gcePersistentDisk:
-    fsType: ext4
-    pdName: {disk_name}
----
-kind: PersistentVolumeClaim
-apiVersion: v1
-metadata:
-  name: postgres-pumpwood-auth
-spec:
-  accessModes:
-    - ReadWriteOnce
-  resources:
-    requests:
-      storage: {disk_size}
-  volumeName: {disk_name}
-"""
-
 
 test_postgres = """
 apiVersion: apps/v1

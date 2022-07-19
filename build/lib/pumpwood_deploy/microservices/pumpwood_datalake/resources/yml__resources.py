@@ -20,9 +20,9 @@ spec:
       imagePullSecrets:
         - name: dockercfg
       volumes:
-      - name: bucket-key
+      - name: gcp--storage-key
         secret:
-          secretName: bucket-key
+          secretName: gcp--storage-key
       containers:
       - name: pumpwood-datalake
         image: {repository}/pumpwood-datalake-app:{version}
@@ -31,7 +31,7 @@ spec:
           requests:
             cpu: "1m"
         volumeMounts:
-          - name: bucket-key
+          - name: gcp--storage-key
             readOnly: true
             mountPath: /etc/secrets
         readinessProbe:
@@ -58,14 +58,6 @@ spec:
               name: pumpwood-datalake
               key: db_password
 
-        # Google
-        - name: GOOGLE_APPLICATION_CREDENTIALS
-          value: "/etc/secrets/key-storage.json"
-        - name: STORAGE_BUCKET_NAME
-          value: {bucket_name}
-        - name: STORAGE_TYPE
-          value: 'google_bucket'
-
         # RABBITMQ ETL
         - name: RABBITMQ_HOST
           value: "rabbitmq-main"
@@ -85,6 +77,39 @@ spec:
         # workers_timeout
         - name: WORKERS_TIMEOUT
           value: "{workers_timeout}"
+
+        ###########
+        # STORAGE #
+        - name: STORAGE_BUCKET_NAME
+          value: {bucket_name}
+        - name: STORAGE_TYPE
+          valueFrom:
+            configMapKeyRef:
+              name: storage
+              key: storage_type
+
+        # GCP
+        - name: GOOGLE_APPLICATION_CREDENTIALS
+          value: "/etc/secrets/key-storage.json"
+
+        # AZURE
+        - name: AZURE_STORAGE_CONNECTION_STRING
+          valueFrom:
+              secretKeyRef:
+                name: azure--storage-key
+                key: azure_storage_connection_string
+
+        # AWS
+        - name: AWS_ACCESS_KEY_ID
+          valueFrom:
+              secretKeyRef:
+                name: aws--storage-key
+                key: aws_access_key_id
+        - name: AWS_SECRET_ACCESS_KEY
+          valueFrom:
+              secretKeyRef:
+                name: aws--storage-key
+                key: aws_secret_access_key
         ports:
         - containerPort: 5000
 ---
@@ -130,9 +155,9 @@ spec:
       imagePullSecrets:
         - name: dockercfg
       volumes:
-      - name: bucket-key
+      - name: gcp--storage-key
         secret:
-          secretName: bucket-key
+          secretName: gcp--storage-key
       containers:
       - name: pumpwood-dataloader-worker
         image: {repository}/pumpwood-datalake-dataloader-worker:{version}
@@ -141,7 +166,7 @@ spec:
           requests:
             cpu: "1m"
         volumeMounts:
-          - name: bucket-key
+          - name: gcp--storage-key
             readOnly: true
             mountPath: /etc/secrets
         env:
@@ -160,14 +185,6 @@ spec:
             secretKeyRef:
               name: pumpwood-datalake
               key: db_password
-
-        #Google
-        - name: GOOGLE_APPLICATION_CREDENTIALS
-          value: "/etc/secrets/key-storage.json"
-        - name: STORAGE_BUCKET_NAME
-          value: {bucket_name}
-        - name: STORAGE_TYPE
-          value: 'google_bucket'
 
         #RABBITMQ
         - name: RABBITMQ_HOST
@@ -190,6 +207,39 @@ spec:
           value: '{n_chunks}'
         - name: CHUNK_SIZE
           value: '{chunk_size}'
+
+        ###########
+        # STORAGE #
+        - name: STORAGE_BUCKET_NAME
+          value: {bucket_name}
+        - name: STORAGE_TYPE
+          valueFrom:
+            configMapKeyRef:
+              name: storage
+              key: storage_type
+
+        # GCP
+        - name: GOOGLE_APPLICATION_CREDENTIALS
+          value: "/etc/secrets/key-storage.json"
+
+        # AZURE
+        - name: AZURE_STORAGE_CONNECTION_STRING
+          valueFrom:
+              secretKeyRef:
+                name: azure--storage-key
+                key: azure_storage_connection_string
+
+        # AWS
+        - name: AWS_ACCESS_KEY_ID
+          valueFrom:
+              secretKeyRef:
+                name: aws--storage-key
+                key: aws_access_key_id
+        - name: AWS_SECRET_ACCESS_KEY
+          valueFrom:
+              secretKeyRef:
+                name: aws--storage-key
+                key: aws_secret_access_key
 """
 
 secrets = """
@@ -229,37 +279,6 @@ spec:
       - {{ip}}
     {%- endfor %}
 """
-
-volume_postgres = """
-kind: PersistentVolume
-apiVersion: v1
-metadata:
-  name: {disk_name}
-  labels:
-    usage: {disk_name}
-spec:
-  accessModes:
-    - ReadWriteOnce
-  capacity:
-    storage: {disk_size}
-  storageClassName: standard
-  gcePersistentDisk:
-    fsType: ext4
-    pdName: {disk_name}
----
-kind: PersistentVolumeClaim
-apiVersion: v1
-metadata:
-  name: postgres-pumpwood-datalake
-spec:
-  accessModes:
-    - ReadWriteOnce
-  resources:
-    requests:
-      storage: {disk_size}
-  volumeName: {disk_name}
-"""
-
 
 deployment_postgres = """
 apiVersion: apps/v1

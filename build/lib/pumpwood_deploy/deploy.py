@@ -2,7 +2,7 @@
 import os
 import stat
 import shutil
-from pumpwood_deploy.microservices.standard.standard import (
+from pumpwood_deploy.microservices.standard.deploy import (
     StandardMicroservices)
 from pumpwood_deploy.kubernets.kubernets import Kubernets
 
@@ -14,42 +14,63 @@ class DeployPumpWood():
         'SCRIPTPATH="$( cd "$(dirname "$0")" ; pwd -P )"\n'
         'kubectl apply -f $SCRIPTPATH/{file} --namespace={namespace}')
 
-    def __init__(self, bucket_key_path: str, model_user_password: str,
+    def __init__(self, model_user_password: str,
                  rabbitmq_secret: str, hash_salt: str, kong_db_disk_name: str,
-                 kong_db_disk_size: str, cluster_name: str,
-                 cluster_zone: str, cluster_project: str,
-                 namespace="default",
-                 gateway_health_url: str = "health-check/pumpwood-auth-app/"):
+                 kong_db_disk_size: str, k8_provider: str,
+                 k8_deploy_args: dict, storage_type: str,
+                 storage_deploy_args: str, k8_namespace="pumpwood",
+                 gateway_health_url: str = "health-check/pumpwood-auth-app/",
+                 kong_repository: str = "gcr.io/repositorio-geral-170012"):
         """
         __init__.
 
         Args:
-          bucket_key_path (str): path to bucket service user path.
           model_password (str): Password of models microservice.
           beatbox_conf_path (str): Path to beatbox configuration file.
           beatbox_version (str): Version of beatbox image.
           hash_salt (str): Salt for hashs in deployment.
           cluster_zone (str): Kubernets cluster zone.
           cluster_project (str): Kubernets project name.
-
+          k8_provider (str): Kubernets provider, so far must be
+            in ['gcp', 'azure'].
+          k8_deploy_args (dict): Arguments to deploy k8s cluster it may
+            vary depending on the provider. Check classes KubernetsGCP,
+            KubernetsAzure.
+          storage_type (str): Storage provider must be in [
+            'azure', 'gcp', 'aws'], correpond to the provider os the flat
+            file storage system.
+          storage_deploy_args (str): Args used to access storage at the
+            pods. Each provider must have diferent arguments:
+                # Azure:
+                - azure_storage_connection_string: Set conenction string to
+                    a blob storage.
+                # GCP:
+                - credential_file: Set a path to a credetial file of a service
+                    user with access to the bucket that will be used at the
+                    deployment.
+                # AWS:
+                - aws_access_key_id: Access key of the service user with
+                    access to the s3 used in deployment.
+                - aws_secret_access_key: Access secret of the service user with
+                    access to the s3 used in deployment.
         Kwargs:
-            namespace [str]: Which namespace to deploy the system.
+            k8_namespace [str]: Which namespace to deploy the system.
         """
         self.deploy = []
-
         self.kube_client = Kubernets(
-            cluster_name=cluster_name, zone=cluster_zone,
-            project=cluster_project, namespace=namespace)
-        self.namespace = namespace
+            k8_namespace=k8_namespace, k8_provider=k8_provider,
+            k8_deploy_args=k8_deploy_args)
+        self.namespace = k8_namespace
 
         standard_microservices = StandardMicroservices(
             hash_salt=hash_salt,
-            rabbit_username='rabbitmq',
             rabbit_password=rabbitmq_secret,
             kong_db_disk_name=kong_db_disk_name,
             kong_db_disk_size=kong_db_disk_size,
+            kong_repository=kong_repository,
             model_user_password=model_user_password,
-            bucket_key_path=bucket_key_path)
+            storage_type=storage_type,
+            storage_deploy_args=storage_deploy_args)
 
         self.microsservices_to_deploy = [
             standard_microservices]
@@ -88,17 +109,22 @@ class DeployPumpWood():
         #####################################################################
         # Usa os arqivos de template e subistitui com as variáveis para criar
         # os templates de deploy
-        print('###Creating microservices files:')
+        print('### Creating microservices files:')
         # m = self.microsservices_to_deploy[0]
         for m in self.microsservices_to_deploy:
             print('\nProcessing: ' + str(m))
-            temp_deployments = m.create_deployment_file()
+            temp_deployments = m.create_deployment_file(
+                kube_client=self.kube_client)
             for d in temp_deployments:
-                if d['type'] in ['secrets', 'deploy', 'volume']:
+                # Create a counter to order the files in the deploy
+                str_counter = "%03d" % (counter, )
+                str_service_counter = "%03d" % (service_counter, )
+
+                # Create Kubernets deploy files using yml string content
+                if d['type'] in ['secrets', 'deploy', 'volume', 'configmap']:
                     file_name_temp = 'resources/{counter}__{name}.yml'
                     file_name = file_name_temp.format(
-                        counter=counter,
-                        name=d['name'])
+                        counter=str_counter, name=d['name'])
 
                     print('Creating secrets/deploy: ' + file_name)
                     with open('outputs/deploy_output/' +
@@ -108,7 +134,7 @@ class DeployPumpWood():
                     file_name_sh_temp = (
                         'outputs/deploy_output/{counter}__{name}.sh')
                     file_name_sh = file_name_sh_temp.format(
-                        counter=counter, name=d['name'])
+                        counter=str_counter, name=d['name'])
 
                     with open(file_name_sh, 'w') as file:
                         content = self.create_kube_cmd.format(
@@ -121,6 +147,7 @@ class DeployPumpWood():
                         'sleep': d.get('sleep')})
                     counter = counter + 1
 
+                # Create a secret from a file
                 elif d['type'] == 'secrets_file':
                     command_formated = (
                         'SCRIPTPATH="$( cd "$(dirname "$0")" ; pwd -P )"\n'
@@ -145,7 +172,8 @@ class DeployPumpWood():
                         'sleep': d.get('sleep')})
                     counter = counter + 1
 
-                elif d['type'] == 'configmap':
+                # Create ConfigMap from a file
+                elif d['type'] == 'configmap_file':
                     file_name_resource_temp = 'resources/{name}'
                     file_name_resource = file_name_resource_temp.format(
                         name=d['file_name'])
@@ -186,8 +214,7 @@ class DeployPumpWood():
                     file_name_temp = 'outputs/deploy_output/' + \
                                      '{counter}__{name}.sh'
                     file_name = file_name_temp.format(
-                        counter=counter,
-                        name=d['name'])
+                        counter=str_counter, name=d['name'])
 
                     print('Creating configmap: ' + file_name)
                     with open(file_name, 'w') as file:
@@ -197,10 +224,11 @@ class DeployPumpWood():
                     os.chmod(file_name, stat.S_IRWXU)
                     counter = counter + 1
 
+                # Create services and load-balacers
                 elif d['type'] == 'services':
                     file_name_temp = 'resources/{service_counter}__{name}.yml'
                     file_name = file_name_temp.format(
-                        service_counter=service_counter,
+                        service_counter=str_service_counter,
                         name=d['name'])
 
                     print('Creating services: ' + file_name)
@@ -212,7 +240,7 @@ class DeployPumpWood():
                         'outputs/services_output/' +\
                         '{service_counter}__{name}.sh'
                     file_name_sh = file_name_sh_temp .format(
-                        service_counter=service_counter,
+                        service_counter=str_service_counter,
                         name=d['name'])
 
                     with open(file_name_sh, 'w') as file:
@@ -230,7 +258,6 @@ class DeployPumpWood():
                     raise Exception('Not used anymore')
                 else:
                     raise Exception('Type not implemented: %s' % (d['type'], ))
-        #####################################################################
 
         return {
             'service_cmds': sevice_cmds,
