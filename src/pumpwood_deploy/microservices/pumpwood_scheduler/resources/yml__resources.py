@@ -49,8 +49,14 @@ spec:
               key: hash_salt
 
         # Database
+        - name: DB_USERNAME
+          value: {db_username}
         - name: DB_HOST
-          value: "postgres-pumpwood-scheduler"
+          value: {db_host}
+        - name: DB_PORT
+          value: "{db_port}"
+        - name: DB_DATABASE
+          value: {db_database}
         - name: DB_PASSWORD
           valueFrom:
             secretKeyRef:
@@ -169,9 +175,15 @@ spec:
             readOnly: true
             mountPath: /etc/secrets
         env:
-        #DATABASE
+        # Database
+        - name: DB_USERNAME
+          value: {db_username}
         - name: DB_HOST
-          value: "postgres-pumpwood-scheduler"
+          value: {db_host}
+        - name: DB_PORT
+          value: "{db_port}"
+        - name: DB_DATABASE
+          value: {db_database}
         - name: DB_PASSWORD
           valueFrom:
             secretKeyRef:

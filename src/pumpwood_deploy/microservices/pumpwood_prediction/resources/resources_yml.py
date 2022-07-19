@@ -48,9 +48,15 @@ spec:
               name: hash-salt
               key: hash_salt
 
-        #Database
+        # Database
+        - name: DB_USERNAME
+          value: {db_username}
         - name: DB_HOST
-          value: "postgres-pumpwood-prediction"
+          value: {db_host}
+        - name: DB_PORT
+          value: "{db_port}"
+        - name: DB_DATABASE
+          value: {db_database}
         - name: DB_PASSWORD
           valueFrom:
             secretKeyRef:
@@ -162,9 +168,15 @@ spec:
             mountPath: /etc/secrets
 
         env:
-        #DATABASE
+        # Database
+        - name: DB_USERNAME
+          value: {db_username}
         - name: DB_HOST
-          value: "postgres-pumpwood-prediction"
+          value: {db_host}
+        - name: DB_PORT
+          value: "{db_port}"
+        - name: DB_DATABASE
+          value: {db_database}
         - name: DB_PASSWORD
           valueFrom:
             secretKeyRef:
@@ -265,8 +277,14 @@ spec:
             mountPath: /etc/secrets
         env:
         # DATALAKE DATALAKE
+        - name: DATALAKE_DB_USERNAME
+          value: {datalake_db_username}
         - name: DATALAKE_DB_HOST
-          value: "postgres-pumpwood-datalake"
+          value: {datalake_db_host}
+        - name: DATALAKE_DB_PORT
+          value: {datalake_db_port}
+        - name: DATALAKE_DB_DATABASE
+          value: {datalake_db_database}
         - name: DATALAKE_DB_PASSWORD
           valueFrom:
             secretKeyRef:
@@ -274,8 +292,14 @@ spec:
               key: db_password
 
         # DATALAKE PREDICTION
+        - name: PREDICTION_DB_USERNAME
+          value: {prediction_db_username}
         - name: PREDICTION_DB_HOST
-          value: "postgres-pumpwood-prediction"
+          value: {prediction_db_host}
+        - name: PREDICTION_DB_PORT
+          value: {prediction_db_port}
+        - name: PREDICTION_DB_DATABASE
+          value: {prediction_db_database}
         - name: PREDICTION_DB_PASSWORD
           valueFrom:
             secretKeyRef:

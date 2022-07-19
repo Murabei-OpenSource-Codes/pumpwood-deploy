@@ -24,7 +24,15 @@ class PumpWoodPredictionMicroservice:
                  workers_timeout: int = 300, replicas: int = 1,
                  test_db_version: str = None,
                  test_db_repository: str = "gcr.io/repositorio-geral-170012",
-                 debug: str = "FALSE"):
+                 debug: str = "FALSE",
+                 db_username: str = "pumpwood",
+                 db_host: str = "postgres-pumpwood-prediction",
+                 db_port: str = "5432",
+                 db_database: str = "pumpwood",
+                 datalake_db_username: str = "pumpwood",
+                 datalake_db_host: str = "postgres-pumpwood-datalake",
+                 datalake_db_port: str = "5432",
+                 datalake_db_database: str = "pumpwood"):
         """
         __init__: Class constructor.
 
@@ -44,6 +52,14 @@ class PumpWoodPredictionMicroservice:
             database.
           repository (str): Repository to pull Image.
           workers_timeout (int): Time in seconds to timeout of uwsgi worker.
+          db_username (str): Database connection username.
+          db_host (str): Database connection host.
+          db_port (str): Database connection port.
+          db_database (str): Database connection database.
+          datalake_db_username (str): Datalake database connection username.
+          datalake_db_host (str): Datalake database connection host.
+          datalake_db_port (str): Datalake database connection port.
+          datalake_db_database (str): Datalake database connection database.
 
         Returns:
           PumpWoodDatalakeMicroservice: New Object
@@ -78,6 +94,15 @@ class PumpWoodPredictionMicroservice:
         self.disk_name = disk_name
         self.base_path = os.path.dirname(__file__)
 
+        self.db_username = db_username
+        self.db_host = db_host
+        self.db_port = db_port
+        self.db_database = db_database
+        self.datalake_db_username = datalake_db_username
+        self.datalake_db_host = datalake_db_host
+        self.datalake_db_port = datalake_db_port
+        self.datalake_db_database = datalake_db_database
+
         self.workers_timeout = workers_timeout
         self.repository = repository
         self.version_app = version_app
@@ -102,11 +127,12 @@ class PumpWoodPredictionMicroservice:
             ssl_crt=self._ssl_crt)
 
         volume_postgres_text_f = None
+        deployment_postgres_text_f = None
         if self.test_db_version is not None:
             deployment_postgres_text_f = test_postgres.format(
                 repository=self.test_db_repository,
                 version=self.test_db_version)
-        else:
+        elif self.disk_size is not None:
             volume_postgres_text_f = kube_client.create_volume_yml(
                 disk_name=self.disk_size,
                 disk_size=self.disk_name,
@@ -116,36 +142,55 @@ class PumpWoodPredictionMicroservice:
         deployment_app_text_formated = app_deployment.format(
             repository=self.repository, version=self.version_app,
             bucket_name=self.bucket_name, replicas=self.replicas,
-            debug=self.debug)
+            debug=self.debug,
+            db_username=self.db_username,
+            db_host=self.db_host,
+            db_port=self.db_port,
+            db_database=self.db_database)
+
         deployment_rawdata_text_formated = worker_rawdata.format(
             repository=self.repository, version=self.version_rawdata,
-            bucket_name=self.bucket_name)
-        deployment_dataloader_text_formated = \
-            worker_dataloader.format(
-                repository=self.repository, version=self.version_dataloader,
-                bucket_name=self.bucket_name)
+            bucket_name=self.bucket_name,
+            db_username=self.db_username,
+            db_host=self.db_host,
+            db_port=self.db_port,
+            db_database=self.db_database,
+            datalake_db_username=self.datalake_db_username,
+            datalake_db_host=self.datalake_db_host,
+            datalake_db_port=self.datalake_db_port,
+            datalake_db_database=self.datalake_db_database)
 
+        deployment_dataloader_text_formated = worker_dataloader.format(
+                repository=self.repository,
+                version=self.version_dataloader,
+                bucket_name=self.bucket_name,
+                db_username=self.db_username,
+                db_host=self.db_host,
+                db_port=self.db_port,
+                db_database=self.db_database)
+
+        list_return = [
+            {'type': 'secrets', 'name': 'pumpwood_prediction__secrets',
+             'content': secrets_text_formated, 'sleep': 5}]
         if volume_postgres_text_f is not None:
-            list_return = [
+            list_return.append(
                 {'type': 'volume',
                  'name': 'pumpwood_prediction__volume',
-                 'content': volume_postgres_text_f, 'sleep': 10}]
-        else:
-            list_return = []
-
-        list_return.extend([
-            {'type': 'secrets', 'name': 'pumpwood_prediction__secrets',
-             'content': secrets_text_formated, 'sleep': 5},
-            {'type': 'deploy', 'name': 'pumpwood_prediction__postgres',
-             'content': deployment_postgres_text_f, 'sleep': 0},
+                 'content': volume_postgres_text_f, 'sleep': 10})
+        elif deployment_postgres_text_f is not None:
+            list_return.append(
+                {'type': 'deploy', 'name': 'pumpwood_prediction__postgres',
+                 'content': deployment_postgres_text_f, 'sleep': 0})
+        list_return.append(
             {'type': 'deploy', 'name': 'pumpwood_prediction_app',
-             'content': deployment_app_text_formated, 'sleep': 0},
+             'content': deployment_app_text_formated, 'sleep': 0})
+        list_return.append(
             {'type': 'deploy', 'name': 'pumpwood_prediction__rawdata_worker',
-             'content': deployment_rawdata_text_formated, 'sleep': 0},
+             'content': deployment_rawdata_text_formated, 'sleep': 0})
+        list_return.append(
             {'type': 'deploy',
              'name': 'pumpwood_prediction_dataloader__dataloader_worker',
-             'content': deployment_dataloader_text_formated, 'sleep': 0}
-        ])
+             'content': deployment_dataloader_text_formated, 'sleep': 0})
 
         if self.firewall_ips and self.postgres_public_ip:
             services__load_balancer_template = Template(
