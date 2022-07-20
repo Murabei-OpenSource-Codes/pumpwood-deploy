@@ -22,7 +22,11 @@ class PumpWoodSchedulerMicroservice:
                  workers_timeout: int = 300, replicas: int = 1,
                  test_db_version: str = None,
                  test_db_repository: str = "gcr.io/repositorio-geral-170012",
-                 debug: str = "FALSE"):
+                 debug: str = "FALSE",
+                 db_username: str = "pumpwood",
+                 db_host: str = "postgres-pumpwood-scheduler",
+                 db_port: str = "5432",
+                 db_database: str = "pumpwood"):
         """
         __init__: Class constructor.
 
@@ -43,6 +47,10 @@ class PumpWoodSchedulerMicroservice:
           repository (str): Repository to pull Image.
           workers_timeout (int): Time in seconds to timeout of uwsgi worker.
           debug (str) = "FALSE": FALSE | TRUE set debug parameter for the app.
+          db_username (str): Database connection username.
+          db_host (str): Database connection host.
+          db_port (str): Database connection port.
+          db_database (str): Database connection database.
 
         Returns:
           PumpWoodDatalakeMicroservice: New Object
@@ -79,6 +87,11 @@ class PumpWoodSchedulerMicroservice:
 
         self.workers_timeout = workers_timeout
 
+        self.db_username = db_username
+        self.db_host = db_host
+        self.db_port = db_port
+        self.db_database = db_database
+
         self.repository = repository
         self.version_app = version_app
         self.version_worker = version_worker
@@ -101,11 +114,12 @@ class PumpWoodSchedulerMicroservice:
             ssl_crt=self._ssl_crt)
 
         volume_postgres_text_f = None
+        deployment_postgres_text_f = None
         if self.test_db_version is not None:
             deployment_postgres_text_f = test_postgres.format(
                 repository=self.test_db_repository,
                 version=self.test_db_version)
-        else:
+        elif self.disk_size is not None:
             volume_postgres_text_f = kube_client.create_volume_yml(
                 disk_name=self.disk_size,
                 disk_size=self.disk_name,
@@ -119,33 +133,38 @@ class PumpWoodSchedulerMicroservice:
                 bucket_name=self.bucket_name,
                 workers_timeout=self.workers_timeout,
                 replicas=self.replicas,
-                debug=self.debug)
+                debug=self.debug,
+                db_username=self.db_username,
+                db_host=self.db_host,
+                db_port=self.db_port,
+                db_database=self.db_database)
         deployment_worker_text_formated = worker_deployment.format(
             repository=self.repository,
             version=self.version_worker,
-            bucket_name=self.bucket_name)
+            bucket_name=self.bucket_name,
+            db_username=self.db_username,
+            db_host=self.db_host,
+            db_port=self.db_port,
+            db_database=self.db_database)
 
+        list_return = [
+            {'type': 'secrets', 'name': 'pumpwood_scheduler__secrets',
+             'content': secrets_text_formated, 'sleep': 5}]
         if volume_postgres_text_f is not None:
-            list_return = [
+            list_return.append(
                 {'type': 'volume',
                  'name': 'pumpwood_scheduler__volume',
-                 'content': volume_postgres_text_f, 'sleep': 10}]
-        else:
-            list_return = []
-
-        list_return.extend([
-            {'type': 'secrets', 'name': 'pumpwood_scheduler__secrets',
-             'content': secrets_text_formated, 'sleep': 5},
-
-            {'type': 'deploy', 'name': 'pumpwood_scheduler__postgres',
-             'content': deployment_postgres_text_f, 'sleep': 0},
-
+                 'content': volume_postgres_text_f, 'sleep': 10})
+        elif deployment_postgres_text_f is not None:
+            list_return.append(
+                {'type': 'deploy', 'name': 'pumpwood_scheduler__postgres',
+                 'content': deployment_postgres_text_f, 'sleep': 0})
+        list_return.append(
             {'type': 'deploy', 'name': 'pumpwood_scheduler__deploy',
-             'content': deployment_app_text_frmtd, 'sleep': 0},
-
+             'content': deployment_app_text_frmtd, 'sleep': 0})
+        list_return.append(
             {'type': 'deploy', 'name': 'pumpwood_scheduler__worker',
-             'content': deployment_worker_text_formated, 'sleep': 0},
-        ])
+             'content': deployment_worker_text_formated, 'sleep': 0})
 
         if self.firewall_ips is not None and self.postgres_public_ip:
             services__load_balancer_template = Template(
@@ -157,5 +176,4 @@ class PumpWoodSchedulerMicroservice:
                 'type': 'services',
                 'name': 'pumpwood_scheduler__services_loadbalancer',
                 'content': svcs__load_balancer_text, 'sleep': 0})
-
         return list_return

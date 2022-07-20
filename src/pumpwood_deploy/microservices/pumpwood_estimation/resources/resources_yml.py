@@ -183,15 +183,15 @@ spec:
               key: hash_salt
 
         # Database
-        - name: DB_USERNAME
-          value: {db_username}
-        - name: DB_HOST
-          value: {db_host}
-        - name: DB_PORT
-          value: "{db_port}"
-        - name: DB_DATABASE
-          value: {db_database}
-        - name: DB_PASSWORD
+        - name: DATALAKE_DB_USERNAME
+          value: {datalake_db_username}
+        - name: DATALAKE_DB_HOST
+          value: {datalake_db_host}
+        - name: DATALAKE_DB_PORT
+          value: "{db_portdatalake_db_port"
+        - name: DATALAKE_DB_DATABASE
+          value: {datalake_db_database}
+        - name: DATALAKE_DB_PASSWORD
           valueFrom:
             secretKeyRef:
               name: pumpwood-datalake

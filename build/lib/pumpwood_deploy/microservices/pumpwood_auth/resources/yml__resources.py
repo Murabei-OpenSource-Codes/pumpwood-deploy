@@ -112,9 +112,15 @@ spec:
               key: secret_key
 
         # Database
+        - name: DB_USERNAME
+          value: {db_username}
         - name: DB_HOST
-          value: postgres-pumpwood-auth
-        - name: DB_PASS
+          value: {db_host}
+        - name: DB_PORT
+          value: "{db_port}"
+        - name: DB_DATABASE
+          value: {db_database}
+        - name: DB_PASSWORD
           valueFrom:
             secretKeyRef:
               name: pumpwood-auth

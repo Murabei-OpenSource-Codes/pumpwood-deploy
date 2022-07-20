@@ -33,12 +33,12 @@ class PumpWoodAuthMicroservice:
             db_password (str): Auth DB password.
             email_host_user (str): Auth email conection username.
             email_host_password (str): Auth email conection password.
-            disk_size (str): Disk size for auth database.
-            disk_name (str): Disk name for auth database.
-            postgres_public_ip (str): Postgres database external IP.
             version_app (str): Version of the auth microservice.
             version_static (str): Version of the static image.
+
         Kwargs:
+            disk_size (str): Disk size for auth database.
+            disk_name (str): Disk name for auth database.
             firewall_ips (str): Firewall alowed conection ips for database.
             repository (str): Repository to pull image from.
             replicas (int): Number of replicas in App deployment.
@@ -46,6 +46,11 @@ class PumpWoodAuthMicroservice:
             test_db_repository (str): Define a repository for the test
               database.
             debug (str): Set app in debug mode.
+            db_username (str): Database connection username.
+            db_host (str): Database connection host.
+            db_port (str): Database connection port.
+            db_database (str): Database connection database.
+            postgres_public_ip (str): Postgres database external IP.
         """
         disk_deploy = (disk_name is not None and disk_size is not None)
         if disk_deploy and test_db_version is not None:

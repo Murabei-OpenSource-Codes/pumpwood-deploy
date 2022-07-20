@@ -23,7 +23,11 @@ class PumpWoodDatalakeMicroservice:
                  chunk_size: int = 5000, replicas: int = 1,
                  test_db_version: str = None,
                  test_db_repository: str = "gcr.io/repositorio-geral-170012",
-                 debug: str = "FALSE"):
+                 debug: str = "FALSE",
+                 db_username: str = "pumpwood",
+                 db_host: str = "postgres-pumpwood-datalake",
+                 db_port: str = "5432",
+                 db_database: str = "pumpwood"):
         """
         __init__: Class constructor.
 
@@ -48,6 +52,10 @@ class PumpWoodDatalakeMicroservice:
           test_db_version (str): Set a test database with version.
           test_db_repository (str): Define a repository for the test
             database.
+          db_username (str): Database connection username.
+          db_host (str): Database connection host.
+          db_port (str): Database connection port.
+          db_database (str): Database connection database.
         Returns:
           PumpWoodDatalakeMicroservice: New Object
 
@@ -85,6 +93,11 @@ class PumpWoodDatalakeMicroservice:
         self.chunk_size = chunk_size
         self.workers_timeout = workers_timeout
 
+        self.db_username = db_username
+        self.db_host = db_host
+        self.db_port = db_port
+        self.db_database = db_database
+
         self.repository = repository
         self.debug = debug
         self.version_app = version_app
@@ -108,49 +121,57 @@ class PumpWoodDatalakeMicroservice:
             ssl_crt=self._ssl_crt)
 
         volume_postgres_text_f = None
+        deployment_postgres_text_f = None
         if self.test_db_version is not None:
             deployment_postgres_text_f = test_postgres.format(
                 repository=self.test_db_repository,
                 version=self.test_db_version)
-        else:
+        elif self.disk_size is not None:
             volume_postgres_text_f = kube_client.create_volume_yml(
                 disk_name=self.disk_size,
                 disk_size=self.disk_name,
                 volume_claim_name="postgres-pumpwood-datalake")
             deployment_postgres_text_f = deployment_postgres
 
-        deployment_queue_manager_text_frmtd = \
+        app_deployment_frmtd = \
             app_deployment.format(
                 repository=self.repository,
                 version=self.version_app,
                 bucket_name=self.bucket_name,
                 workers_timeout=self.workers_timeout,
                 replicas=self.replicas,
-                debug=self.debug)
+                debug=self.debug,
+                db_username=self.db_username,
+                db_host=self.db_host,
+                db_port=self.db_port,
+                db_database=self.db_database)
+
         worker_deployment_text_frmted = worker_deployment.format(
             repository=self.repository, version=self.version_worker,
             n_chunks=self.n_chunks, chunk_size=self.chunk_size,
-            bucket_name=self.bucket_name)
+            bucket_name=self.bucket_name,
+            db_username=self.db_username,
+            db_host=self.db_host,
+            db_port=self.db_port,
+            db_database=self.db_database)
 
+        list_return = [{
+            'type': 'secrets', 'name': 'pumpwood_datalake__secrets',
+            'content': secrets_text_formated, 'sleep': 5}]
         if volume_postgres_text_f is not None:
-            list_return = [
-                {'type': 'volume', 'name': 'pumpwood_datalake__volume',
-                 'content': volume_postgres_text_formated, 'sleep': 10}]
-        else:
-            list_return = []
-
-        list_return.extend([
-            {'type': 'secrets', 'name': 'pumpwood_datalake__secrets',
-             'content': secrets_text_formated, 'sleep': 5},
-
-            {'type': 'deploy', 'name': 'pumpwood_datalake__postgres',
-             'content': deployment_postgres_text_f, 'sleep': 0},
-
-            {'type': 'deploy', 'name': 'pumpwood_datalake__deploy',
-             'content': deployment_queue_manager_text_frmtd, 'sleep': 0},
-
-            {'type': 'deploy', 'name': 'pumpwood_datalake_dataloader__worker',
-             'content': worker_deployment_text_frmted, 'sleep': 0}])
+            list_return.append({
+                'type': 'volume', 'name': 'pumpwood_datalake__volume',
+                'content': volume_postgres_text_f, 'sleep': 10})
+        if deployment_postgres_text_f is not None:
+            list_return.append({
+                'type': 'deploy', 'name': 'pumpwood_datalake__postgres',
+                'content': deployment_postgres_text_f, 'sleep': 0})
+        list_return.append({
+            'type': 'deploy', 'name': 'pumpwood_datalake__deploy',
+            'content': app_deployment_frmtd, 'sleep': 0})
+        list_return.append({
+            'type': 'deploy', 'name': 'pumpwood_datalake_dataloader__worker',
+            'content': worker_deployment_text_frmted, 'sleep': 0})
 
         if self.firewall_ips is not None and self.postgres_public_ip:
             services__load_balancer_template = Template(

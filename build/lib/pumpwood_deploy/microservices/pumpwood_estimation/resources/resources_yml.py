@@ -50,10 +50,14 @@ spec:
               key: hash_salt
 
         # Database
-        - name: DB_HOST
-          value: "postgres-pumpwood-estimation"
         - name: DB_USERNAME
-          value: pumpwood
+          value: {db_username}
+        - name: DB_HOST
+          value: {db_host}
+        - name: DB_PORT
+          value: "{db_port}"
+        - name: DB_DATABASE
+          value: {db_database}
         - name: DB_PASSWORD
           valueFrom:
             secretKeyRef:
@@ -178,12 +182,16 @@ spec:
               name: hash-salt
               key: hash_salt
 
-        #DATABASE
-        - name: DB_HOST
-          value: "postgres-pumpwood-datalake"
-        - name: DB_USERNAME
-          value: pumpwood
-        - name: DB_PASSWORD
+        # Database
+        - name: DATALAKE_DB_USERNAME
+          value: {datalake_db_username}
+        - name: DATALAKE_DB_HOST
+          value: {datalake_db_host}
+        - name: DATALAKE_DB_PORT
+          value: "{db_portdatalake_db_port"
+        - name: DATALAKE_DB_DATABASE
+          value: {datalake_db_database}
+        - name: DATALAKE_DB_PASSWORD
           valueFrom:
             secretKeyRef:
               name: pumpwood-datalake

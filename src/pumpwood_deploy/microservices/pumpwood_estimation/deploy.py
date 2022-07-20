@@ -30,7 +30,11 @@ class PumpWoodEstimationMicroservice:
                  db_username: str = "pumpwood",
                  db_host: str = "postgres-pumpwood-estimation",
                  db_port: str = "5432",
-                 db_database: str = "pumpwood"):
+                 db_database: str = "pumpwood",
+                 datalake_db_username: str = "pumpwood",
+                 datalake_db_host: str = "postgres-pumpwood-datalake",
+                 datalake_db_port: str = "5432",
+                 datalake_db_database: str = "pumpwood"):
         """
         __init__: Class constructor.
 
@@ -87,6 +91,10 @@ class PumpWoodEstimationMicroservice:
         self.db_host = db_host
         self.db_port = db_port
         self.db_database = db_database
+        self.datalake_db_username = datalake_db_username
+        self.datalake_db_host = datalake_db_host
+        self.datalake_db_port = datalake_db_port
+        self.datalake_db_database = datalake_db_database
 
         self.debug = debug
         self.workers_timeout = workers_timeout
@@ -126,8 +134,7 @@ class PumpWoodEstimationMicroservice:
 
         app_deployment_formated = \
             app_deployment.format(
-                repository=self.repository,
-                version=self.version_app,
+                repository=self.repository, version=self.version_app,
                 bucket_name=self.bucket_name,
                 workers_timeout=self.workers_timeout,
                 replicas=self.replicas,
@@ -139,10 +146,10 @@ class PumpWoodEstimationMicroservice:
         worker_deployment_text_formated = worker_deployment.format(
             repository=self.repository, version=self.version_worker,
             bucket_name=self.bucket_name,
-            db_username=self.db_username,
-            db_host=self.db_host,
-            db_port=self.db_port,
-            db_database=self.db_database)
+            datalake_db_username=self.datalake_db_username,
+            datalake_db_host=self.datalake_db_host,
+            datalake_db_port=self.datalake_db_port,
+            datalake_db_database=self.datalake_db_database)
 
         list_return = [
             {'type': 'secrets', 'name': 'pumpwood_estimation__secrets',

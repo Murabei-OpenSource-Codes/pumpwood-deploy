@@ -120,7 +120,7 @@ spec:
           value: "{db_port}"
         - name: DB_DATABASE
           value: {db_database}
-        - name: DB_PASS
+        - name: DB_PASSWORD
           valueFrom:
             secretKeyRef:
               name: pumpwood-auth
