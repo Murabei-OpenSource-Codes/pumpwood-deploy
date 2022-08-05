@@ -6,7 +6,7 @@ from pumpwood_deploy.microservices.postgres.postgres import \
 from jinja2 import Template
 from .resources.yml__resources import (
     app_deployment, deployment_postgres, secrets, services__load_balancer,
-    volume_postgres, test_postgres)
+    test_postgres)
 
 
 class PumpWoodDescriptionMatcherMicroservice:
@@ -110,8 +110,6 @@ class PumpWoodDescriptionMatcherMicroservice:
             microservice_password=self._microservice_password,
             ssl_key=self._ssl_key,
             ssl_crt=self._ssl_crt)
-        volume_postgres_text_formated = volume_postgres.format(
-            disk_size=self.disk_size, disk_name=self.disk_name)
 
         volume_postgres_text_f = None
         deployment_postgres_text_f = None
@@ -119,10 +117,10 @@ class PumpWoodDescriptionMatcherMicroservice:
             deployment_postgres_text_f = test_postgres.format(
                 repository=self.test_db_repository,
                 version=self.test_db_version)
-        elif deployment_postgres_text_f is not None:
+        elif self.disk_size is not None:
             volume_postgres_text_f = kube_client.create_volume_yml(
-                disk_name=self.disk_size,
-                disk_size=self.disk_name,
+                disk_name=self.disk_name,
+                disk_size=self.disk_size,
                 volume_claim_name="postgres-pumpwood-description-matcher")
             deployment_postgres_text_f = deployment_postgres
 
@@ -147,8 +145,8 @@ class PumpWoodDescriptionMatcherMicroservice:
             list_return.append(
                 {'type': 'volume',
                  'name': 'pumpwood_description_matcher__volume',
-                 'content': volume_postgres_text_formated, 'sleep': 10})
-        elif deployment_postgres_text_f is not None:
+                 'content': volume_postgres_text_f, 'sleep': 10})
+        if deployment_postgres_text_f is not None:
             list_return.append(
                 {'type': 'deploy',
                  'name': 'pumpwood_description_matcher__postgres',

@@ -135,8 +135,8 @@ class PumpWoodAuthMicroservice:
                 version=self.test_db_version)
         elif self.disk_size is not None:
             volume_postgres_text_f = kube_client.create_volume_yml(
-                disk_name=self.disk_size,
-                disk_size=self.disk_name,
+                disk_name=self.disk_name,
+                disk_size=self.disk_size,
                 volume_claim_name="postgres-pumpwood-auth")
             deployment_postgres_text_f = deployment_postgres
 

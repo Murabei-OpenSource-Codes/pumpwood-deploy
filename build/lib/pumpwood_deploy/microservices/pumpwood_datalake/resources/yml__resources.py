@@ -326,7 +326,7 @@ spec:
           medium: Memory
       containers:
       - name: postgres-pumpwood-datalake
-        image: timescale/timescaledb-postgis:1.7.3-pg12
+        image: timescale/timescaledb-postgis:2.3.0-pg12
         imagePullPolicy: Always
         resources:
           requests:

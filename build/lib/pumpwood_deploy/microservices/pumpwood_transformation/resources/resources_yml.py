@@ -428,7 +428,7 @@ spec:
 
       containers:
       - name: postgres-pumpwood-transformation
-        image: timescale/timescaledb-postgis:1.7.3-pg12
+        image: timescale/timescaledb-postgis:2.3.0-pg12
         imagePullPolicy: Always
         resources:
           requests:

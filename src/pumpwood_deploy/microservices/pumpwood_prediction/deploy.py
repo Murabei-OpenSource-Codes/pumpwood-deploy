@@ -134,8 +134,8 @@ class PumpWoodPredictionMicroservice:
                 version=self.test_db_version)
         elif self.disk_size is not None:
             volume_postgres_text_f = kube_client.create_volume_yml(
-                disk_name=self.disk_size,
-                disk_size=self.disk_name,
+                disk_name=self.disk_name,
+                disk_size=self.disk_size,
                 volume_claim_name="postgres-pumpwood-prediction")
             deployment_postgres_text_f = deployment_postgres
 
@@ -177,7 +177,7 @@ class PumpWoodPredictionMicroservice:
                 {'type': 'volume',
                  'name': 'pumpwood_prediction__volume',
                  'content': volume_postgres_text_f, 'sleep': 10})
-        elif deployment_postgres_text_f is not None:
+        if deployment_postgres_text_f is not None:
             list_return.append(
                 {'type': 'deploy', 'name': 'pumpwood_prediction__postgres',
                  'content': deployment_postgres_text_f, 'sleep': 0})

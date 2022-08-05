@@ -4,7 +4,7 @@ import base64
 from pumpwood_deploy.microservices.postgres.postgres import \
     create_ssl_key_ssl_crt
 from jinja2 import Template
-from .resources.yml__resources import (
+from pumpwood_deploy.crawlers.criptocurrency.resources.yml__resources import (
     app_deployment, worker_candle_deployment,
     worker_balance_deployment, worker_order_deployment,
     deployment_postgres, secrets, services__load_balancer,

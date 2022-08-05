@@ -119,8 +119,8 @@ class PumpWoodDescisionMicroservice:
                 version=self.test_db_version)
         elif self.disk_size is not None:
             volume_postgres_text_f = kube_client.create_volume_yml(
-                disk_name=self.disk_size,
-                disk_size=self.disk_name,
+                disk_name=self.disk_name,
+                disk_size=self.disk_size,
                 volume_claim_name="postgres-pumpwood-decision")
             deployment_postgres_text_f = deployment_postgres
 
@@ -145,7 +145,7 @@ class PumpWoodDescisionMicroservice:
             list_return.append({
                 'type': 'volume', 'name': 'pumpwood_decision__volume',
                 'content': volume_postgres_text_f, 'sleep': 10})
-        elif self.disk_size is not None:
+        if deployment_postgres_text_f is not None:
             list_return.append({
                 'type': 'deploy',
                 'name': 'pumpwood_decision__postgres',
@@ -188,7 +188,7 @@ class PumpwoodDecisionModel:
         self.version = version
         self.bucket_name = bucket_name
 
-    def create_deployment_file(self):
+    def create_deployment_file(self, kube_client):
         """Create Google Trends deployment files."""
         decision_model_frmted = decision_model_yml.format(
             decision_model_name=self.decision_model_name,
@@ -201,7 +201,3 @@ class PumpwoodDecisionModel:
                 'name': 'decision_model__{}__worker'.format(
                     self.decision_model_name),
                 'content': decision_model_frmted, 'sleep': 0}]
-
-    def end_points(self):
-        """Return microservices end-points."""
-        return self.end_points

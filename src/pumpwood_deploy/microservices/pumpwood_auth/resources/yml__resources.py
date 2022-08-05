@@ -220,9 +220,6 @@ spec:
       - name: postgres-pumpwood-auth-data
         persistentVolumeClaim:
           claimName: postgres-pumpwood-auth
-      - name: postgres-init-configmap
-        configMap:
-          name: postgres-init-configmap
       - name: secrets
         secret:
           secretName: pumpwood-auth
@@ -232,7 +229,14 @@ spec:
 
       containers:
       - name: postgres-pumpwood-auth
-        image: timescale/timescaledb-postgis:1.7.3-pg12
+        image: timescale/timescaledb-postgis:2.3.0-pg12
+        args: [
+            "-c", "max_connections=1000",
+            "-c", "work_mem=50MB",
+            "-c", "shared_buffers=1GB",
+            "-c", "max_locks_per_transaction=500",
+            "-c", "max_wal_size=10GB",
+            "-c", "min_wal_size=80MB"]
         imagePullPolicy: Always
         resources:
           requests:
@@ -250,8 +254,6 @@ spec:
         volumeMounts:
         - name: postgres-pumpwood-auth-data
           mountPath: /var/lib/postgresql/data/
-        - name: postgres-init-configmap
-          mountPath: /docker-entrypoint-initdb.d/
         - name: secrets
           mountPath: /etc/secrets
           readOnly: true
