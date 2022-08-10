@@ -6,7 +6,7 @@ from pumpwood_deploy.microservices.postgres.postgres import \
 from jinja2 import Template
 from .resources.yml__resources import (
     app_deployment, deployment_postgres, secrets, services__load_balancer,
-    volume_postgres, test_postgres)
+    test_postgres)
 
 
 class PumpWoodDescriptionMatcherMicroservice:
@@ -18,10 +18,23 @@ class PumpWoodDescriptionMatcherMicroservice:
                  disk_name: str = None, disk_size: str = None,
                  postgres_public_ip: str = None, firewall_ips: list = None,
                  repository: str = "gcr.io/repositorio-geral-170012",
-                 workers_timeout: int = 300, replicas: int = 1,
+                 workers_timeout: int = 300,
                  test_db_version: str = None,
                  test_db_repository: str = "gcr.io/repositorio-geral-170012",
-                 debug: str = "FALSE"):
+                 debug: str = "FALSE",
+                 db_username: str = "pumpwood",
+                 db_host: str = "postgres-pumpwood-description-matcher",
+                 db_port: str = "5432",
+                 db_database: str = "pumpwood",
+                 app_replicas: int = 1,
+                 app_limits_memory: str = "60Gi",
+                 app_limits_cpu: str = "12000m",
+                 app_requests_memory: str = "20Mi",
+                 app_requests_cpu: str = "1m",
+                 postgres_limits_memory: str = "60Gi",
+                 postgres_limits_cpu: str = "12000m",
+                 postgres_requests_memory: str = "20Mi",
+                 postgres_requests_cpu: str = "1m"):
         """
         __init__: Class constructor.
 
@@ -35,6 +48,16 @@ class PumpWoodDescriptionMatcherMicroservice:
             version_worker (str): Verison of the Worker Image.
 
         Kwargs:
+          app_limits_memory (str) = "60Gi": Memory limits for app pods.
+          app_limits_cpu (str) = "12000m": CPU limits for app pods.
+          app_requests_memory (str) = "20Mi": Memory requests for app pods.
+          app_requests_cpu (str) = "1m": CPU requests for app pods.
+          postgres_limits_memory (str) = "60Gi":  Memory limits for postgres
+            pod.
+          postgres_limits_cpu (str) = "12000m":  CPU limits for postgres pod.
+          postgres_requests_memory (str) = "20Mi":  Memory request for postgres
+            pod.
+          postgres_requests_cpu (str) = "1m":  CPU request for postgres pod.
           disk_size (str): Disk size (ex.: 50Gi, 100Gi)
           disk_name (str): Name of the disk that will be used in postgres
           replicas (int) = 1: Number of replicas in app deployment.
@@ -47,6 +70,11 @@ class PumpWoodDescriptionMatcherMicroservice:
           test_db_repository (str): Define a repository for the test
             database.
           debug (str): Set app in debug mode.
+          db_username (str): Database connection username.
+          db_host (str): Database connection host.
+          db_port (str): Database connection port.
+          db_database (str): Database connection database.
+
         Returns:
           PumpWoodDatalakeMicroservice: New Object
 
@@ -77,11 +105,23 @@ class PumpWoodDescriptionMatcherMicroservice:
         self.disk_name = disk_name
         self.base_path = os.path.dirname(__file__)
         self.workers_timeout = workers_timeout
+
+        self.app_replicas = app_replicas
         self.repository = repository
-
         self.version_app = version_app
-        self.replicas = replicas
+        self.app_limits_memory = app_limits_memory
+        self.app_limits_cpu = app_limits_cpu
+        self.app_requests_memory = app_requests_memory
+        self.app_requests_cpu = app_requests_cpu
 
+        self.db_username = db_username
+        self.db_host = db_host
+        self.db_port = db_port
+        self.db_database = db_database
+        self.postgres_limits_memory = postgres_limits_memory
+        self.postgres_limits_cpu = postgres_limits_cpu
+        self.postgres_requests_memory = postgres_requests_memory
+        self.postgres_requests_cpu = postgres_requests_cpu
         self.test_db_version = test_db_version
         self.test_db_repository = test_db_repository
 
@@ -97,20 +137,27 @@ class PumpWoodDescriptionMatcherMicroservice:
             microservice_password=self._microservice_password,
             ssl_key=self._ssl_key,
             ssl_crt=self._ssl_crt)
-        volume_postgres_text_formated = volume_postgres.format(
-            disk_size=self.disk_size, disk_name=self.disk_name)
 
         volume_postgres_text_f = None
+        deployment_postgres_text_f = None
         if self.test_db_version is not None:
             deployment_postgres_text_f = test_postgres.format(
                 repository=self.test_db_repository,
-                version=self.test_db_version)
-        else:
+                version=self.test_db_version,
+                limits_memory=self.postgres_limits_memory,
+                limits_cpu=self.postgres_limits_cpu,
+                requests_memory=self.postgres_requests_memory,
+                requests_cpu=self.postgres_requests_cpu)
+        elif self.disk_size is not None:
             volume_postgres_text_f = kube_client.create_volume_yml(
-                disk_name=self.disk_size,
-                disk_size=self.disk_name,
+                disk_name=self.disk_name,
+                disk_size=self.disk_size,
                 volume_claim_name="postgres-pumpwood-description-matcher")
-            deployment_postgres_text_f = deployment_postgres
+            deployment_postgres_text_f = deployment_postgres.format(
+                limits_memory=self.postgres_limits_memory,
+                limits_cpu=self.postgres_limits_cpu,
+                requests_memory=self.postgres_requests_memory,
+                requests_cpu=self.postgres_requests_cpu)
 
         deployment_text_frmtd = \
             app_deployment.format(
@@ -118,29 +165,34 @@ class PumpWoodDescriptionMatcherMicroservice:
                 version=self.version_app,
                 bucket_name=self.bucket_name,
                 workers_timeout=self.workers_timeout,
-                replicas=self.replicas,
-                debug=self.debug)
+                replicas=self.app_replicas,
+                debug=self.debug,
+                db_username=self.db_username,
+                db_host=self.db_host,
+                db_port=self.db_port,
+                db_database=self.db_database,
+                limits_memory=self.app_limits_memory,
+                limits_cpu=self.app_limits_cpu,
+                requests_memory=self.app_requests_memory,
+                requests_cpu=self.app_requests_cpu)
 
-        if volume_postgres_text_f is not None:
-            list_return = [
-                {'type': 'volume',
-                 'name': 'pumpwood_description_matcher__volume',
-                 'content': volume_postgres_text_formated, 'sleep': 10}]
-        else:
-            list_return = []
-
-        list_return.extend([
+        list_return = [
             {'type': 'secrets',
              'name': 'pumpwood_description_matcher__secrets',
-             'content': secrets_text_formated, 'sleep': 5},
-
-            {'type': 'deploy',
-             'name': 'pumpwood_description_matcher__postgres',
-             'content': deployment_postgres_text_f, 'sleep': 0},
-
+             'content': secrets_text_formated, 'sleep': 5}]
+        if volume_postgres_text_f is not None:
+            list_return.append(
+                {'type': 'volume',
+                 'name': 'pumpwood_description_matcher__volume',
+                 'content': volume_postgres_text_f, 'sleep': 10})
+        if deployment_postgres_text_f is not None:
+            list_return.append(
+                {'type': 'deploy',
+                 'name': 'pumpwood_description_matcher__postgres',
+                 'content': deployment_postgres_text_f, 'sleep': 0})
+        list_return.append(
             {'type': 'deploy', 'name': 'pumpwood_description_matcher__deploy',
-             'content': deployment_text_frmtd, 'sleep': 0},
-        ])
+             'content': deployment_text_frmtd, 'sleep': 0})
 
         if self.firewall_ips is not None and \
            self.postgres_public_ip is not None:

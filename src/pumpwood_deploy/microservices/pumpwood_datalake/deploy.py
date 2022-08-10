@@ -19,11 +19,32 @@ class PumpWoodDatalakeMicroservice:
                  disk_name: str = None, disk_size: str = None,
                  postgres_public_ip: str = None, firewall_ips: list = None,
                  repository: str = "gcr.io/repositorio-geral-170012",
-                 workers_timeout: int = 300, n_chunks: int = 5,
-                 chunk_size: int = 5000, replicas: int = 1,
                  test_db_version: str = None,
                  test_db_repository: str = "gcr.io/repositorio-geral-170012",
-                 debug: str = "FALSE"):
+                 debug: str = "FALSE",
+                 db_username: str = "pumpwood",
+                 db_host: str = "postgres-pumpwood-datalake",
+                 db_port: str = "5432",
+                 db_database: str = "pumpwood",
+                 app_replicas: int = 1,
+                 app_timeout: int = 300,
+                 app_workers: int = 20,
+                 app_limits_memory: str = "60Gi",
+                 app_limits_cpu: str = "12000m",
+                 app_requests_memory: str = "20Mi",
+                 app_requests_cpu: str = "1m",
+                 worker_replicas: int = 1,
+                 worker_n_parallel: int = 4,
+                 worker_chunk_size: int = 1000,
+                 worker_query_limit: int = 1000000,
+                 worker_limits_memory: str = "60Gi",
+                 worker_limits_cpu: str = "12000m",
+                 worker_requests_memory: str = "20Mi",
+                 worker_requests_cpu: str = "1m",
+                 postgres_limits_memory: str = "60Gi",
+                 postgres_limits_cpu: str = "12000m",
+                 postgres_requests_memory: str = "20Mi",
+                 postgres_requests_cpu: str = "1m"):
         """
         __init__: Class constructor.
 
@@ -39,15 +60,38 @@ class PumpWoodDatalakeMicroservice:
         Kwargs:
           disk_size (str): Disk size (ex.: 50Gi, 100Gi)
           disk_name (str): Name of the disk that will be used in postgres
-          replicas (int) = 1: Number of replicas in app deployment.
-          workers_timeout (str): Time to workout time for guicorn workers.
-          n_chunks (str) = 5: n chunks working o data loader.
-          chunk_size (str) = 5000: Size of the datalake chunks.
           repository (str) = "gcr.io/repositorio-geral-170012": Repository to
             pull Image
           test_db_version (str): Set a test database with version.
           test_db_repository (str): Define a repository for the test
             database.
+          db_username (str): Database connection username.
+          db_host (str): Database connection host.
+          db_port (str): Database connection port.
+          db_database (str): Database connection database.
+          app_replicas (int) = 1: Number of replicas in app deployment.
+          app_timeout (int): Timeout in seconds for the guinicorn workers.
+          app_workers (int): Number of workers to spaw at guinicorn.
+          app_limits_memory (str) = "60Gi": Memory limits for app pods.
+          app_limits_cpu (str) = "12000m": CPU limits for app pods.
+          app_requests_memory (str) = "20Mi": Memory requests for app pods.
+          app_requests_cpu (str) = "1m": CPU requests for app pods.
+          worker_replicas (int) = 1:
+          worker_n_chunks (str) = 5: n chunks working o data loader.
+          worker_chunk_size (str) = 5000: Size of the datalake chunks.
+          worker_limits_memory (str) = "60Gi": Memory requests for worker
+            pods.
+          worker_limits_cpu (str) = "12000m": CPU requests for worker pods.
+          worker_requests_memory (str) = "20Mi": Memory requests for worker
+            pods.
+          worker_requests_cpu (str) = "1m": CPU requests for worker pod.
+          postgres_limits_memory (str) = "60Gi":  Memory limits for postgres
+            pod.
+          postgres_limits_cpu (str) = "12000m":  CPU limits for postgres pod.
+          postgres_requests_memory (str) = "20Mi":  Memory request for postgres
+            pod.
+          postgres_requests_cpu (str) = "1m":  CPU request for postgres pod.
+
         Returns:
           PumpWoodDatalakeMicroservice: New Object
 
@@ -81,15 +125,40 @@ class PumpWoodDatalakeMicroservice:
         self.disk_name = disk_name
         self.base_path = os.path.dirname(__file__)
 
-        self.n_chunks = n_chunks
-        self.chunk_size = chunk_size
-        self.workers_timeout = workers_timeout
+        self.db_username = db_username
+        self.db_host = db_host
+        self.db_port = db_port
+        self.db_database = db_database
 
         self.repository = repository
         self.debug = debug
         self.version_app = version_app
         self.version_worker = version_worker
-        self.replicas = replicas
+
+        # App
+        self.app_replicas = app_replicas
+        self.app_timeout = app_timeout
+        self.app_workers = app_workers
+        self.app_limits_memory = app_limits_memory
+        self.app_limits_cpu = app_limits_cpu
+        self.app_requests_memory = app_requests_memory
+        self.app_requests_cpu = app_requests_cpu
+
+        # Worker
+        self.worker_replicas = worker_replicas
+        self.worker_n_parallel = worker_n_parallel
+        self.worker_chunk_size = worker_chunk_size
+        self.worker_query_limit = worker_query_limit
+        self.worker_limits_memory = worker_limits_memory
+        self.worker_limits_cpu = worker_limits_cpu
+        self.worker_requests_memory = worker_requests_memory
+        self.worker_requests_cpu = worker_requests_cpu
+
+        # Database
+        self.postgres_limits_memory = postgres_limits_memory
+        self.postgres_limits_cpu = postgres_limits_cpu
+        self.postgres_requests_memory = postgres_requests_memory
+        self.postgres_requests_cpu = postgres_requests_cpu
 
         self.test_db_version = test_db_version
         self.test_db_repository = test_db_repository
@@ -108,49 +177,79 @@ class PumpWoodDatalakeMicroservice:
             ssl_crt=self._ssl_crt)
 
         volume_postgres_text_f = None
+        deployment_postgres_text_f = None
         if self.test_db_version is not None:
             deployment_postgres_text_f = test_postgres.format(
                 repository=self.test_db_repository,
-                version=self.test_db_version)
-        else:
-            volume_postgres_text_f = kube_client.create_volume_yml(
-                disk_name=self.disk_size,
-                disk_size=self.disk_name,
-                volume_claim_name="postgres-pumpwood-datalake")
-            deployment_postgres_text_f = deployment_postgres
+                version=self.test_db_version,
+                requests_memory=self.postgres_requests_memory,
+                requests_cpu=self.postgres_requests_cpu,
+                limits_memory=self.postgres_limits_memory,
+                limits_cpu=self.postgres_limits_cpu)
 
-        deployment_queue_manager_text_frmtd = \
+        elif self.disk_size is not None:
+            volume_postgres_text_f = kube_client.create_volume_yml(
+                disk_name=self.disk_name,
+                disk_size=self.disk_size,
+                volume_claim_name="postgres-pumpwood-datalake")
+            deployment_postgres_text_f = deployment_postgres.format(
+                requests_memory=self.postgres_requests_memory,
+                requests_cpu=self.postgres_requests_cpu,
+                limits_memory=self.postgres_limits_memory,
+                limits_cpu=self.postgres_limits_cpu)
+
+        app_deployment_frmtd = \
             app_deployment.format(
                 repository=self.repository,
                 version=self.version_app,
                 bucket_name=self.bucket_name,
-                workers_timeout=self.workers_timeout,
-                replicas=self.replicas,
-                debug=self.debug)
+                replicas=self.app_replicas,
+                requests_memory=self.app_requests_memory,
+                requests_cpu=self.app_requests_cpu,
+                limits_cpu=self.app_limits_cpu,
+                limits_memory=self.app_limits_memory,
+                workers_timeout=self.app_timeout,
+                n_workers=self.app_workers,
+                debug=self.debug,
+                db_username=self.db_username,
+                db_host=self.db_host,
+                db_port=self.db_port,
+                db_database=self.db_database)
+
         worker_deployment_text_frmted = worker_deployment.format(
-            repository=self.repository, version=self.version_worker,
-            n_chunks=self.n_chunks, chunk_size=self.chunk_size,
-            bucket_name=self.bucket_name)
+            repository=self.repository,
+            version=self.version_worker,
+            bucket_name=self.bucket_name,
+            db_username=self.db_username,
+            db_host=self.db_host,
+            db_port=self.db_port,
+            db_database=self.db_database,
+            n_parallel=self.worker_n_parallel,
+            chunk_size=self.worker_chunk_size,
+            query_limit=self.worker_query_limit,
+            replicas=self.worker_replicas,
+            requests_memory=self.worker_requests_memory,
+            requests_cpu=self.worker_requests_cpu,
+            limits_cpu=self.worker_limits_cpu,
+            limits_memory=self.worker_limits_memory)
 
+        list_return = [{
+            'type': 'secrets', 'name': 'pumpwood_datalake__secrets',
+            'content': secrets_text_formated, 'sleep': 5}]
         if volume_postgres_text_f is not None:
-            list_return = [
-                {'type': 'volume', 'name': 'pumpwood_datalake__volume',
-                 'content': volume_postgres_text_formated, 'sleep': 10}]
-        else:
-            list_return = []
-
-        list_return.extend([
-            {'type': 'secrets', 'name': 'pumpwood_datalake__secrets',
-             'content': secrets_text_formated, 'sleep': 5},
-
-            {'type': 'deploy', 'name': 'pumpwood_datalake__postgres',
-             'content': deployment_postgres_text_f, 'sleep': 0},
-
-            {'type': 'deploy', 'name': 'pumpwood_datalake__deploy',
-             'content': deployment_queue_manager_text_frmtd, 'sleep': 0},
-
-            {'type': 'deploy', 'name': 'pumpwood_datalake_dataloader__worker',
-             'content': worker_deployment_text_frmted, 'sleep': 0}])
+            list_return.append({
+                'type': 'volume', 'name': 'pumpwood_datalake__volume',
+                'content': volume_postgres_text_f, 'sleep': 10})
+        if deployment_postgres_text_f is not None:
+            list_return.append({
+                'type': 'deploy', 'name': 'pumpwood_datalake__postgres',
+                'content': deployment_postgres_text_f, 'sleep': 0})
+        list_return.append({
+            'type': 'deploy', 'name': 'pumpwood_datalake__deploy',
+            'content': app_deployment_frmtd, 'sleep': 0})
+        list_return.append({
+            'type': 'deploy', 'name': 'pumpwood_datalake_dataloader__worker',
+            'content': worker_deployment_text_frmted, 'sleep': 0})
 
         if self.firewall_ips is not None and self.postgres_public_ip:
             services__load_balancer_template = Template(

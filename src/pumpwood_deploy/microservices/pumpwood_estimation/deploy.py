@@ -23,10 +23,32 @@ class PumpWoodEstimationMicroservice:
                  disk_name: str = None, disk_size: str = None,
                  postgres_public_ip: str = None, firewall_ips: list = None,
                  repository: str = "gcr.io/repositorio-geral-170012",
-                 workers_timeout: int = 300, replicas: int = 1,
+                 workers_timeout: int = 300,
                  test_db_version: str = None,
                  test_db_repository: str = "gcr.io/repositorio-geral-170012",
-                 debug: str = "FALSE"):
+                 debug: str = "FALSE",
+                 db_username: str = "pumpwood",
+                 db_host: str = "postgres-pumpwood-estimation",
+                 db_port: str = "5432",
+                 db_database: str = "pumpwood",
+                 datalake_db_username: str = "pumpwood",
+                 datalake_db_host: str = "postgres-pumpwood-datalake",
+                 datalake_db_port: str = "5432",
+                 datalake_db_database: str = "pumpwood",
+                 app_replicas: int = 1,
+                 app_limits_memory: str = "60Gi",
+                 app_limits_cpu: str = "12000m",
+                 app_requests_memory: str = "20Mi",
+                 app_requests_cpu: str = "1m",
+                 postgres_limits_memory: str = "60Gi",
+                 postgres_limits_cpu: str = "12000m",
+                 postgres_requests_memory: str = "20Mi",
+                 postgres_requests_cpu: str = "1m",
+                 worker_replicas: int = 1,
+                 worker_limits_memory: str = "60Gi",
+                 worker_limits_cpu: str = "12000m",
+                 worker_requests_memory: str = "20Mi",
+                 worker_requests_cpu: str = "1m"):
         """
         __init__: Class constructor.
 
@@ -39,11 +61,32 @@ class PumpWoodEstimationMicroservice:
           bucket_name (str): Name of the bucket (Storage)
           version_app (str): Verison of the estimation app imageself.
           version_worker (str): Version of the raw data worker.
+
         Kwargs:
+          app_limits_memory (str) = "60Gi": Memory limits for app pods.
+          app_limits_cpu (str) = "12000m": CPU limits for app pods.
+          app_requests_memory (str) = "20Mi": Memory requests for app pods.
+          app_requests_cpu (str) = "1m": CPU requests for app pods.
+          postgres_limits_memory (str) = "60Gi":  Memory limits for postgres
+            pod.
+          postgres_limits_cpu (str) = "12000m":  CPU limits for postgres pod.
+          postgres_requests_memory (str) = "20Mi":  Memory request for postgres
+            pod.
+          postgres_requests_cpu (str) = "1m":  CPU request for postgres pod.
+          worker_limits_memory: str = "60Gi":  Memory limits for worker pods.
+          worker_limits_cpu: str = "12000m": CPU limits for worker pods.
+          worker_requests_memory: str = "20Mi": Memory requests for worker
+            pods.
+          worker_requests_cpu: str = "1m":  CPU requests for worker pods.
           firewall_ips (list[str]): List with the IPs to allow connection to
             database.
           repository (str): Repository to pull Image.
           workers_timeout (int): Time in seconds to timeout of uwsgi worker.
+          db_username (str): Database connection username.
+          db_host (str): Database connection host.
+          db_port (str): Database connection port.
+          db_database (str): Database connection database.
+
         Returns:
           PumpWoodDatalakeMicroservice: New Object
         Raises:
@@ -74,15 +117,41 @@ class PumpWoodEstimationMicroservice:
         self.disk_name = disk_name
         self.base_path = os.path.dirname(__file__)
 
+        self.db_username = db_username
+        self.db_host = db_host
+        self.db_port = db_port
+        self.db_database = db_database
+        self.datalake_db_username = datalake_db_username
+        self.datalake_db_host = datalake_db_host
+        self.datalake_db_port = datalake_db_port
+        self.datalake_db_database = datalake_db_database
+
+        # App
+        self.app_replicas = app_replicas
+        self.version_app = version_app
         self.debug = debug
         self.workers_timeout = workers_timeout
         self.repository = repository
-        self.version_app = version_app
-        self.version_worker = version_worker
-        self.replicas = replicas
+        self.app_limits_memory = app_limits_memory
+        self.app_limits_cpu = app_limits_cpu
+        self.app_requests_memory = app_requests_memory
+        self.app_requests_cpu = app_requests_cpu
 
+        # Worker
+        self.worker_replicas = worker_replicas
+        self.version_worker = version_worker
+        self.worker_limits_memory = worker_limits_memory
+        self.worker_limits_cpu = worker_limits_cpu
+        self.worker_requests_memory = worker_requests_memory
+        self.worker_requests_cpu = worker_requests_cpu
+
+        # Postgres
         self.test_db_version = test_db_version
         self.test_db_repository = test_db_repository
+        self.postgres_limits_memory = postgres_limits_memory
+        self.postgres_limits_cpu = postgres_limits_cpu
+        self.postgres_requests_memory = postgres_requests_memory
+        self.postgres_requests_cpu = postgres_requests_cpu
 
     def create_deployment_file(self, kube_client):
         """
@@ -98,58 +167,80 @@ class PumpWoodEstimationMicroservice:
             ssl_crt=self._ssl_crt)
 
         volume_postgres_text_f = None
+        deployment_postgres_text_f = None
         if self.test_db_version is not None:
             deployment_postgres_text_f = test_postgres.format(
                 repository=self.test_db_repository,
-                version=self.test_db_version)
-        else:
+                version=self.test_db_version,
+                limits_memory=self.postgres_limits_memory,
+                limits_cpu=self.postgres_limits_cpu,
+                requests_memory=self.postgres_requests_memory,
+                requests_cpu=self.postgres_requests_cpu)
+        elif self.disk_size is not None:
             volume_postgres_text_f = kube_client.create_volume_yml(
-                disk_name=self.disk_size,
-                disk_size=self.disk_name,
+                disk_name=self.disk_name,
+                disk_size=self.disk_size,
                 volume_claim_name="postgres-pumpwood-estimation")
-            deployment_postgres_text_f = deployment_postgres
+            deployment_postgres_text_f = deployment_postgres.format(
+                limits_memory=self.postgres_limits_memory,
+                limits_cpu=self.postgres_limits_cpu,
+                requests_memory=self.postgres_requests_memory,
+                requests_cpu=self.postgres_requests_cpu)
 
         app_deployment_formated = \
             app_deployment.format(
-                repository=self.repository,
-                version=self.version_app,
+                repository=self.repository, version=self.version_app,
                 bucket_name=self.bucket_name,
                 workers_timeout=self.workers_timeout,
-                replicas=self.replicas,
-                debug=self.debug)
+                replicas=self.app_replicas,
+                debug=self.debug,
+                db_username=self.db_username,
+                db_host=self.db_host,
+                db_port=self.db_port,
+                db_database=self.db_database,
+                limits_memory=self.app_limits_memory,
+                limits_cpu=self.app_limits_cpu,
+                requests_memory=self.app_requests_memory,
+                requests_cpu=self.app_requests_cpu)
         worker_deployment_text_formated = worker_deployment.format(
-            repository=self.repository, version=self.version_worker,
-            bucket_name=self.bucket_name)
+            repository=self.repository,
+            version=self.version_worker,
+            replicas=self.worker_replicas,
+            bucket_name=self.bucket_name,
+            datalake_db_username=self.datalake_db_username,
+            datalake_db_host=self.datalake_db_host,
+            datalake_db_port=self.datalake_db_port,
+            datalake_db_database=self.datalake_db_database,
+            limits_memory=self.worker_limits_memory,
+            limits_cpu=self.worker_limits_cpu,
+            requests_memory=self.worker_requests_memory,
+            requests_cpu=self.worker_requests_cpu)
 
+        list_return = [
+            {'type': 'secrets', 'name': 'pumpwood_estimation__secrets',
+             'content': secrets_text_formated, 'sleep': 5}]
         if volume_postgres_text_f is not None:
-            list_return = [
+            list_return.append(
                 {'type': 'volume',
                  'name': 'pumpwood_estimation__volume',
-                 'content': volume_postgres_text_f, 'sleep': 10}]
-        else:
-            list_return = []
-
-        list_return.extend([
-            {'type': 'secrets', 'name': 'pumpwood_estimation__secrets',
-             'content': secrets_text_formated, 'sleep': 5},
-
-            {'type': 'deploy', 'name': 'pumpwood_estimation__postgres',
-             'content': deployment_postgres_text_f, 'sleep': 0},
-
+                 'content': volume_postgres_text_f, 'sleep': 10})
+        if deployment_postgres_text_f is not None:
+            list_return.append(
+                {'type': 'deploy', 'name': 'pumpwood_estimation__postgres',
+                 'content': deployment_postgres_text_f, 'sleep': 0})
+        list_return.append(
             {'type': 'deploy', 'name': 'pumpwood_estimation__deploy',
-             'content': app_deployment_formated, 'sleep': 0},
-
+             'content': app_deployment_formated, 'sleep': 0})
+        list_return.append(
             {'type': 'deploy', 'name': 'pumpwood_estimation__rawdata',
-             'content': worker_deployment_text_formated, 'sleep': 0},
-        ])
+             'content': worker_deployment_text_formated, 'sleep': 0})
 
         if self.firewall_ips and self.postgres_public_ip:
             services__load_balancer_template = Template(
                 services__load_balancer)
             svcs__load_balancer_text = services__load_balancer_template.render(
                 postgres_public_ip=self.postgres_public_ip,
-                firewall_ips=self.firewall_ips
-            )
+                firewall_ips=self.firewall_ips)
             list_return.append({
                 'type': 'services',
                 'name': 'pumpwood_estimation__services_loadbalancer',

@@ -15,7 +15,8 @@ class ApiGateway:
                  version: str,
                  health_check_url: str = "health-check/pumpwood-auth-app/",
                  server_name: str = "not_set",
-                 repository: str = "gcr.io/repositorio-geral-170012"):
+                 repository: str = "gcr.io/repositorio-geral-170012",
+                 souce_ranges: List[str] = ["0.0.0.0/0"]):
         """
         Build deployment files for the Kong ApiGateway.
 
@@ -27,6 +28,9 @@ class ApiGateway:
         Kwargs:
             server_name (str): DNS name for the server.
             health_check_url (str): Url for the health checks.
+            souce_ranges (list[str]): List of the IPs to restrict source
+                conections to the ApiGateway. By default is 0.0.0.0/0, no
+                restriction.
         """
         self.repository = repository
         self.gateway_public_ip = gateway_public_ip
@@ -34,7 +38,7 @@ class ApiGateway:
         self.email_contact = email_contact
         self.version = version
         self.health_check_url = health_check_url
-
+        self.souce_ranges = souce_ranges
         self.base_path = os.path.dirname(__file__)
 
     def create_deployment_file(self, kube_client):
@@ -56,8 +60,10 @@ class ApiGateway:
             service__formated = internal_service.format(
                 public_ip=self.gateway_public_ip)
         else:
-            service__formated = external_service.format(
-                public_ip=self.gateway_public_ip)
+            external_service_template = Template(external_service)
+            service__formated = external_service_template.render(
+                public_ip=self.gateway_public_ip,
+                firewall_ips=self.souce_ranges)
 
         to_return = [
             {'type': 'deploy', 'name': 'nginx-gateway__deploy',
@@ -75,7 +81,8 @@ class ApiGatewaySecretsSSL:
                  google_project_id: str, secret_id: str,
                  health_check_url: str = "health-check/pumpwood-auth-app/",
                  server_name: str = "not_set",
-                 repository: str = "gcr.io/repositorio-geral-170012"):
+                 repository: str = "gcr.io/repositorio-geral-170012",
+                 souce_ranges: list = ["0.0.0.0/0"]):
         """
         Build deployment files for the Kong ApiGateway.
 
@@ -100,6 +107,7 @@ class ApiGatewaySecretsSSL:
         self.health_check_url = health_check_url
         self.google_project_id = google_project_id
         self.secret_id = secret_id
+        self.souce_ranges = souce_ranges
         self.base_path = os.path.dirname(__file__)
 
     def create_deployment_file(self):
@@ -118,8 +126,10 @@ class ApiGatewaySecretsSSL:
             service__formated = internal_service.format(
                 public_ip=self.gateway_public_ip)
         else:
-            service__formated = external_service.format(
-                public_ip=self.gateway_public_ip)
+            external_service_template = Template(external_service)
+            service__formated = external_service_template.render(
+                public_ip=self.gateway_public_ip,
+                firewall_ips=self.souce_ranges)
 
         to_return = [
             {'type': 'secrets_file', 'name': 'ssl-credentials-key',

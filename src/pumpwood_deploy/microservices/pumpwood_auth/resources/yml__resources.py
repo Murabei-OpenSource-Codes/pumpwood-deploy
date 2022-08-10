@@ -80,6 +80,13 @@ spec:
       containers:
       - name: pumpwood-auth-app
         image: {repository}/pumpwood-auth-app:{version}
+        resources:
+          requests:
+            memory: "{requests_memory}"
+            cpu:  "{requests_cpu}"
+          limits:
+            memory: "{limits_memory}"
+            cpu:  "{limits_cpu}"
         imagePullPolicy: Always
         resources:
           requests:
@@ -112,9 +119,15 @@ spec:
               key: secret_key
 
         # Database
+        - name: DB_USERNAME
+          value: {db_username}
         - name: DB_HOST
-          value: postgres-pumpwood-auth
-        - name: DB_PASS
+          value: {db_host}
+        - name: DB_PORT
+          value: "{db_port}"
+        - name: DB_DATABASE
+          value: {db_database}
+        - name: DB_PASSWORD
           valueFrom:
             secretKeyRef:
               name: pumpwood-auth
@@ -214,9 +227,6 @@ spec:
       - name: postgres-pumpwood-auth-data
         persistentVolumeClaim:
           claimName: postgres-pumpwood-auth
-      - name: postgres-init-configmap
-        configMap:
-          name: postgres-init-configmap
       - name: secrets
         secret:
           secretName: pumpwood-auth
@@ -226,11 +236,22 @@ spec:
 
       containers:
       - name: postgres-pumpwood-auth
-        image: timescale/timescaledb-postgis:1.7.3-pg12
+        image: timescale/timescaledb-postgis:2.3.0-pg12
+        args: [
+            "-c", "max_connections=1000",
+            "-c", "work_mem=50MB",
+            "-c", "shared_buffers=1GB",
+            "-c", "max_locks_per_transaction=500",
+            "-c", "max_wal_size=10GB",
+            "-c", "min_wal_size=80MB"]
         imagePullPolicy: Always
         resources:
           requests:
-            cpu: "1m"
+            memory: "{requests_memory}"
+            cpu:  "{requests_cpu}"
+          limits:
+            memory: "{limits_memory}"
+            cpu:  "{limits_cpu}"
         env:
         - name: POSTGRES_USER
           value: pumpwood
@@ -244,8 +265,6 @@ spec:
         volumeMounts:
         - name: postgres-pumpwood-auth-data
           mountPath: /var/lib/postgresql/data/
-        - name: postgres-init-configmap
-          mountPath: /docker-entrypoint-initdb.d/
         - name: secrets
           mountPath: /etc/secrets
           readOnly: true
@@ -356,7 +375,11 @@ spec:
         imagePullPolicy: Always
         resources:
           requests:
-            cpu: "1m"
+            memory: "{requests_memory}"
+            cpu:  "{requests_cpu}"
+          limits:
+            memory: "{limits_memory}"
+            cpu:  "{limits_cpu}"
         volumeMounts:
         - name: dshm
           mountPath: /dev/shm

@@ -29,7 +29,11 @@ spec:
         imagePullPolicy: Always
         resources:
           requests:
-            cpu: "1m"
+            memory: "{requests_memory}"
+            cpu:  "{requests_cpu}"
+          limits:
+            memory: "{limits_memory}"
+            cpu:  "{limits_cpu}"
         volumeMounts:
           - name: gcp--storage-key
             readOnly: true
@@ -41,6 +45,10 @@ spec:
         env:
         - name: DEBUG
           value: "{debug}"
+        - name: WORKERS_TIMEOUT
+          value: "{workers_timeout}"
+        - name: N_WORKERS
+          value: "{n_workers}"
 
         # HASH_SALT
         - name: HASH_SALT
@@ -50,8 +58,14 @@ spec:
               key: hash_salt
 
         # Database
+        - name: DB_USERNAME
+          value: {db_username}
         - name: DB_HOST
-          value: "postgres-pumpwood-datalake"
+          value: {db_host}
+        - name: DB_PORT
+          value: "{db_port}"
+        - name: DB_DATABASE
+          value: {db_database}
         - name: DB_PASSWORD
           valueFrom:
             secretKeyRef:
@@ -73,10 +87,6 @@ spec:
               secretKeyRef:
                 name: pumpwood-datalake
                 key: microservice_password
-
-        # workers_timeout
-        - name: WORKERS_TIMEOUT
-          value: "{workers_timeout}"
 
         ###########
         # STORAGE #
@@ -139,7 +149,7 @@ kind: Deployment
 metadata:
   name: pumpwood-datalake-dataloader-worker
 spec:
-  replicas: 1
+  replicas: {replicas}
   selector:
     matchLabels:
       type: worker
@@ -164,7 +174,11 @@ spec:
         imagePullPolicy: Always
         resources:
           requests:
-            cpu: "1m"
+            memory: "{requests_memory}"
+            cpu:  "{requests_cpu}"
+          limits:
+            memory: "{limits_memory}"
+            cpu:  "{limits_cpu}"
         volumeMounts:
           - name: gcp--storage-key
             readOnly: true
@@ -177,9 +191,15 @@ spec:
               name: hash-salt
               key: hash_salt
 
-        #DATABASE
+        # Database
+        - name: DB_USERNAME
+          value: {db_username}
         - name: DB_HOST
-          value: "postgres-pumpwood-datalake"
+          value: {db_host}
+        - name: DB_PORT
+          value: "{db_port}"
+        - name: DB_DATABASE
+          value: {db_database}
         - name: DB_PASSWORD
           valueFrom:
             secretKeyRef:
@@ -203,10 +223,12 @@ spec:
                 key: microservice_password
 
         # Limit process
-        - name: N_CHUNKS
-          value: '{n_chunks}'
+        - name: N_PARALLEL
+          value: '{n_parallel}'
         - name: CHUNK_SIZE
           value: '{chunk_size}'
+        - name: QUERY_LIMIT
+          value: '{query_limit}'
 
         ###########
         # STORAGE #
@@ -303,9 +325,6 @@ spec:
       - name: pumpwood-datalake-data
         persistentVolumeClaim:
           claimName: postgres-pumpwood-datalake
-      - name: postgres-init-configmap
-        configMap:
-          name: postgres-init-configmap
       - name: secrets
         secret:
           secretName: pumpwood-datalake
@@ -314,13 +333,24 @@ spec:
           medium: Memory
       containers:
       - name: postgres-pumpwood-datalake
-        image: timescale/timescaledb-postgis:1.7.3-pg12
+        image: timescale/timescaledb-postgis:2.3.0-pg12
+        args: [
+            "-c", "max_connections=1000",
+            "-c", "work_mem=50MB",
+            "-c", "shared_buffers=1GB",
+            "-c", "max_locks_per_transaction=500",
+            "-c", "max_locks_per_transaction=500",
+            "-c", "synchronous_commit=off",
+            "-c", "max_wal_size=10GB",
+            "-c", "min_wal_size=80MB"]
         imagePullPolicy: Always
         resources:
           requests:
-            cpu: "1m"
+            memory: "{requests_memory}"
+            cpu:  "{requests_cpu}"
           limits:
-            cpu: "3"
+            memory: "{limits_memory}"
+            cpu:  "{limits_cpu}"
         env:
         - name: POSTGRES_USER
           value: pumpwood
@@ -337,8 +367,6 @@ spec:
         volumeMounts:
         - name: pumpwood-datalake-data
           mountPath: /var/lib/postgresql/data/
-        - name: postgres-init-configmap
-          mountPath: /docker-entrypoint-initdb.d/
         - name: secrets
           mountPath: /etc/secrets
           readOnly: true
@@ -388,6 +416,13 @@ spec:
     spec:
       imagePullSecrets:
         - name: dockercfg
+      resources:
+        requests:
+          memory: "{requests_memory}"
+          cpu:  "{requests_cpu}"
+        limits:
+          memory: "{limits_memory}"
+          cpu:  "{limits_cpu}"
       volumes:
       - name: dshm
         emptyDir:

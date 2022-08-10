@@ -34,6 +34,7 @@ src/pumpwood_deploy/microservices/frontend/resources/yml__resources.py
 src/pumpwood_deploy/microservices/postgres/__init__.py
 src/pumpwood_deploy/microservices/postgres/postgres.py
 src/pumpwood_deploy/microservices/postgres/config_files/__init__.py
+src/pumpwood_deploy/microservices/postgres/resources/__init__.py
 src/pumpwood_deploy/microservices/pumpwood_auth/__init__.py
 src/pumpwood_deploy/microservices/pumpwood_auth/deploy.py
 src/pumpwood_deploy/microservices/pumpwood_auth/resources/__init__.py
@@ -73,7 +74,6 @@ src/pumpwood_deploy/microservices/pumpwood_transformation/resources/resources_ym
 src/pumpwood_deploy/microservices/standard/__init__.py
 src/pumpwood_deploy/microservices/standard/deploy.py
 src/pumpwood_deploy/microservices/standard/resources/__init__.py
-src/pumpwood_deploy/microservices/standard/resources/postgres_init_configmap.py
 src/pumpwood_deploy/microservices/standard/resources/yml__resorces.py
 src/pumpwood_deploy/models/__init__.py
 src/pumpwood_deploy/models/deploy.py

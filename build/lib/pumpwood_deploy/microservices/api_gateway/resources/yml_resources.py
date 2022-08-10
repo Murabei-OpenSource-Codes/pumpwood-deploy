@@ -103,7 +103,11 @@ spec:
     - name: http
       port: 80
       targetPort: 80
-  loadBalancerIP: {public_ip}
+  loadBalancerIP: {{ public_ip }}
+  loadBalancerSourceRanges:
+    {%- for ip in firewall_ips %}
+      - {{ip}}
+    {%- endfor %}
 """
 
 internal_service = """

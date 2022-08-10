@@ -14,15 +14,30 @@ class PumpWoodDescisionMicroservice:
 
     def __init__(self, db_password: str,
                  microservice_password: str,
-                 bucket_name: str, version_app: str,
-                 disk_name: str = None, disk_size: str = None,
-                 postgres_public_ip: str = None, firewall_ips: list = None,
+                 bucket_name: str,
+                 version_app: str,
+                 disk_name: str = None,
+                 disk_size: str = None,
+                 postgres_public_ip: str = None,
+                 firewall_ips: list = None,
                  repository: str = "gcr.io/repositorio-geral-170012",
-                 replicas: int = 1,
+                 debug: str = "FALSE",
+                 db_username: str = "pumpwood",
+                 db_host: str = "postgres-pumpwood-decision",
+                 db_port: str = "5432",
+                 db_database: str = "pumpwood",
+                 app_replicas: int = 1,
                  workers_timeout: int = 300,
+                 app_limits_memory: str = "60Gi",
+                 app_limits_cpu: str = "12000m",
+                 app_requests_memory: str = "20Mi",
+                 app_requests_cpu: str = "1m",
+                 postgres_limits_memory: str = "60Gi",
+                 postgres_limits_cpu: str = "12000m",
+                 postgres_requests_memory: str = "20Mi",
+                 postgres_requests_cpu: str = "1m",
                  test_db_version: str = None,
-                 test_db_repository: str = "gcr.io/repositorio-geral-170012",
-                 debug: str = "FALSE"):
+                 test_db_repository: str = "gcr.io/repositorio-geral-170012"):
         """
         __init__: Class constructor.
 
@@ -36,9 +51,19 @@ class PumpWoodDescisionMicroservice:
             version_worker (str): Verison of the Worker Image.
 
         Kwargs:
+          app_replicas (int) = 1: Number of replicas in app deployment.
+          app_limits_memory (str) = "60Gi": Memory limits for app pods.
+          app_limits_cpu (str) = "12000m": CPU limits for app pods.
+          app_requests_memory (str) = "20Mi": Memory requests for app pods.
+          app_requests_cpu (str) = "1m": CPU requests for app pods.
+          postgres_limits_memory (str) = "60Gi":  Memory limits for postgres
+            pod.
+          postgres_limits_cpu (str) = "12000m":  CPU limits for postgres pod.
+          postgres_requests_memory (str) = "20Mi":  Memory request for postgres
+            pod.
+          postgres_requests_cpu (str) = "1m":  CPU request for postgres pod.
           disk_size (str): Disk size (ex.: 50Gi, 100Gi)
-          disk_name (str): Name of the disk that will be used in postgres
-          replicas (int) = 1: Number of replicas in app deployment.
+          disk_name (str): Name of the disk that will be used in postgres.
           workers_timeout (str): Time to workout time for guicorn workers.
           n_chunks (str) = 5: n chunks working o data loader.
           chunk_size (str) = 5000: Size of the datalake chunks.
@@ -47,6 +72,11 @@ class PumpWoodDescisionMicroservice:
           test_db_version (str): Set a test database with version.
           test_db_repository (str): Define a repository for the test
             database.
+          db_username (str): Database connection username.
+          db_host (str): Database connection host.
+          db_port (str): Database connection port.
+          db_database (str): Database connection database.
+
         Returns:
           PumpWoodDatalakeMicroservice: New Object
 
@@ -72,15 +102,30 @@ class PumpWoodDescisionMicroservice:
         self.firewall_ips = firewall_ips
 
         self.debug = debug
-        self.replicas = replicas
+        self.app_replicas = app_replicas
         self.bucket_name = bucket_name
         self.disk_size = disk_size
         self.disk_name = disk_name
         self.base_path = os.path.dirname(__file__)
         self.workers_timeout = workers_timeout
-        self.repository = repository
 
+        # App
+        self.repository = repository
         self.version_app = version_app
+        self.app_limits_memory = app_limits_memory
+        self.app_limits_cpu = app_limits_cpu
+        self.app_requests_memory = app_requests_memory
+        self.app_requests_cpu = app_requests_cpu
+
+        # Database
+        self.db_username = db_username
+        self.db_host = db_host
+        self.db_port = db_port
+        self.db_database = db_database
+        self.postgres_limits_memory = postgres_limits_memory
+        self.postgres_limits_cpu = postgres_limits_cpu
+        self.postgres_requests_memory = postgres_requests_memory
+        self.postgres_requests_cpu = postgres_requests_cpu
         self.test_db_version = test_db_version
         self.test_db_repository = test_db_repository
 
@@ -98,16 +143,25 @@ class PumpWoodDescisionMicroservice:
             ssl_crt=self._ssl_crt)
 
         volume_postgres_text_f = None
+        deployment_postgres_text_f = None
         if self.test_db_version is not None:
             deployment_postgres_text_f = test_postgres.format(
                 repository=self.test_db_repository,
-                version=self.test_db_version)
-        else:
+                version=self.test_db_version,
+                requests_memory=self.postgres_requests_memory,
+                requests_cpu=self.postgres_requests_cpu,
+                limits_memory=self.postgres_limits_memory,
+                limits_cpu=self.postgres_limits_cpu)
+        elif self.disk_size is not None:
             volume_postgres_text_f = kube_client.create_volume_yml(
-                disk_name=self.disk_size,
-                disk_size=self.disk_name,
+                disk_name=self.disk_name,
+                disk_size=self.disk_size,
                 volume_claim_name="postgres-pumpwood-decision")
-            deployment_postgres_text_f = deployment_postgres
+            deployment_postgres_text_f = deployment_postgres.format(
+                requests_memory=self.postgres_requests_memory,
+                requests_cpu=self.postgres_requests_cpu,
+                limits_memory=self.postgres_limits_memory,
+                limits_cpu=self.postgres_limits_cpu)
 
         deployment_text_frmtd = \
             app_deployment.format(
@@ -116,27 +170,32 @@ class PumpWoodDescisionMicroservice:
                 bucket_name=self.bucket_name,
                 workers_timeout=self.workers_timeout,
                 debug=self.debug,
-                replicas=self.replicas)
+                replicas=self.app_replicas,
+                db_username=self.db_username,
+                db_host=self.db_host,
+                db_port=self.db_port,
+                db_database=self.db_database,
+                requests_memory=self.app_limits_memory,
+                requests_cpu=self.app_limits_cpu,
+                limits_memory=self.app_requests_memory,
+                limits_cpu=self.app_requests_cpu)
 
+        list_return = [{
+            'type': 'secrets',
+            'name': 'pumpwood_decision__secrets',
+            'content': secrets_text_formated, 'sleep': 5}]
         if volume_postgres_text_f is not None:
-            list_return = [
-                {'type': 'volume', 'name': 'pumpwood_decision__volume',
-                 'content': volume_postgres_text_f, 'sleep': 10}]
-        else:
-            list_return = []
-
-        list_return.extend([
-            {'type': 'secrets',
-             'name': 'pumpwood_decision__secrets',
-             'content': secrets_text_formated, 'sleep': 5},
-
-            {'type': 'deploy',
-             'name': 'pumpwood_decision__postgres',
-             'content': deployment_postgres_text_f, 'sleep': 0},
-
-            {'type': 'deploy', 'name': 'pumpwood_decision__deploy',
-             'content': deployment_text_frmtd, 'sleep': 0},
-        ])
+            list_return.append({
+                'type': 'volume', 'name': 'pumpwood_decision__volume',
+                'content': volume_postgres_text_f, 'sleep': 10})
+        if deployment_postgres_text_f is not None:
+            list_return.append({
+                'type': 'deploy',
+                'name': 'pumpwood_decision__postgres',
+                'content': deployment_postgres_text_f, 'sleep': 0})
+        list_return.append({
+            'type': 'deploy', 'name': 'pumpwood_decision__deploy',
+            'content': deployment_text_frmtd, 'sleep': 0})
 
         if self.firewall_ips is not None and \
            self.postgres_public_ip is not None:
@@ -155,8 +214,15 @@ class PumpWoodDescisionMicroservice:
 class PumpwoodDecisionModel:
     """Class to help deployment of Decision models."""
 
-    def __init__(self, decision_model_name: str, version: str,
-                 bucket_name: str, repository: str):
+    def __init__(self,
+                 decision_model_name: str,
+                 version: str,
+                 bucket_name: str,
+                 repository: str,
+                 limits_memory: str = "60Gi",
+                 limits_cpu: str = "12000m",
+                 requests_memory: str = "20Mi",
+                 requests_cpu: str = "1m"):
         """
         __init__.
 
@@ -165,27 +231,36 @@ class PumpwoodDecisionModel:
             version (str): Model version.
             version (str): Version of the model.
             repository (str): Repository path.
+        Kwargs:
+            limits_memory: str = "60Gi"
+            limits_cpu: str = "12000m"
+            requests_memory: str = "20Mi"
+            requests_cpu: str = "1m"
         """
         self.base_path = os.path.dirname(__file__)
         self.decision_model_name = decision_model_name
         self.repository = repository
         self.version = version
         self.bucket_name = bucket_name
+        self.limits_memory = limits_memory
+        self.limits_cpu = limits_cpu
+        self.requests_memory = requests_memory
+        self.requests_cpu = requests_cpu
 
-    def create_deployment_file(self):
+    def create_deployment_file(self, kube_client):
         """Create Google Trends deployment files."""
         decision_model_frmted = decision_model_yml.format(
             decision_model_name=self.decision_model_name,
             repository=self.repository,
             bucket_name=self.bucket_name,
-            version=self.version)
+            version=self.version,
+            limits_memory=self.limits_memory,
+            limits_cpu=self.limits_cpu,
+            requests_memory=self.requests_memory,
+            requests_cpu=self.requests_cpu)
 
         return [{
                 'type': 'deploy',
                 'name': 'decision_model__{}__worker'.format(
                     self.decision_model_name),
                 'content': decision_model_frmted, 'sleep': 0}]
-
-    def end_points(self):
-        """Return microservices end-points."""
-        return self.end_points
