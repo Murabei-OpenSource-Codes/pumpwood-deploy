@@ -29,7 +29,11 @@ spec:
         imagePullPolicy: Always
         resources:
           requests:
-            cpu: "1m"
+            memory: "{requests_memory}"
+            cpu:  "{requests_cpu}"
+          limits:
+            memory: "{limits_memory}"
+            cpu:  "{limits_cpu}"
         volumeMounts:
           - name: gcp--storage-key
             readOnly: true
@@ -144,7 +148,7 @@ kind: Deployment
 metadata:
   name: pumpwood-estimation-rawdata-workers
 spec:
-  replicas: 1
+  replicas: {replicas}
   selector:
     matchLabels:
       type: worker
@@ -169,7 +173,11 @@ spec:
         imagePullPolicy: Always
         resources:
           requests:
-            cpu: "1m"
+            memory: "{requests_memory}"
+            cpu:  "{requests_cpu}"
+          limits:
+            memory: "{limits_memory}"
+            cpu:  "{limits_cpu}"
         volumeMounts:
           - name: gcp--storage-key
             readOnly: true
@@ -308,9 +316,6 @@ spec:
       - name: pumpwood-estimation-data
         persistentVolumeClaim:
           claimName: postgres-pumpwood-estimation
-      - name: postgres-init-configmap
-        configMap:
-          name: postgres-init-configmap
       - name: secrets
         secret:
           secretName: pumpwood-estimation
@@ -321,12 +326,21 @@ spec:
       containers:
       - name: postgres-pumpwood-estimation
         image: timescale/timescaledb-postgis:2.3.0-pg12
+        args: [
+            "-c", "max_connections=1000",
+            "-c", "work_mem=50MB",
+            "-c", "shared_buffers=1GB",
+            "-c", "max_locks_per_transaction=500",
+            "-c", "max_wal_size=10GB",
+            "-c", "min_wal_size=80MB"]
         imagePullPolicy: Always
         resources:
           requests:
-            cpu: "1m"
+            memory: "{requests_memory}"
+            cpu:  "{requests_cpu}"
           limits:
-            cpu: "2"
+            memory: "{limits_memory}"
+            cpu:  "{limits_cpu}"
         env:
         - name: POSTGRES_USER
           value: pumpwood
@@ -343,8 +357,6 @@ spec:
         volumeMounts:
         - name: pumpwood-estimation-data
           mountPath: /var/lib/postgresql/data/
-        - name: postgres-init-configmap
-          mountPath: /docker-entrypoint-initdb.d/
         - name: secrets
           mountPath: /etc/secrets
           readOnly: true
@@ -402,9 +414,11 @@ spec:
         imagePullPolicy: Always
         resources:
           requests:
-            cpu: "1m"
+            memory: "{requests_memory}"
+            cpu:  "{requests_cpu}"
           limits:
-            cpu: "2"
+            memory: "{limits_memory}"
+            cpu:  "{limits_cpu}"
         volumeMounts:
         - name: dshm
           mountPath: /dev/shm

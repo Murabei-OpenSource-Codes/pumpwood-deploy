@@ -12,14 +12,30 @@ from .resources.yml__resources import (
 class PumpWoodAuthMicroservice:
     """PumpWoodAuthMicroservice."""
 
-    def __init__(self, secret_key: str, db_password: str,
+    def __init__(self,
+                 secret_key: str,
+                 db_password: str,
                  microservice_password: str,
-                 email_host_user: str, email_host_password: str,
-                 bucket_name: str, version_app: str,  version_static: str,
-                 disk_size: str = None, disk_name: str = None,
-                 postgres_public_ip: str = None, firewall_ips: list = None,
+                 email_host_user: str,
+                 email_host_password: str,
+                 bucket_name: str,
+                 version_app: str,
+                 version_static: str,
+                 app_limits_memory: str = "60Gi",
+                 app_limits_cpu: str = "12000m",
+                 app_requests_memory: str = "20Mi",
+                 app_requests_cpu: str = "1m",
+                 disk_size: str = None,
+                 disk_name: str = None,
+                 postgres_limits_memory: str = "60Gi",
+                 postgres_limits_cpu: str = "12000m",
+                 postgres_requests_memory: str = "20Mi",
+                 postgres_requests_cpu: str = "1m",
+                 postgres_public_ip: str = None,
+                 firewall_ips: list = None,
                  repository: str = "gcr.io/repositorio-geral-170012",
-                 replicas: int = 1, test_db_version: str = None,
+                 replicas: int = 1,
+                 test_db_version: str = None,
                  test_db_repository: str = "gcr.io/repositorio-geral-170012",
                  debug: str = "FALSE",
                  db_username: str = "pumpwood",
@@ -37,8 +53,16 @@ class PumpWoodAuthMicroservice:
             version_static (str): Version of the static image.
 
         Kwargs:
+            app_limits_memory (str): str = "60Gi"
+            app_limits_cpu (str): str = "12000m"
+            app_requests_memory (str): str = "20Mi"
+            app_requests_cpu (str): str = "1m"
             disk_size (str): Disk size for auth database.
             disk_name (str): Disk name for auth database.
+            postgres_limits_memory: str = "60Gi"
+            postgres_limits_cpu: str = "12000m"
+            postgres_requests_memory: str = "20Mi"
+            postgres_requests_cpu: str = "1m"
             firewall_ips (str): Firewall alowed conection ips for database.
             repository (str): Repository to pull image from.
             replicas (int): Number of replicas in App deployment.
@@ -87,11 +111,22 @@ class PumpWoodAuthMicroservice:
         self.db_port = db_port
         self.db_database = db_database
 
+        self.version_static = version_static
+
+        # App
         self.repository = repository
         self.version_app = version_app
-        self.version_static = version_static
+        self.app_limits_memory = app_limits_memory
+        self.app_limits_cpu = app_limits_cpu
+        self.app_requests_memory = app_requests_memory
+        self.app_requests_cpu = app_requests_cpu
         self.replicas = replicas
 
+        # Postgres
+        self.postgres_limits_memory = postgres_limits_memory
+        self.postgres_limits_cpu = postgres_limits_cpu
+        self.postgres_requests_memory = postgres_requests_memory
+        self.postgres_requests_cpu = postgres_requests_cpu
         self.test_db_version = test_db_version
         self.test_db_repository = test_db_repository
 
@@ -121,7 +156,12 @@ class PumpWoodAuthMicroservice:
               db_username=self.db_username,
               db_host=self.db_host,
               db_port=self.db_port,
-              db_database=self.db_database)
+              db_database=self.db_database,
+              # Resources
+              requests_memory=self.app_limits_memory,
+              requests_cpu=self.app_limits_cpu,
+              limits_memory=self.app_requests_memory,
+              limits_cpu=self.app_requests_cpu)
         deployment_auth_admin_static_f = \
             auth_admin_static.format(
                 repository=self.repository,
@@ -132,13 +172,22 @@ class PumpWoodAuthMicroservice:
         if self.test_db_version is not None:
             deployment_postgres_text_f = test_postgres.format(
                 repository=self.test_db_repository,
-                version=self.test_db_version)
+                version=self.test_db_version,
+                # Resources
+                requests_memory=self.postgres_requests_memory,
+                requests_cpu=self.postgres_requests_cpu,
+                limits_memory=self.postgres_limits_memory,
+                limits_cpu=self.postgres_limits_cpu)
         elif self.disk_size is not None:
             volume_postgres_text_f = kube_client.create_volume_yml(
                 disk_name=self.disk_name,
                 disk_size=self.disk_size,
                 volume_claim_name="postgres-pumpwood-auth")
-            deployment_postgres_text_f = deployment_postgres
+            deployment_postgres_text_f = deployment_postgres.format(
+                requests_memory=self.postgres_requests_memory,
+                requests_cpu=self.postgres_requests_cpu,
+                limits_memory=self.postgres_limits_memory,
+                limits_cpu=self.postgres_limits_cpu)
 
         list_return = [{
             'type': 'secrets', 'name': 'pumpwood_auth__secrets',

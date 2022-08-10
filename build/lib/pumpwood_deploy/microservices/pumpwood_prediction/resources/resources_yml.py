@@ -27,7 +27,15 @@ spec:
         imagePullPolicy: Always
         resources:
           requests:
-            cpu: "1m"
+            memory: "{requests_memory}"
+            cpu:  "{requests_cpu}"
+          limits:
+            memory: "{limits_memory}"
+            cpu:  "{limits_cpu}"
+        volumeMounts:
+          - name: gcp--storage-key
+            readOnly: true
+            mountPath: /etc/secrets
         volumeMounts:
           - name: gcp--storage-key
             readOnly: true
@@ -135,7 +143,7 @@ kind: Deployment
 metadata:
   name: pumpwood-prediction-dataloader-workers
 spec:
-  replicas: 1
+  replicas: {replicas}
   selector:
     matchLabels:
       type: worker
@@ -161,7 +169,11 @@ spec:
         imagePullPolicy: Always
         resources:
           requests:
-            cpu: "1m"
+            memory: "{requests_memory}"
+            cpu:  "{requests_cpu}"
+          limits:
+            memory: "{limits_memory}"
+            cpu:  "{limits_cpu}"
         volumeMounts:
           - name: gcp--storage-key
             readOnly: true
@@ -245,7 +257,7 @@ kind: Deployment
 metadata:
   name: pumpwood-prediction-rawdata-workers
 spec:
-  replicas: 1
+  replicas: {replicas}
   selector:
     matchLabels:
       type: worker
@@ -270,7 +282,11 @@ spec:
         imagePullPolicy: Always
         resources:
           requests:
-            cpu: "1m"
+            memory: "{requests_memory}"
+            cpu:  "{requests_cpu}"
+          limits:
+            memory: "{limits_memory}"
+            cpu:  "{limits_cpu}"
         volumeMounts:
           - name: gcp--storage-key
             readOnly: true
@@ -450,9 +466,6 @@ spec:
       - name: postgres-pumpwood-prediction
         persistentVolumeClaim:
           claimName: postgres-pumpwood-prediction
-      - name: postgres-init-configmap
-        configMap:
-          name: postgres-init-configmap
       - name: secrets
         secret:
           secretName: pumpwood-prediction
@@ -463,12 +476,21 @@ spec:
       containers:
       - name: postgres-pumpwood-prediction
         image: timescale/timescaledb-postgis:2.3.0-pg12
+        args: [
+            "-c", "max_connections=1000",
+            "-c", "work_mem=50MB",
+            "-c", "shared_buffers=1GB",
+            "-c", "max_locks_per_transaction=500",
+            "-c", "max_wal_size=10GB",
+            "-c", "min_wal_size=80MB"]
         imagePullPolicy: Always
         resources:
           requests:
-            cpu: "10m"
+            memory: "{requests_memory}"
+            cpu:  "{requests_cpu}"
           limits:
-            cpu: "2"
+            memory: "{limits_memory}"
+            cpu:  "{limits_cpu}"
         ports:
         - containerPort: 5432
 
@@ -488,8 +510,6 @@ spec:
         volumeMounts:
         - name: postgres-pumpwood-prediction
           mountPath: /var/lib/postgresql/data/
-        - name: postgres-init-configmap
-          mountPath: /docker-entrypoint-initdb.d/
         - name: secrets
           mountPath: /etc/secrets
           readOnly: true
@@ -547,9 +567,11 @@ spec:
         imagePullPolicy: Always
         resources:
           requests:
-            cpu: "10m"
+            memory: "{requests_memory}"
+            cpu:  "{requests_cpu}"
           limits:
-            cpu: "2"
+            memory: "{limits_memory}"
+            cpu:  "{limits_cpu}"
         ports:
         - containerPort: 5432
         volumeMounts:

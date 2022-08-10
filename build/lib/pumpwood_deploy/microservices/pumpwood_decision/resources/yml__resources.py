@@ -29,7 +29,11 @@ spec:
         imagePullPolicy: Always
         resources:
           requests:
-            cpu: "1m"
+            memory: "{requests_memory}"
+            cpu:  "{requests_cpu}"
+          limits:
+            memory: "{limits_memory}"
+            cpu:  "{limits_cpu}"
         volumeMounts:
           - name: gcp--storage-key
             readOnly: true
@@ -199,9 +203,6 @@ spec:
       - name: pumpwood-decision-data
         persistentVolumeClaim:
           claimName: postgres-pumpwood-decision
-      - name: postgres-init-configmap
-        configMap:
-          name: postgres-init-configmap
       - name: secrets
         secret:
           secretName: pumpwood-decision
@@ -211,12 +212,21 @@ spec:
       containers:
       - name: postgres-pumpwood-decision
         image: timescale/timescaledb-postgis:2.3.0-pg12
+        args: [
+            "-c", "max_connections=1000",
+            "-c", "work_mem=50MB",
+            "-c", "shared_buffers=1GB",
+            "-c", "max_locks_per_transaction=500",
+            "-c", "max_wal_size=10GB",
+            "-c", "min_wal_size=80MB"]
         imagePullPolicy: Always
         resources:
           requests:
-            cpu: "1m"
+            memory: "{requests_memory}"
+            cpu:  "{requests_cpu}"
           limits:
-            cpu: "3"
+            memory: "{limits_memory}"
+            cpu:  "{limits_cpu}"
         env:
         - name: POSTGRES_USER
           value: pumpwood
@@ -233,8 +243,6 @@ spec:
         volumeMounts:
         - name: pumpwood-decision-data
           mountPath: /var/lib/postgresql/data/
-        - name: postgres-init-configmap
-          mountPath: /docker-entrypoint-initdb.d/
         - name: secrets
           mountPath: /etc/secrets
           readOnly: true
@@ -293,9 +301,11 @@ spec:
         imagePullPolicy: Always
         resources:
           requests:
-            cpu: "1m"
+            memory: "{requests_memory}"
+            cpu:  "{requests_cpu}"
           limits:
-            cpu: "3"
+            memory: "{limits_memory}"
+            cpu:  "{limits_cpu}"
         volumeMounts:
         - name: dshm
           mountPath: /dev/shm
@@ -354,7 +364,11 @@ spec:
         imagePullPolicy: Always
         resources:
           requests:
-            cpu: "1m"
+            memory: "{requests_memory}"
+            cpu:  "{requests_cpu}"
+          limits:
+            memory: "{limits_memory}"
+            cpu:  "{limits_cpu}"
         volumeMounts:
           - name: gcp--storage-key
             readOnly: true

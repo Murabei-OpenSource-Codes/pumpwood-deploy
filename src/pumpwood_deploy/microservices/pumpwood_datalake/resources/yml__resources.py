@@ -339,6 +339,8 @@ spec:
             "-c", "work_mem=50MB",
             "-c", "shared_buffers=1GB",
             "-c", "max_locks_per_transaction=500",
+            "-c", "max_locks_per_transaction=500",
+            "-c", "synchronous_commit=off",
             "-c", "max_wal_size=10GB",
             "-c", "min_wal_size=80MB"]
         imagePullPolicy: Always

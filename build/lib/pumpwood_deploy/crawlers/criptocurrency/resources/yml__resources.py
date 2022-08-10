@@ -31,7 +31,11 @@ spec:
         imagePullPolicy: Always
         resources:
           requests:
-            cpu: "1m"
+            memory: "{requests_memory}"
+            cpu:  "{requests_cpu}"
+          limits:
+            memory: "{limits_memory}"
+            cpu:  "{limits_cpu}"
         volumeMounts:
           - name: bucket-key
             readOnly: true
@@ -51,8 +55,15 @@ spec:
               key: hash_salt
 
         # Database
+        # Database
+        - name: DB_USERNAME
+          value: {db_username}
         - name: DB_HOST
-          value: "postgres-crawler-criptocurrency"
+          value: {db_host}
+        - name: DB_PORT
+          value: "{db_port}"
+        - name: DB_DATABASE
+          value: {db_database}
         - name: DB_PASSWORD
           valueFrom:
             secretKeyRef:
@@ -146,7 +157,11 @@ spec:
         imagePullPolicy: Always
         resources:
           requests:
-            cpu: "1m"
+            memory: "{requests_memory}"
+            cpu:  "{requests_cpu}"
+          limits:
+            memory: "{limits_memory}"
+            cpu:  "{limits_cpu}"
         volumeMounts:
           - name: bucket-key
             readOnly: true
@@ -208,7 +223,11 @@ spec:
         imagePullPolicy: Always
         resources:
           requests:
-            cpu: "1m"
+            memory: "{requests_memory}"
+            cpu:  "{requests_cpu}"
+          limits:
+            memory: "{limits_memory}"
+            cpu:  "{limits_cpu}"
         volumeMounts:
           - name: bucket-key
             readOnly: true
@@ -281,7 +300,11 @@ spec:
         imagePullPolicy: Always
         resources:
           requests:
-            cpu: "1m"
+            memory: "{requests_memory}"
+            cpu:  "{requests_cpu}"
+          limits:
+            memory: "{limits_memory}"
+            cpu:  "{limits_cpu}"
         volumeMounts:
           - name: bucket-key
             readOnly: true
@@ -443,9 +466,11 @@ spec:
         imagePullPolicy: Always
         resources:
           requests:
-            cpu: "1m"
+            memory: "{requests_memory}"
+            cpu:  "{requests_cpu}"
           limits:
-            cpu: "3"
+            memory: "{limits_memory}"
+            cpu:  "{limits_cpu}"
         env:
         - name: POSTGRES_USER
           value: pumpwood

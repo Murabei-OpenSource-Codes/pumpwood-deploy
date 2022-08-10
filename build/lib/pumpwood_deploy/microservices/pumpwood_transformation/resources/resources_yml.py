@@ -42,7 +42,11 @@ spec:
         imagePullPolicy: Always
         resources:
           requests:
-            cpu: "10m"
+            memory: "{requests_memory}"
+            cpu:  "{requests_cpu}"
+          limits:
+            memory: "{limits_memory}"
+            cpu:  "{limits_cpu}"
         volumeMounts:
           - name: gcp--storage-key
             readOnly: true
@@ -157,7 +161,7 @@ kind: Deployment
 metadata:
   name: pumpwood-transformation-estimation-worker
 spec:
-  replicas: 1
+  replicas: {replicas}
   selector:
     matchLabels:
       type: worker
@@ -182,7 +186,11 @@ spec:
         imagePullPolicy: Always
         resources:
           requests:
-            cpu: "10m"
+            memory: "{requests_memory}"
+            cpu:  "{requests_cpu}"
+          limits:
+            memory: "{limits_memory}"
+            cpu:  "{limits_cpu}"
         volumeMounts:
           - name: gcp--storage-key
             readOnly: true
@@ -263,7 +271,7 @@ kind: Deployment
 metadata:
   name: pumpwood-transformation-prediction-worker
 spec:
-  replicas: 1
+  replicas: {replicas}
   selector:
     matchLabels:
       type: worker
@@ -288,7 +296,11 @@ spec:
         imagePullPolicy: Always
         resources:
           requests:
-            cpu: "1m"
+            memory: "{requests_memory}"
+            cpu:  "{requests_cpu}"
+          limits:
+            memory: "{limits_memory}"
+            cpu:  "{limits_cpu}"
         volumeMounts:
           - name: gcp--storage-key
             readOnly: true
@@ -416,9 +428,6 @@ spec:
       - name: pumpwood-transformation-data
         persistentVolumeClaim:
           claimName: postgres-pumpwood-transformation
-      - name: postgres-init-configmap
-        configMap:
-          name: postgres-init-configmap
       - name: secrets
         secret:
           secretName: pumpwood-transformation
@@ -429,12 +438,21 @@ spec:
       containers:
       - name: postgres-pumpwood-transformation
         image: timescale/timescaledb-postgis:2.3.0-pg12
+        args: [
+            "-c", "max_connections=1000",
+            "-c", "work_mem=50MB",
+            "-c", "shared_buffers=1GB",
+            "-c", "max_locks_per_transaction=500",
+            "-c", "max_wal_size=10GB",
+            "-c", "min_wal_size=80MB"]
         imagePullPolicy: Always
         resources:
           requests:
-            cpu: "10m"
+            memory: "{requests_memory}"
+            cpu:  "{requests_cpu}"
           limits:
-            cpu: "2"
+            memory: "{limits_memory}"
+            cpu:  "{limits_cpu}"
         ports:
         - containerPort: 5432
         env:
@@ -453,8 +471,6 @@ spec:
         volumeMounts:
         - name: pumpwood-transformation-data
           mountPath: /var/lib/postgresql/data/
-        - name: postgres-init-configmap
-          mountPath: /docker-entrypoint-initdb.d/
         - name: secrets
           mountPath: /etc/secrets
           readOnly: true
@@ -535,9 +551,11 @@ spec:
         imagePullPolicy: Always
         resources:
           requests:
-            cpu: "10m"
+            memory: "{requests_memory}"
+            cpu:  "{requests_cpu}"
           limits:
-            cpu: "2"
+            memory: "{limits_memory}"
+            cpu:  "{limits_cpu}"
         ports:
         - containerPort: 5432
         volumeMounts:

@@ -29,7 +29,11 @@ spec:
         imagePullPolicy: Always
         resources:
           requests:
-            cpu: "1m"
+            memory: "{requests_memory}"
+            cpu:  "{requests_cpu}"
+          limits:
+            memory: "{limits_memory}"
+            cpu:  "{limits_cpu}"
         volumeMounts:
           - name: gcp--storage-key
             readOnly: true
@@ -144,7 +148,7 @@ kind: Deployment
 metadata:
   name: pumpwood-estimation-rawdata-workers
 spec:
-  replicas: 1
+  replicas: {replicas}
   selector:
     matchLabels:
       type: worker
@@ -169,7 +173,11 @@ spec:
         imagePullPolicy: Always
         resources:
           requests:
-            cpu: "1m"
+            memory: "{requests_memory}"
+            cpu:  "{requests_cpu}"
+          limits:
+            memory: "{limits_memory}"
+            cpu:  "{limits_cpu}"
         volumeMounts:
           - name: gcp--storage-key
             readOnly: true
@@ -328,9 +336,11 @@ spec:
         imagePullPolicy: Always
         resources:
           requests:
-            cpu: "1m"
+            memory: "{requests_memory}"
+            cpu:  "{requests_cpu}"
           limits:
-            cpu: "2"
+            memory: "{limits_memory}"
+            cpu:  "{limits_cpu}"
         env:
         - name: POSTGRES_USER
           value: pumpwood
@@ -404,9 +414,11 @@ spec:
         imagePullPolicy: Always
         resources:
           requests:
-            cpu: "1m"
+            memory: "{requests_memory}"
+            cpu:  "{requests_cpu}"
           limits:
-            cpu: "2"
+            memory: "{limits_memory}"
+            cpu:  "{limits_cpu}"
         volumeMounts:
         - name: dshm
           mountPath: /dev/shm

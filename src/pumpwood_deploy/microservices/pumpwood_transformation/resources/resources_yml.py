@@ -42,7 +42,11 @@ spec:
         imagePullPolicy: Always
         resources:
           requests:
-            cpu: "10m"
+            memory: "{requests_memory}"
+            cpu:  "{requests_cpu}"
+          limits:
+            memory: "{limits_memory}"
+            cpu:  "{limits_cpu}"
         volumeMounts:
           - name: gcp--storage-key
             readOnly: true
@@ -157,7 +161,7 @@ kind: Deployment
 metadata:
   name: pumpwood-transformation-estimation-worker
 spec:
-  replicas: 1
+  replicas: {replicas}
   selector:
     matchLabels:
       type: worker
@@ -182,7 +186,11 @@ spec:
         imagePullPolicy: Always
         resources:
           requests:
-            cpu: "10m"
+            memory: "{requests_memory}"
+            cpu:  "{requests_cpu}"
+          limits:
+            memory: "{limits_memory}"
+            cpu:  "{limits_cpu}"
         volumeMounts:
           - name: gcp--storage-key
             readOnly: true
@@ -263,7 +271,7 @@ kind: Deployment
 metadata:
   name: pumpwood-transformation-prediction-worker
 spec:
-  replicas: 1
+  replicas: {replicas}
   selector:
     matchLabels:
       type: worker
@@ -288,7 +296,11 @@ spec:
         imagePullPolicy: Always
         resources:
           requests:
-            cpu: "1m"
+            memory: "{requests_memory}"
+            cpu:  "{requests_cpu}"
+          limits:
+            memory: "{limits_memory}"
+            cpu:  "{limits_cpu}"
         volumeMounts:
           - name: gcp--storage-key
             readOnly: true
@@ -436,9 +448,11 @@ spec:
         imagePullPolicy: Always
         resources:
           requests:
-            cpu: "10m"
+            memory: "{requests_memory}"
+            cpu:  "{requests_cpu}"
           limits:
-            cpu: "2"
+            memory: "{limits_memory}"
+            cpu:  "{limits_cpu}"
         ports:
         - containerPort: 5432
         env:
@@ -537,9 +551,11 @@ spec:
         imagePullPolicy: Always
         resources:
           requests:
-            cpu: "10m"
+            memory: "{requests_memory}"
+            cpu:  "{requests_cpu}"
           limits:
-            cpu: "2"
+            memory: "{limits_memory}"
+            cpu:  "{limits_cpu}"
         ports:
         - containerPort: 5432
         volumeMounts:

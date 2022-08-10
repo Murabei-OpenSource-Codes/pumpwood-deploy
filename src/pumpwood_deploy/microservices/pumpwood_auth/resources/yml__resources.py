@@ -80,6 +80,13 @@ spec:
       containers:
       - name: pumpwood-auth-app
         image: {repository}/pumpwood-auth-app:{version}
+        resources:
+          requests:
+            memory: "{requests_memory}"
+            cpu:  "{requests_cpu}"
+          limits:
+            memory: "{limits_memory}"
+            cpu:  "{limits_cpu}"
         imagePullPolicy: Always
         resources:
           requests:
@@ -240,7 +247,11 @@ spec:
         imagePullPolicy: Always
         resources:
           requests:
-            cpu: "1m"
+            memory: "{requests_memory}"
+            cpu:  "{requests_cpu}"
+          limits:
+            memory: "{limits_memory}"
+            cpu:  "{limits_cpu}"
         env:
         - name: POSTGRES_USER
           value: pumpwood
@@ -364,7 +375,11 @@ spec:
         imagePullPolicy: Always
         resources:
           requests:
-            cpu: "1m"
+            memory: "{requests_memory}"
+            cpu:  "{requests_cpu}"
+          limits:
+            memory: "{limits_memory}"
+            cpu:  "{limits_cpu}"
         volumeMounts:
         - name: dshm
           mountPath: /dev/shm

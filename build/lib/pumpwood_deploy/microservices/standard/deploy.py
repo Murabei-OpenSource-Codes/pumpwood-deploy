@@ -6,7 +6,6 @@ from pumpwood_deploy.microservices.standard.resources.yml__resorces import (
     kong_postgres_deployment, kong_deployment,
     azure__storage_key_secrets, gcp__storage_key_secrets,
     aws__storage_key_secrets, storage_config_map)
-from pumpwood_deploy.microservices.standard.resources.postgres_init_configmap import postgres_init_configmap
 
 
 class StandardMicroservices:
@@ -167,7 +166,7 @@ class StandardMicroservices:
         if self._gcp_credential_file is not None:
             gcp_bucket_secrets = {
                 'type': 'secrets_file', 'name': 'gcp--storage-key',
-                'path': self.bucket_key_path, 'sleep': 5
+                'path': self._gcp_credential_file, 'sleep': 5
             }
 
         # AWS
@@ -186,11 +185,6 @@ class StandardMicroservices:
              'content': secrets_text_formated, 'sleep': 5},
             {'type': 'deploy', 'name': 'rabbitmq__deployment',
              'content': rabbitmq_deployment, 'sleep': 0},
-
-            # Postgres
-            {'type': 'configmap_file', 'name': 'postgres-init-configmap',
-             'content': postgres_init_configmap,
-             'file_name': 'server_init.sh', 'sleep': 5},
 
             # Hash salt
             {'type': 'secrets', 'name': 'hash_salt__secrets',
