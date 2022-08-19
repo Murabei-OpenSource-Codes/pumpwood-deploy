@@ -333,16 +333,19 @@ spec:
           medium: Memory
       containers:
       - name: postgres-pumpwood-datalake
-        image: timescale/timescaledb-postgis:2.3.0-pg12
+        image: timescale/timescaledb-postgis:2.3.0-pg13
         args: [
             "-c", "max_connections=1000",
             "-c", "work_mem=50MB",
-            "-c", "shared_buffers=1GB",
-            "-c", "max_locks_per_transaction=500",
+            "-c", "shared_buffers=5GB",
             "-c", "max_locks_per_transaction=500",
             "-c", "synchronous_commit=off",
             "-c", "max_wal_size=10GB",
-            "-c", "min_wal_size=80MB"]
+            "-c", "min_wal_size=80MB",
+            "-c", "effective_io_concurrency=200",
+            "-c", "max_worker_processes=50",
+            "-c", "max_parallel_workers=20",
+            "-c", "max_parallel_workers_per_gather=10"]
         imagePullPolicy: Always
         resources:
           requests:

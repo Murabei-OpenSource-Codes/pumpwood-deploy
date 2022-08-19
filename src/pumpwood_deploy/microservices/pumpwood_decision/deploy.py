@@ -175,10 +175,10 @@ class PumpWoodDescisionMicroservice:
                 db_host=self.db_host,
                 db_port=self.db_port,
                 db_database=self.db_database,
-                requests_memory=self.app_limits_memory,
-                requests_cpu=self.app_limits_cpu,
-                limits_memory=self.app_requests_memory,
-                limits_cpu=self.app_requests_cpu)
+                requests_memory=self.app_requests_memory,
+                requests_cpu=self.app_requests_cpu,
+                limits_memory=self.app_limits_memory,
+                limits_cpu=self.app_limits_cpu)
 
         list_return = [{
             'type': 'secrets',

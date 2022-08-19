@@ -211,7 +211,7 @@ spec:
           medium: Memory
       containers:
       - name: postgres-pumpwood-description-matcher
-        image: timescale/timescaledb-postgis:2.3.0-pg12
+        image: timescale/timescaledb-postgis:2.3.0-pg13
         args: [
             "-c", "max_connections=1000",
             "-c", "work_mem=50MB",
