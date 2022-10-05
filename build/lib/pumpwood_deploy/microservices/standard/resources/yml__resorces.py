@@ -50,6 +50,15 @@ spec:
       - name: secrets
         secret:
           secretName: rabbitmq-main-secrets
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: function
+                operator: NotIn
+                values:
+                - system
       containers:
       - name: rabbitmq-main
         image: rabbitmq:3.8-management
@@ -152,6 +161,15 @@ spec:
       - name: postgres-kong-database-data
         persistentVolumeClaim:
           claimName: postgres-kong-database
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: function
+                operator: NotIn
+                values:
+                - system
       containers:
       - name: postgres-kong-database
         image: postgres:11
@@ -207,6 +225,15 @@ spec:
     spec:
       imagePullSecrets:
         - name: dockercfg
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: function
+                operator: NotIn
+                values:
+                - system
       containers:
       - name: apigateway-kong
         image: {repository}/gateway-loadbalancer-kong:0.1
