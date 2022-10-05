@@ -17,6 +17,24 @@ spec:
     spec:
       imagePullSecrets:
         - name: dockercfg
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: function
+                operator: NotIn
+                values:
+                - system
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: function
+                operator: NotIn
+                values:
+                - system
       containers:
       - name: pumpwood-frontend-react
         image: {repository}/pumpwood-frontend-react:{version}

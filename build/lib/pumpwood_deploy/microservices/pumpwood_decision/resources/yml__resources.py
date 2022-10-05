@@ -23,6 +23,15 @@ spec:
       - name: gcp--storage-key
         secret:
           secretName: gcp--storage-key
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: function
+                operator: NotIn
+                values:
+                - system
       containers:
       - name: pumpwood-decision
         image: {repository}/pumpwood-decision-app:{version}
@@ -209,9 +218,18 @@ spec:
       - name: dshm
         emptyDir:
           medium: Memory
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: function
+                operator: NotIn
+                values:
+                - system
       containers:
       - name: postgres-pumpwood-decision
-        image: timescale/timescaledb-postgis:2.3.0-pg12
+        image: timescale/timescaledb-postgis:2.3.0-pg13
         args: [
             "-c", "max_connections=1000",
             "-c", "work_mem=50MB",
@@ -295,6 +313,15 @@ spec:
       - name: dshm
         emptyDir:
           medium: Memory
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: function
+                operator: NotIn
+                values:
+                - system
       containers:
       - name: postgres-pumpwood-decision
         image: {repository}/test-db-pumpwood-decision:{version}
@@ -358,6 +385,15 @@ spec:
         - name: gcp--storage-key
           secret:
             secretName: gcp--storage-key
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: function
+                operator: NotIn
+                values:
+                - system
       containers:
       - name: decision-model--{decision_model_name}
         image: {repository}/decision-model--{decision_model_name}:{version}

@@ -23,6 +23,15 @@ spec:
       - name: gcp--storage-key
         secret:
           secretName: gcp--storage-key
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: function
+                operator: NotIn
+                values:
+                - system
       containers:
       - name: pumpwood-scheduler
         image: {repository}/pumpwood-scheduler-app:{version}
@@ -167,6 +176,15 @@ spec:
       - name: gcp--storage-key
         secret:
           secretName: gcp--storage-key
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: function
+                operator: NotIn
+                values:
+                - system
       containers:
       - name: pumpwood-worker
         image: {repository}/pumpwood-scheduler-worker:{version}
@@ -315,9 +333,18 @@ spec:
       - name: dshm
         emptyDir:
           medium: Memory
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: function
+                operator: NotIn
+                values:
+                - system
       containers:
       - name: postgres-pumpwood-scheduler
-        image: timescale/timescaledb-postgis:2.3.0-pg12
+        image: timescale/timescaledb-postgis:2.3.0-pg13
         args: [
             "-c", "max_connections=1000",
             "-c", "work_mem=50MB",
@@ -401,6 +428,15 @@ spec:
       - name: dshm
         emptyDir:
           medium: Memory
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: function
+                operator: NotIn
+                values:
+                - system
       containers:
       - name: postgres-pumpwood-scheduler
         image: {repository}/test-db-pumpwood-scheduler:{version}

@@ -15,6 +15,15 @@ spec:
     spec:
       imagePullSecrets:
         - name: dockercfg
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: function
+                operator: NotIn
+                values:
+                - system
       containers:
       - name: apigateway-nginx
         image: {repository}/pumpwood-nginx-ssl-gateway:{nginx_ssl_version}
@@ -57,6 +66,15 @@ spec:
       - name: ssl-credentials-key
         secret:
           secretName: ssl-credentials-key
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: function
+                operator: NotIn
+                values:
+                - system
       containers:
       - name: apigateway-nginx
         image: {repository}/pumpwood-nginx-ssl-secrets-gateway:{nginx_ssl_version}

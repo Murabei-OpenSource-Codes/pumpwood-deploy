@@ -23,6 +23,15 @@ spec:
       - name: gcp--storage-key
         secret:
           secretName: gcp--storage-key
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: function
+                operator: NotIn
+                values:
+                - system
       containers:
       - name: pumpwood-etl-app
         image: {repository}/pumpwood-etl-app:{version}
@@ -165,6 +174,15 @@ spec:
       - name: gcp--storage-key
         secret:
           secretName: gcp--storage-key
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: function
+                operator: NotIn
+                values:
+                - system
       containers:
       - name: pumpwood-etl-worker
         image: {repository}/pumpwood-etl-worker:{version}
@@ -320,9 +338,18 @@ spec:
       - name: dshm
         emptyDir:
           medium: Memory
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: function
+                operator: NotIn
+                values:
+                - system
       containers:
       - name: postgres-pumpwood-etl
-        image: timescale/timescaledb-postgis:2.3.0-pg12
+        image: timescale/timescaledb-postgis:2.3.0-pg13
         args: [
             "-c", "max_connections=1000",
             "-c", "work_mem=50MB",
@@ -406,6 +433,15 @@ spec:
       - name: dshm
         emptyDir:
           medium: Memory
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: function
+                operator: NotIn
+                values:
+                - system
       containers:
       - name: postgres-pumpwood-etl
         image: {repository}/test-db-pumpwood-etl:{version}

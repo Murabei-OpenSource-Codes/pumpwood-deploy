@@ -21,6 +21,15 @@ spec:
       - name: gcp--storage-key
         secret:
           secretName: gcp--storage-key
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: function
+                operator: NotIn
+                values:
+                - system
       containers:
       - name: pumpwood-prediction
         image: {repository}/pumpwood-prediction-app:{version}
@@ -162,7 +171,24 @@ spec:
       - name: gcp--storage-key
         secret:
           secretName: gcp--storage-key
-
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: function
+                operator: NotIn
+                values:
+                - system
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: function
+                operator: NotIn
+                values:
+                - system
       containers:
       - name: pumpwood-prediction-dataloader-workers
         image: {repository}/pumpwood-prediction-dataloader-worker:{version}
@@ -276,6 +302,15 @@ spec:
       - name: gcp--storage-key
         secret:
           secretName: gcp--storage-key
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: function
+                operator: NotIn
+                values:
+                - system
       containers:
       - name: pumpwood-prediction-rawdata-workers
         image: {repository}/pumpwood-prediction-rawdata-worker:{version}
@@ -472,10 +507,18 @@ spec:
       - name: dshm
         emptyDir:
           medium: Memory
-
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: function
+                operator: NotIn
+                values:
+                - system
       containers:
       - name: postgres-pumpwood-prediction
-        image: timescale/timescaledb-postgis:2.3.0-pg12
+        image: timescale/timescaledb-postgis:2.3.0-pg13
         args: [
             "-c", "max_connections=1000",
             "-c", "work_mem=50MB",

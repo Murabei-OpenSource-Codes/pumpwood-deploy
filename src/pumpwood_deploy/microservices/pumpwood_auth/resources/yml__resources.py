@@ -19,6 +19,15 @@ spec:
     spec:
       imagePullSecrets:
         - name: dockercfg
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: function
+                operator: NotIn
+                values:
+                - system
       containers:
       - name: pumpwood-auth-static
         image: {repository}/pumpwood-auth-static:{version}
@@ -77,6 +86,15 @@ spec:
       - name: gcp--storage-key
         secret:
           secretName: gcp--storage-key
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: function
+                operator: NotIn
+                values:
+                - system
       containers:
       - name: pumpwood-auth-app
         image: {repository}/pumpwood-auth-app:{version}
@@ -233,10 +251,18 @@ spec:
       - name: dshm
         emptyDir:
           medium: Memory
-
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: function
+                operator: NotIn
+                values:
+                - system
       containers:
       - name: postgres-pumpwood-auth
-        image: timescale/timescaledb-postgis:2.3.0-pg12
+        image: timescale/timescaledb-postgis:2.3.0-pg13
         args: [
             "-c", "max_connections=1000",
             "-c", "work_mem=50MB",
@@ -368,7 +394,15 @@ spec:
       - name: dshm
         emptyDir:
           medium: Memory
-
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: function
+                operator: NotIn
+                values:
+                - system
       containers:
       - name: postgres-pumpwood-auth
         image: {repository}/test-db-pumpwood-auth:{version}

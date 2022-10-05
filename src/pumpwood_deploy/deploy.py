@@ -5,6 +5,14 @@ import shutil
 from pumpwood_deploy.microservices.standard.deploy import (
     StandardMicroservices)
 from pumpwood_deploy.kubernets.kubernets import Kubernets
+from jinja2 import Template
+
+
+# Template to create secrets from files
+secret_file_template = Template("""
+SCRIPTPATH="$( cd "$(dirname "$0")" ; pwd -P )"
+kubectl delete secret --namespace={{namespace}} {{name}};
+kubectl create secret generic {{name}} --namespace={{namespace}}{%- for path in paths %} --from-file='{{path}}'{%- endfor %}""")
 
 
 class DeployPumpWood():
@@ -110,7 +118,7 @@ class DeployPumpWood():
         # Usa os arqivos de template e subistitui com as variáveis para criar
         # os templates de deploy
         print('### Creating microservices files:')
-        # m = self.microsservices_to_deploy[0]
+        # m = self.microsservices_to_deploy[-1]
         for m in self.microsservices_to_deploy:
             print('\nProcessing: ' + str(m))
             temp_deployments = m.create_deployment_file(
@@ -126,7 +134,7 @@ class DeployPumpWood():
                     file_name = file_name_temp.format(
                         counter=str_counter, name=d['name'])
 
-                    print('Creating secrets/deploy: ' + file_name)
+                    print('Creating deploy: ' + file_name)
                     with open('outputs/deploy_output/' +
                               file_name, 'w') as file:
                         file.write(d['content'])
@@ -149,19 +157,16 @@ class DeployPumpWood():
 
                 # Create a secret from a file
                 elif d['type'] == 'secrets_file':
-                    command_formated = (
-                        'SCRIPTPATH="$( cd "$(dirname "$0")" ; pwd -P )"\n'
-                        "kubectl delete secret --namespace={namespace} {name};"
-                        "\n"
-                        "kubectl create secret generic {name} "
-                        "--from-file='{path}' "
-                        "--namespace={namespace}").format(
-                            name=d["name"], path=d["path"],
-                            namespace=self.namespace)
+                    # Legacy path set as string
+                    if type(d["path"]) == str:
+                        d["path"] = [str]
+                    command_formated = secret_file_template.render(
+                        name=d["name"], paths=d["path"],
+                        namespace=self.namespace)
                     file_name_temp = (
                         'outputs/deploy_output/{counter}__{name}.sh')
                     file_name = file_name_temp.format(
-                        counter=counter, name=d['name'])
+                        counter=str_counter, name=d['name'])
 
                     print('Creating secrets_file: ' + file_name)
                     with open(file_name, 'w') as file:

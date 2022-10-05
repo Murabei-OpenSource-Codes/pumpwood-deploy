@@ -23,6 +23,18 @@ spec:
       - name: gcp--storage-key
         secret:
           secretName: gcp--storage-key
+      - name: airflow--gitkey
+        secret:
+          secretName: airflow--gitkey
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: function
+                operator: NotIn
+                values:
+                - system
       containers:
       - name: simple-airflow--webserver
         image: andrebaceti/simple-airflow:{version}
@@ -34,6 +46,11 @@ spec:
           - name: gcp--storage-key
             readOnly: true
             mountPath: /etc/secrets
+          - name: airflow--gitkey
+            readOnly: true
+            mountPath: /ssh_keys/
+        ports:
+        - containerPort: 8080
         env:
         - name: HASH_SALT
           valueFrom:
@@ -42,11 +59,32 @@ spec:
               key: hash_salt
 
         # AIRFLOW
-        - name: AIRFLOW__WEBSERVER__SECRET_KEY_SECRET
+        - name: AIRFLOW__WEBSERVER__SECRET_KEY
           valueFrom:
             secretKeyRef:
               name: simple-airflow
               key: secret_key
+        - name: AIRFLOW__CORE__FERNET_KEY
+          valueFrom:
+            secretKeyRef:
+              name: simple-airflow
+              key: fernet_key
+        - name: AIRFLOW__KUBERNETES__NAMESPACE
+          value: {k8s_pods_namespace}
+        - name: AIRFLOW__LOGGING__REMOTE_BASE_LOG_FOLDER
+          value: "{remote_base_log_folder}"
+        - name: AIRFLOW__LOGGING__REMOTE_LOGGING
+          value: "{remote_logging}"
+        - AIRFLOW__LOGGING__REMOTE_LOG_CONN_ID
+          name: "{remote_log_conn_id}"
+
+        # Git
+        - name: GIT_SERVER
+          value: "{git_server}"
+        - name: GIT_REPOSITORY
+          value: "{git_repository}"
+        - name: GIT_BRANCH
+          value: "{git_branch}"
 
         # DATABASE
         - name: DB_HOST
@@ -57,12 +95,11 @@ spec:
               name: simple-airflow
               key: db_password
 
-        # MICROSSERVICE
-        - name: MICROSERVICE_PASSWORD
-          valueFrom:
-              secretKeyRef:
-                name: simple-airflow
-                key: microservice_password
+        # KONG
+        - name: KONG_API_URL
+          value: "http://load-balancer:8001"
+        - name: SERVICE_URL
+          value: "http://simple-airflow--webserver:5000/"
 
         # RABBITMQ QUEUE
         - name: RABBITMQ_HOST
@@ -105,8 +142,6 @@ spec:
               secretKeyRef:
                 name: aws--storage-key
                 key: aws_secret_access_key
-        ports:
-        - containerPort: 8080
 ---
 apiVersion : "v1"
 kind: Service
@@ -153,11 +188,24 @@ spec:
       - name: gcp--storage-key
         secret:
           secretName: gcp--storage-key
-      command: ["bash", "/app/start_airflow__scheduler.sh"]
+      - name: airflow--gitkey
+        secret:
+          secretName: airflow--gitkey
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: function
+                operator: NotIn
+                values:
+                - system
       containers:
       - name: simple-airflow--scheduler
         image: andrebaceti/simple-airflow:{version}
         imagePullPolicy: Always
+        command: ["bash"]
+        args: ["/airflow/start_airflow__scheduler.bash"]
         resources:
           requests:
             cpu: "1m"
@@ -165,6 +213,9 @@ spec:
           - name: gcp--storage-key
             readOnly: true
             mountPath: /etc/secrets
+          - name: airflow--gitkey
+            readOnly: true
+            mountPath: /ssh_keys/
         env:
         - name: HASH_SALT
           valueFrom:
@@ -173,11 +224,32 @@ spec:
               key: hash_salt
 
         # AIRFLOW
-        - name: AIRFLOW__WEBSERVER__SECRET_KEY_SECRET
+        - name: AIRFLOW__WEBSERVER__SECRET_KEY
           valueFrom:
             secretKeyRef:
               name: simple-airflow
               key: secret_key
+        - name: AIRFLOW__CORE__FERNET_KEY
+          valueFrom:
+            secretKeyRef:
+              name: simple-airflow
+              key: fernet_key
+        - name: AIRFLOW__KUBERNETES__NAMESPACE
+          value: {k8s_pods_namespace}
+        - name: AIRFLOW__LOGGING__REMOTE_BASE_LOG_FOLDER
+          value: "{remote_base_log_folder}"
+        - name: AIRFLOW__LOGGING__REMOTE_LOGGING
+          value: "{remote_logging}"
+        - AIRFLOW__LOGGING__REMOTE_LOG_CONN_ID
+          name: "{remote_log_conn_id}"
+
+        # Git
+        - name: GIT_SERVER
+          value: "{git_server}"
+        - name: GIT_REPOSITORY
+          value: "{git_repository}"
+        - name: GIT_BRANCH
+          value: "{git_branch}"
 
         # DATABASE
         - name: DB_HOST
@@ -187,13 +259,6 @@ spec:
             secretKeyRef:
               name: simple-airflow
               key: db_password
-
-        # MICROSSERVICE
-        - name: MICROSERVICE_PASSWORD
-          valueFrom:
-              secretKeyRef:
-                name: simple-airflow
-                key: microservice_password
 
         # RABBITMQ QUEUE
         - name: RABBITMQ_HOST
@@ -244,7 +309,7 @@ kind: Deployment
 metadata:
   name: simple-airflow--worker
 spec:
-  replicas: 1
+  replicas: {replicas}
   selector:
     matchLabels:
       type: worker
@@ -263,11 +328,24 @@ spec:
       - name: gcp--storage-key
         secret:
           secretName: gcp--storage-key
-      command: ["bash", "/app/start_airflow__worker.sh"]
+      - name: airflow--gitkey
+        secret:
+          secretName: airflow--gitkey
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: function
+                operator: NotIn
+                values:
+                - system
       containers:
       - name: simple-airflow--scheduler
         image: andrebaceti/simple-airflow:{version}
         imagePullPolicy: Always
+        command: ["bash"]
+        args: ["/airflow/start_airflow__worker.bash"]
         resources:
           requests:
             cpu: "1m"
@@ -275,12 +353,48 @@ spec:
           - name: gcp--storage-key
             readOnly: true
             mountPath: /etc/secrets
+          - name: airflow--gitkey
+            readOnly: true
+            mountPath: /ssh_keys/
+        ports:
+        - containerPort: 8793
         env:
         - name: HASH_SALT
           valueFrom:
             secretKeyRef:
               name: hash-salt
               key: hash_salt
+
+        # AIRFLOW
+        - name: AIRFLOW__WEBSERVER__SECRET_KEY
+          valueFrom:
+            secretKeyRef:
+              name: simple-airflow
+              key: secret_key
+        - name: AIRFLOW__CORE__FERNET_KEY
+          valueFrom:
+            secretKeyRef:
+              name: simple-airflow
+              key: fernet_key
+        - name: AIRFLOW__KUBERNETES__NAMESPACE
+          value: {k8s_pods_namespace}
+        - name: AIRFLOW__LOGGING__REMOTE_BASE_LOG_FOLDER
+          value: "{remote_base_log_folder}"
+        - name: AIRFLOW__LOGGING__REMOTE_LOGGING
+          value: "{remote_logging}"
+        - AIRFLOW__LOGGING__REMOTE_LOG_CONN_ID
+          name: "{remote_log_conn_id}"
+        # Ajust log collection from workers using IP address of the POD
+        - name: AIRFLOW__CORE__HOSTNAME_CALLABLE
+          value: 'airflow.utils.net:get_host_ip_address'
+
+        # Git
+        - name: GIT_SERVER
+          value: "{git_server}"
+        - name: GIT_REPOSITORY
+          value: "{git_repository}"
+        - name: GIT_BRANCH
+          value: "{git_branch}"
 
         # DATABASE
         - name: DB_HOST
@@ -290,13 +404,6 @@ spec:
             secretKeyRef:
               name: simple-airflow
               key: db_password
-
-        # MICROSSERVICE
-        - name: MICROSERVICE_PASSWORD
-          valueFrom:
-              secretKeyRef:
-                name: simple-airflow
-                key: microservice_password
 
         # RABBITMQ QUEUE
         - name: RABBITMQ_HOST
@@ -349,9 +456,10 @@ metadata:
   name: simple-airflow
 type: Opaque
 data:
+  secret_key: {secret_key}
   db_password: {db_password}
   microservice_password: {microservice_password}
-  secret_key: {secret_key}
+  fernet_key: {fernet_key}
 """
 
 
@@ -380,72 +488,48 @@ spec:
     {%- endfor %}
 """
 
-volume_postgres = """
-kind: PersistentVolume
-apiVersion: v1
-metadata:
-  name: postgres-pumpwood-datalake
-  labels:
-    usage: postgres-pumpwood-datalake
-spec:
-  accessModes:
-    - ReadWriteOnce
-  capacity:
-    storage: {disk_size}
-  storageClassName: standard
-  gcePersistentDisk:
-    fsType: ext4
-    pdName: {disk_name}
----
-kind: PersistentVolumeClaim
-apiVersion: v1
-metadata:
-  name: postgres-pumpwood-datalake
-spec:
-  accessModes:
-    - ReadWriteOnce
-  resources:
-    requests:
-      storage: {disk_size}
-  volumeName: postgres-pumpwood-datalake
-"""
-
-
 deployment_postgres = """
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: postgres-pumpwood-datalake
+  name: postgres-simple-airflow
 spec:
   replicas: 1
   selector:
     matchLabels:
       type: db
-      endpoint: pumpwood-datalake-app
-      function: datalake
+      endpoint: simple-airflow-app
   template:
     metadata:
       labels:
         type: db
-        endpoint: pumpwood-datalake-app
-        function: datalake
+        endpoint: simple-airflow-app
     spec:
       volumes:
-      - name: pumpwood-datalake-data
+      - name: simple-airflow-data
         persistentVolumeClaim:
-          claimName: postgres-pumpwood-datalake
+          claimName: postgres-simple-airflow
       - name: postgres-init-configmap
         configMap:
           name: postgres-init-configmap
       - name: secrets
         secret:
-          secretName: pumpwood-datalake
+          secretName: simple-airflow
       - name: dshm
         emptyDir:
           medium: Memory
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: function
+                operator: NotIn
+                values:
+                - system
       containers:
-      - name: postgres-pumpwood-datalake
-        image: timescale/timescaledb-postgis:2.3.0-pg12
+      - name: postgres-simple-airflow
+        image: timescale/timescaledb-postgis:2.3.0-pg13
         args: [
             "-c", "max_connections=1000",
             "-c", "work_mem=50MB",
@@ -467,13 +551,13 @@ spec:
         - name: POSTGRES_PASSWORD
           valueFrom:
             secretKeyRef:
-              name: pumpwood-datalake
+              name: simple-airflow
               key: db_password
         - name: PGDATA
           value: /var/lib/postgresql/data/pgdata
 
         volumeMounts:
-        - name: pumpwood-datalake-data
+        - name: simple-airflow-data
           mountPath: /var/lib/postgresql/data/
         - name: postgres-init-configmap
           mountPath: /docker-entrypoint-initdb.d/
@@ -482,17 +566,17 @@ spec:
           readOnly: true
         - name: dshm
           mountPath: /dev/shm
+
         ports:
         - containerPort: 5432
 ---
 apiVersion : "v1"
 kind: Service
 metadata:
-  name: postgres-pumpwood-datalake
+  name: postgres-simple-airflow
   labels:
     type: db
-    endpoint: pumpwood-datalake-app
-    function: datalake
+    endpoint: simple-airflow-app
 spec:
   type: ClusterIP
   ports:
@@ -500,66 +584,61 @@ spec:
       targetPort: 5432
   selector:
     type: db
-    endpoint: pumpwood-datalake-app
-    function: datalake
+    endpoint: simple-airflow-app
 """
 
 
-test_postgres = """
-apiVersion: apps/v1
-kind: Deployment
+service_account = """
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
 metadata:
-  name: postgres-pumpwood-datalake
-spec:
-  replicas: 1
-  selector:
-    matchLabels:
-      type: db
-      endpoint: pumpwood-datalake-app
-      function: datalake
-  template:
-    metadata:
-      labels:
-        type: db
-        endpoint: pumpwood-datalake-app
-        function: datalake
-    spec:
-      imagePullSecrets:
-        - name: dockercfg
-      volumes:
-      - name: dshm
-        emptyDir:
-          medium: Memory
-      containers:
-      - name: postgres-pumpwood-datalake
-        image: {repository}/test-db-pumpwood-datalake:{version}
-        imagePullPolicy: Always
-        resources:
-          requests:
-            cpu: "1m"
-          limits:
-            cpu: "3"
-        volumeMounts:
-        - name: dshm
-          mountPath: /dev/shm
-        ports:
-        - containerPort: 5432
----
-apiVersion : "v1"
-kind: Service
-metadata:
-  name: postgres-pumpwood-datalake
+  name: airflow--pod-launcher-role
   labels:
-    type: db
-    endpoint: pumpwood-datalake-app
-    function: datalake
-spec:
-  type: ClusterIP
-  ports:
-    - port: 5432
-      targetPort: 5432
-  selector:
-    type: db
-    endpoint: pumpwood-datalake-app
-    function: datalake
+    tier: airflow
+rules:
+  - apiGroups:
+      - ""
+    resources:
+      - "pods"
+    verbs:
+      - "create"
+      - "list"
+      - "get"
+      - "patch"
+      - "watch"
+      - "delete"
+  - apiGroups:
+      - ""
+    resources:
+      - "pods/log"
+    verbs:
+      - "get"
+  - apiGroups:
+      - ""
+    resources:
+      - "pods/exec"
+    verbs:
+      - "create"
+      - "get"
+  - apiGroups:
+      - ""
+    resources:
+      - "events"
+    verbs:
+      - "list"
+---
+kind: ClusterRoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: airflow--pod-launcher-rolebinding
+  labels:
+    tier: airflow
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: airflow--pod-launcher-role
+subjects:
+  - kind: ServiceAccount
+    name: defautl
+    namespace: {namespace}
 """
