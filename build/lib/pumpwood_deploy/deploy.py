@@ -118,7 +118,7 @@ class DeployPumpWood():
         # Usa os arqivos de template e subistitui com as variáveis para criar
         # os templates de deploy
         print('### Creating microservices files:')
-        # m = self.microsservices_to_deploy[-1]
+        # m = self.microsservices_to_deploy[0]
         for m in self.microsservices_to_deploy:
             print('\nProcessing: ' + str(m))
             temp_deployments = m.create_deployment_file(
@@ -159,7 +159,7 @@ class DeployPumpWood():
                 elif d['type'] == 'secrets_file':
                     # Legacy path set as string
                     if type(d["path"]) == str:
-                        d["path"] = [str]
+                        d["path"] = [d["path"]]
                     command_formated = secret_file_template.render(
                         name=d["name"], paths=d["path"],
                         namespace=self.namespace)
