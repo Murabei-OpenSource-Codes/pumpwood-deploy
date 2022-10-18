@@ -45,8 +45,8 @@ class DeployPumpWood():
             vary depending on the provider. Check classes KubernetsGCP,
             KubernetsAzure.
           storage_type (str): Storage provider must be in [
-            'azure', 'gcp', 'aws'], correpond to the provider os the flat
-            file storage system.
+            'azure_storage', 'google_bucket', 'aws_s3'], correpond to the
+            provider os the flat file storage system.
           storage_deploy_args (str): Args used to access storage at the
             pods. Each provider must have diferent arguments:
                 # Azure:

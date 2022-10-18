@@ -214,7 +214,7 @@ spec:
         - name: DATALAKE_DB_HOST
           value: {datalake_db_host}
         - name: DATALAKE_DB_PORT
-          value: "{db_portdatalake_db_port"
+          value: "{datalake_db_port}"
         - name: DATALAKE_DB_DATABASE
           value: {datalake_db_database}
         - name: DATALAKE_DB_PASSWORD
