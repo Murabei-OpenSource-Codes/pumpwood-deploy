@@ -75,8 +75,8 @@ spec:
           value: "{remote_base_log_folder}"
         - name: AIRFLOW__LOGGING__REMOTE_LOGGING
           value: "{remote_logging}"
-        - AIRFLOW__LOGGING__REMOTE_LOG_CONN_ID
-          name: "{remote_log_conn_id}"
+        - name: AIRFLOW__LOGGING__REMOTE_LOG_CONN_ID
+          value: "{remote_log_conn_id}"
 
         # Git
         - name: GIT_SERVER
@@ -240,8 +240,8 @@ spec:
           value: "{remote_base_log_folder}"
         - name: AIRFLOW__LOGGING__REMOTE_LOGGING
           value: "{remote_logging}"
-        - AIRFLOW__LOGGING__REMOTE_LOG_CONN_ID
-          name: "{remote_log_conn_id}"
+        - name: AIRFLOW__LOGGING__REMOTE_LOG_CONN_ID
+          value: "{remote_log_conn_id}"
 
         # Git
         - name: GIT_SERVER
@@ -382,8 +382,8 @@ spec:
           value: "{remote_base_log_folder}"
         - name: AIRFLOW__LOGGING__REMOTE_LOGGING
           value: "{remote_logging}"
-        - AIRFLOW__LOGGING__REMOTE_LOG_CONN_ID
-          name: "{remote_log_conn_id}"
+        - name: AIRFLOW__LOGGING__REMOTE_LOG_CONN_ID
+          value: "{remote_log_conn_id}"
         # Ajust log collection from workers using IP address of the POD
         - name: AIRFLOW__CORE__HOSTNAME_CALLABLE
           value: 'airflow.utils.net:get_host_ip_address'
