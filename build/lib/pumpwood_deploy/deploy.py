@@ -45,8 +45,8 @@ class DeployPumpWood():
             vary depending on the provider. Check classes KubernetsGCP,
             KubernetsAzure.
           storage_type (str): Storage provider must be in [
-            'azure', 'gcp', 'aws'], correpond to the provider os the flat
-            file storage system.
+            'azure_storage', 'google_bucket', 'aws_s3'], correpond to the
+            provider os the flat file storage system.
           storage_deploy_args (str): Args used to access storage at the
             pods. Each provider must have diferent arguments:
                 # Azure:
@@ -118,7 +118,7 @@ class DeployPumpWood():
         # Usa os arqivos de template e subistitui com as variáveis para criar
         # os templates de deploy
         print('### Creating microservices files:')
-        # m = self.microsservices_to_deploy[-1]
+        # m = self.microsservices_to_deploy[0]
         for m in self.microsservices_to_deploy:
             print('\nProcessing: ' + str(m))
             temp_deployments = m.create_deployment_file(
@@ -159,7 +159,7 @@ class DeployPumpWood():
                 elif d['type'] == 'secrets_file':
                     # Legacy path set as string
                     if type(d["path"]) == str:
-                        d["path"] = [str]
+                        d["path"] = [d["path"]]
                     command_formated = secret_file_template.render(
                         name=d["name"], paths=d["path"],
                         namespace=self.namespace)

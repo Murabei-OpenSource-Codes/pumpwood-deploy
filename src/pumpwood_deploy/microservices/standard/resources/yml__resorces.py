@@ -236,7 +236,7 @@ spec:
                 - system
       containers:
       - name: apigateway-kong
-        image: {repository}/gateway-loadbalancer-kong:0.1
+        image: andrebaceti/autoboostrap-kong:1.0
         imagePullPolicy: Always
         resources:
           requests:

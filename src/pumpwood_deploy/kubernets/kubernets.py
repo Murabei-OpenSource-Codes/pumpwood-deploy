@@ -89,7 +89,6 @@ class Kubernets:
 class KubernetsGCP:
     """Class to auxiliate GCP Kubernets interface."""
 
-
     def __init__(self, cluster_name: str, zone: str, project: str):
         """
         __init__.

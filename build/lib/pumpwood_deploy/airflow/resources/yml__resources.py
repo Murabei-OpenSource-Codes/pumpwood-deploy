@@ -75,8 +75,8 @@ spec:
           value: "{remote_base_log_folder}"
         - name: AIRFLOW__LOGGING__REMOTE_LOGGING
           value: "{remote_logging}"
-        - AIRFLOW__LOGGING__REMOTE_LOG_CONN_ID
-          name: "{remote_log_conn_id}"
+        - name: AIRFLOW__LOGGING__REMOTE_LOG_CONN_ID
+          value: "{remote_log_conn_id}"
 
         # Git
         - name: GIT_SERVER
@@ -240,8 +240,8 @@ spec:
           value: "{remote_base_log_folder}"
         - name: AIRFLOW__LOGGING__REMOTE_LOGGING
           value: "{remote_logging}"
-        - AIRFLOW__LOGGING__REMOTE_LOG_CONN_ID
-          name: "{remote_log_conn_id}"
+        - name: AIRFLOW__LOGGING__REMOTE_LOG_CONN_ID
+          value: "{remote_log_conn_id}"
 
         # Git
         - name: GIT_SERVER
@@ -382,8 +382,8 @@ spec:
           value: "{remote_base_log_folder}"
         - name: AIRFLOW__LOGGING__REMOTE_LOGGING
           value: "{remote_logging}"
-        - AIRFLOW__LOGGING__REMOTE_LOG_CONN_ID
-          name: "{remote_log_conn_id}"
+        - name: AIRFLOW__LOGGING__REMOTE_LOG_CONN_ID
+          value: "{remote_log_conn_id}"
         # Ajust log collection from workers using IP address of the POD
         - name: AIRFLOW__CORE__HOSTNAME_CALLABLE
           value: 'airflow.utils.net:get_host_ip_address'
@@ -509,9 +509,6 @@ spec:
       - name: simple-airflow-data
         persistentVolumeClaim:
           claimName: postgres-simple-airflow
-      - name: postgres-init-configmap
-        configMap:
-          name: postgres-init-configmap
       - name: secrets
         secret:
           secretName: simple-airflow
@@ -559,8 +556,6 @@ spec:
         volumeMounts:
         - name: simple-airflow-data
           mountPath: /var/lib/postgresql/data/
-        - name: postgres-init-configmap
-          mountPath: /docker-entrypoint-initdb.d/
         - name: secrets
           mountPath: /etc/secrets
           readOnly: true
@@ -639,6 +634,6 @@ roleRef:
   name: airflow--pod-launcher-role
 subjects:
   - kind: ServiceAccount
-    name: defautl
+    name: default
     namespace: {namespace}
 """

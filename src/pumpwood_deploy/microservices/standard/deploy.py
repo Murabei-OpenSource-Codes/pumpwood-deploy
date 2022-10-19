@@ -12,8 +12,7 @@ class StandardMicroservices:
     """
     Create StandardMicroservices.
 
-    Create RabbitMQ deployment and secrets, postgres-init-configmap config map
-    for postgres initiation and storage bucket key secret.
+    Create RabbitMQ deployment and secrets, storage bucket key secret.
 
     """
 
