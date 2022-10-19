@@ -1,31 +1,31 @@
 Metadata-Version: 2.1
 Name: pumpwood-deploy
-Version: 0.13
+Version: 0.14
 Summary: Package to assist deploy Pumpwood Systems on Kubenets
 Home-page: https://github.com/Murabei-OpenSource-Codes/pumpwood-deploy
 Author: Murabei Data Science
 Author-email: a.baceti@murabei.com
 License: BSD-3-Clause License
-Description: # PumpWood Deploy
-        This package helps deploy of Pumpwood like components in Kubernets clusters.
-        It uses jinja templates to generate yml files to be apply using kubectrl.
-        This package was developed by Murabei Data Science and is under BSD-3-Clause
-        license.
-        
-        <p align="center" width="60%">
-          <img src="doc/sitelogo-horizontal.png" /> <br>
-        
-          <a href="https://en.wikipedia.org/wiki/Cecropia">
-            Pumpwood is a native brasilian tree
-          </a> which has a symbiotic relation with ants (Murabei)
-        </p>
-        
-        # Quick Start
-        Each microservice is defined as and object which is added to the deployment
-        stack.
-        
-Platform: UNKNOWN
 Classifier: Programming Language :: Python :: 3
 Classifier: Operating System :: OS Independent
 Requires-Python: >=3.6
 Description-Content-Type: text/markdown
+License-File: LICENSE
+
+# PumpWood Deploy
+This package helps deploy of Pumpwood like components in Kubernets clusters.
+It uses jinja templates to generate yml files to be apply using kubectrl.
+This package was developed by Murabei Data Science and is under BSD-3-Clause
+license.
+
+<p align="center" width="60%">
+  <img src="doc/sitelogo-horizontal.png" /> <br>
+
+  <a href="https://en.wikipedia.org/wiki/Cecropia">
+    Pumpwood is a native brasilian tree
+  </a> which has a symbiotic relation with ants (Murabei)
+</p>
+
+# Quick Start
+Each microservice is defined as and object which is added to the deployment
+stack.

@@ -444,9 +444,6 @@ spec:
       - name: crawler-criptocurrency-data
         persistentVolumeClaim:
           claimName: postgres-crawler-criptocurrency
-      - name: postgres-init-configmap
-        configMap:
-          name: postgres-init-configmap
       - name: secrets
         secret:
           secretName: crawler-criptocurrency
@@ -487,8 +484,6 @@ spec:
         volumeMounts:
         - name: crawler-criptocurrency-data
           mountPath: /var/lib/postgresql/data/
-        - name: postgres-init-configmap
-          mountPath: /docker-entrypoint-initdb.d/
         - name: secrets
           mountPath: /etc/secrets
           readOnly: true

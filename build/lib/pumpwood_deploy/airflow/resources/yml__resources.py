@@ -509,9 +509,6 @@ spec:
       - name: simple-airflow-data
         persistentVolumeClaim:
           claimName: postgres-simple-airflow
-      - name: postgres-init-configmap
-        configMap:
-          name: postgres-init-configmap
       - name: secrets
         secret:
           secretName: simple-airflow
@@ -559,8 +556,6 @@ spec:
         volumeMounts:
         - name: simple-airflow-data
           mountPath: /var/lib/postgresql/data/
-        - name: postgres-init-configmap
-          mountPath: /docker-entrypoint-initdb.d/
         - name: secrets
           mountPath: /etc/secrets
           readOnly: true
@@ -639,6 +634,6 @@ roleRef:
   name: airflow--pod-launcher-role
 subjects:
   - kind: ServiceAccount
-    name: defautl
+    name: default
     namespace: {namespace}
 """
