@@ -30,7 +30,7 @@ spec:
                 - system
       containers:
       - name: pumpwood-auth-static
-        image: {repository}/pumpwood-auth-static:{version}
+        image: {repository}{static_image}:{version}
         imagePullPolicy: Always
         resources:
           requests:
@@ -97,7 +97,7 @@ spec:
                 - system
       containers:
       - name: pumpwood-auth-app
-        image: {repository}/pumpwood-auth-app:{version}
+        image: {repository}{app_image}:{version}
         resources:
           requests:
             memory: "{requests_memory}"
@@ -262,7 +262,7 @@ spec:
                 - system
       containers:
       - name: postgres-pumpwood-auth
-        image: timescale/timescaledb-postgis:2.3.0-pg13
+        image: timescale/timescaledb-postgis:{postgres_version}
         args: [
             "-c", "max_connections=1000",
             "-c", "work_mem=50MB",
@@ -405,7 +405,7 @@ spec:
                 - system
       containers:
       - name: postgres-pumpwood-auth
-        image: {repository}/test-db-pumpwood-auth:{version}
+        image: {repository}test-db-pumpwood-auth:{version}
         imagePullPolicy: Always
         resources:
           requests:

@@ -1,6 +1,7 @@
 LICENSE
 MANIFEST.in
 README.md
+README.rst
 setup.py
 src/pumpwood_deploy/__init__.py
 src/pumpwood_deploy/deploy.py
@@ -39,6 +40,10 @@ src/pumpwood_deploy/microservices/pumpwood_auth/__init__.py
 src/pumpwood_deploy/microservices/pumpwood_auth/deploy.py
 src/pumpwood_deploy/microservices/pumpwood_auth/resources/__init__.py
 src/pumpwood_deploy/microservices/pumpwood_auth/resources/yml__resources.py
+src/pumpwood_deploy/microservices/pumpwood_complex_datalake/__init__.py
+src/pumpwood_deploy/microservices/pumpwood_complex_datalake/deploy.py
+src/pumpwood_deploy/microservices/pumpwood_complex_datalake/resources/__init__.py
+src/pumpwood_deploy/microservices/pumpwood_complex_datalake/resources/yml__resources.py
 src/pumpwood_deploy/microservices/pumpwood_datalake/__init__.py
 src/pumpwood_deploy/microservices/pumpwood_datalake/deploy.py
 src/pumpwood_deploy/microservices/pumpwood_datalake/resources/__init__.py
