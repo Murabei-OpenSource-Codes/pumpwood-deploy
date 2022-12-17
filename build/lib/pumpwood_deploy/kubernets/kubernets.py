@@ -103,8 +103,9 @@ class KubernetsGCP:
         self.zone = zone
         self.project = project
 
-        cmd = "gcloud container clusters get-credentials {cluster_name} " + \
-            " --zone {zone} --project {project}"
+        cmd = (
+            "gcloud container clusters get-credentials {cluster_name} "
+            " --zone {zone} --project {project}")
         cmd_formated = cmd.format(
             cluster_name=cluster_name, zone=zone, project=project)
 

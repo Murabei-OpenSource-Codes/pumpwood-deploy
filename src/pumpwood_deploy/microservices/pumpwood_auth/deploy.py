@@ -41,7 +41,10 @@ class PumpWoodAuthMicroservice:
                  db_username: str = "pumpwood",
                  db_host: str = "postgres-pumpwood-auth",
                  db_port: str = "5432",
-                 db_database: str = "pumpwood"):
+                 db_database: str = "pumpwood",
+                 app_image: str="pumpwood-auth-app",
+                 static_image: str="pumpwood-auth-static",
+                 postgres_version="2.3.0-pg13"):
         """Deploy PumpWood Auth Microservice.
 
         Args:
@@ -110,11 +113,15 @@ class PumpWoodAuthMicroservice:
         self.db_host = db_host
         self.db_port = db_port
         self.db_database = db_database
-
         self.version_static = version_static
 
+        self.app_image = app_image
+        self.static_image = static_image
+
         # App
-        self.repository = repository
+        self.repository = (
+            repository + "/"
+            if repository is not None else "")
         self.version_app = version_app
         self.app_limits_memory = app_limits_memory
         self.app_limits_cpu = app_limits_cpu
@@ -123,12 +130,15 @@ class PumpWoodAuthMicroservice:
         self.replicas = replicas
 
         # Postgres
+        self.postgres_version = postgres_version
         self.postgres_limits_memory = postgres_limits_memory
         self.postgres_limits_cpu = postgres_limits_cpu
         self.postgres_requests_memory = postgres_requests_memory
         self.postgres_requests_cpu = postgres_requests_cpu
         self.test_db_version = test_db_version
-        self.test_db_repository = test_db_repository
+        self.test_db_repository = (
+            test_db_repository + "/"
+            if test_db_repository is not None else "")
 
     def create_deployment_file(self, kube_client):
         """
@@ -161,11 +171,14 @@ class PumpWoodAuthMicroservice:
               requests_memory=self.app_limits_memory,
               requests_cpu=self.app_limits_cpu,
               limits_memory=self.app_requests_memory,
-              limits_cpu=self.app_requests_cpu)
+              limits_cpu=self.app_requests_cpu,
+              app_image=self.app_image)
+
         deployment_auth_admin_static_f = \
             auth_admin_static.format(
                 repository=self.repository,
-                version=self.version_static)
+                version=self.version_static,
+                static_image=self.static_image)
 
         volume_postgres_text_f = None
         deployment_postgres_text_f = None
@@ -186,7 +199,8 @@ class PumpWoodAuthMicroservice:
                 requests_memory=self.postgres_requests_memory,
                 requests_cpu=self.postgres_requests_cpu,
                 limits_memory=self.postgres_limits_memory,
-                limits_cpu=self.postgres_limits_cpu)
+                limits_cpu=self.postgres_limits_cpu,
+                postgres_version=self.postgres_version)
 
         list_return = [{
             'type': 'secrets', 'name': 'pumpwood_auth__secrets',
