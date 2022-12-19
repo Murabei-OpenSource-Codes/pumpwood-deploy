@@ -91,6 +91,13 @@ spec:
               secretKeyRef:
                 name: pumpwood-etl
                 key: microservice_password
+        
+        # Airflow connection
+        - name: AIRFLOW_PASSWORD
+          valueFrom:
+              secretKeyRef:
+                name: pumpwood-etl
+                key: microservice_password
 
         # workers_timeout
         - name: WORKERS_TIMEOUT
