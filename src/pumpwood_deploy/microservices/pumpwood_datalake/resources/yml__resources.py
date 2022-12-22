@@ -446,13 +446,6 @@ spec:
     spec:
       imagePullSecrets:
         - name: dockercfg
-      resources:
-        requests:
-          memory: "{requests_memory}"
-          cpu:  "{requests_cpu}"
-        limits:
-          memory: "{limits_memory}"
-          cpu:  "{limits_cpu}"
       volumes:
       - name: dshm
         emptyDir:
@@ -472,9 +465,11 @@ spec:
         imagePullPolicy: Always
         resources:
           requests:
-            cpu: "1m"
+            memory: "{requests_memory}"
+            cpu:  "{requests_cpu}"
           limits:
-            cpu: "3"
+            memory: "{limits_memory}"
+            cpu:  "{limits_cpu}"
         volumeMounts:
         - name: dshm
           mountPath: /dev/shm
