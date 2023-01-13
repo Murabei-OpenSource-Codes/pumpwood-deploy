@@ -14,21 +14,25 @@ class PumpWoodDatalakeMicroservice:
     """PumpWoodDatalakeMicroservice."""
 
     def __init__(self, db_password: str,
-                 microservice_password: str, bucket_name: str,
-                 version_app: str, version_worker: str,
-                 disk_name: str = None, disk_size: str = None,
-                 postgres_public_ip: str = None, firewall_ips: list = None,
+                 microservice_password: str,
+                 bucket_name: str,
+                 version_app: str,
+                 version_worker: str,
+                 disk_name: str = None,
+                 disk_size: str = None,
+                 postgres_public_ip: str = None,
+                 firewall_ips: list = None,
                  repository: str = "gcr.io/repositorio-geral-170012",
                  test_db_version: str = None,
                  test_db_repository: str = "gcr.io/repositorio-geral-170012",
-                 debug: str = "FALSE",
                  db_username: str = "pumpwood",
                  db_host: str = "postgres-pumpwood-datalake",
                  db_port: str = "5432",
                  db_database: str = "pumpwood",
+                 app_debug: str = "FALSE",
                  app_replicas: int = 1,
                  app_timeout: int = 300,
-                 app_workers: int = 20,
+                 app_workers: int = 10,
                  app_limits_memory: str = "60Gi",
                  app_limits_cpu: str = "12000m",
                  app_requests_memory: str = "20Mi",
@@ -69,6 +73,7 @@ class PumpWoodDatalakeMicroservice:
           db_host (str): Database connection host.
           db_port (str): Database connection port.
           db_database (str): Database connection database.
+          app_debug (str): TRUE or FALSE, set app in debug mode.
           app_replicas (int) = 1: Number of replicas in app deployment.
           app_timeout (int): Timeout in seconds for the guinicorn workers.
           app_workers (int): Number of workers to spaw at guinicorn.
@@ -131,7 +136,10 @@ class PumpWoodDatalakeMicroservice:
         self.db_database = db_database
 
         self.repository = repository
-        self.debug = debug
+        self.app_debug = app_debug
+        self.app_replicas = app_replicas
+        self.app_timeout = app_timeout
+        self.app_workers = app_workers
         self.version_app = version_app
         self.version_worker = version_worker
 
@@ -210,7 +218,7 @@ class PumpWoodDatalakeMicroservice:
                 limits_memory=self.app_limits_memory,
                 workers_timeout=self.app_timeout,
                 n_workers=self.app_workers,
-                debug=self.debug,
+                debug=self.app_debug,
                 db_username=self.db_username,
                 db_host=self.db_host,
                 db_port=self.db_port,

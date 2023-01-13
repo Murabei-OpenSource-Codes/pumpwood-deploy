@@ -15,10 +15,10 @@ src/pumpwood_deploy/airflow/deploy.py
 src/pumpwood_deploy/airflow/resources/__init__.py
 src/pumpwood_deploy/airflow/resources/yml__resources.py
 src/pumpwood_deploy/crawlers/__init__.py
-src/pumpwood_deploy/crawlers/criptocurrency/__init__.py
-src/pumpwood_deploy/crawlers/criptocurrency/deploy.py
-src/pumpwood_deploy/crawlers/criptocurrency/resources/__init__.py
-src/pumpwood_deploy/crawlers/criptocurrency/resources/yml__resources.py
+src/pumpwood_deploy/crawlers/cryptocurrency/__init__.py
+src/pumpwood_deploy/crawlers/cryptocurrency/deploy.py
+src/pumpwood_deploy/crawlers/cryptocurrency/resources/__init__.py
+src/pumpwood_deploy/crawlers/cryptocurrency/resources/yml__resources.py
 src/pumpwood_deploy/kubernets/__init__.py
 src/pumpwood_deploy/kubernets/kubernets.py
 src/pumpwood_deploy/kubernets/resources/__init__.py

@@ -54,6 +54,10 @@ spec:
         env:
         - name: DEBUG
           value: "{debug}"
+        - name: WORKERS_TIMEOUT
+          value: "{workers_timeout}"
+        - name: N_WORKERS
+          value: "{n_workers}"
 
         # HASH_SALT
         - name: HASH_SALT
@@ -92,10 +96,6 @@ spec:
               secretKeyRef:
                 name: pumpwood-description-matcher
                 key: microservice_password
-
-        # workers_timeout
-        - name: WORKERS_TIMEOUT
-          value: "{workers_timeout}"
 
         ###########
         # STORAGE #
