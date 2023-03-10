@@ -1,6 +1,5 @@
 LICENSE
 MANIFEST.in
-README.md
 README.rst
 setup.py
 src/pumpwood_deploy/__init__.py
@@ -15,10 +14,10 @@ src/pumpwood_deploy/airflow/deploy.py
 src/pumpwood_deploy/airflow/resources/__init__.py
 src/pumpwood_deploy/airflow/resources/yml__resources.py
 src/pumpwood_deploy/crawlers/__init__.py
-src/pumpwood_deploy/crawlers/criptocurrency/__init__.py
-src/pumpwood_deploy/crawlers/criptocurrency/deploy.py
-src/pumpwood_deploy/crawlers/criptocurrency/resources/__init__.py
-src/pumpwood_deploy/crawlers/criptocurrency/resources/yml__resources.py
+src/pumpwood_deploy/crawlers/cryptocurrency/__init__.py
+src/pumpwood_deploy/crawlers/cryptocurrency/deploy.py
+src/pumpwood_deploy/crawlers/cryptocurrency/resources/__init__.py
+src/pumpwood_deploy/crawlers/cryptocurrency/resources/yml__resources.py
 src/pumpwood_deploy/kubernets/__init__.py
 src/pumpwood_deploy/kubernets/kubernets.py
 src/pumpwood_deploy/kubernets/resources/__init__.py
@@ -56,6 +55,10 @@ src/pumpwood_deploy/microservices/pumpwood_description_matcher/__init__.py
 src/pumpwood_deploy/microservices/pumpwood_description_matcher/deploy.py
 src/pumpwood_deploy/microservices/pumpwood_description_matcher/resources/__init__.py
 src/pumpwood_deploy/microservices/pumpwood_description_matcher/resources/yml__resources.py
+src/pumpwood_deploy/microservices/pumpwood_dummy_models/__init__.py
+src/pumpwood_deploy/microservices/pumpwood_dummy_models/deploy.py
+src/pumpwood_deploy/microservices/pumpwood_dummy_models/resources/__init__.py
+src/pumpwood_deploy/microservices/pumpwood_dummy_models/resources/yml__resources.py
 src/pumpwood_deploy/microservices/pumpwood_estimation/__init__.py
 src/pumpwood_deploy/microservices/pumpwood_estimation/deploy.py
 src/pumpwood_deploy/microservices/pumpwood_estimation/resources/__init__.py

@@ -4,15 +4,14 @@ import base64
 from pumpwood_deploy.microservices.postgres.postgres import \
     create_ssl_key_ssl_crt
 from jinja2 import Template
-from pumpwood_deploy.crawlers.criptocurrency.resources.yml__resources import (
+from pumpwood_deploy.crawlers.cryptocurrency.resources.yml__resources import (
     app_deployment, worker_candle_deployment,
     worker_balance_deployment, worker_order_deployment,
-    deployment_postgres, secrets, services__load_balancer,
-    volume_postgres)
+    deployment_postgres, secrets, services__load_balancer)
 
 
-class CrawlerCriptoCurrency:
-    """CrawlerCriptoCurrency."""
+class CrawlerCryptoCurrency:
+    """CrawlerCryptoCurrency."""
 
     def __init__(self,
                  db_password: str,
@@ -34,7 +33,7 @@ class CrawlerCriptoCurrency:
                  app_replicas: int = 1,
                  app_timeout: int = 300,
                  app_debug: str = "FALSE",
-                 app_workers: int = 20,
+                 app_workers: int = 10,
                  app_limits_memory: str = "60Gi",
                  app_limits_cpu: str = "12000m",
                  app_requests_memory: str = "20Mi",
@@ -56,7 +55,7 @@ class CrawlerCriptoCurrency:
                  postgres_requests_memory: str = "20Mi",
                  postgres_requests_cpu: str = "1m",
                  db_username: str = "pumpwood",
-                 db_host: str = "postgres-crawler-criptocurrency",
+                 db_host: str = "postgres-crawler-cryptocurrency",
                  db_port: str = "5432",
                  db_database: str = "pumpwood"):
         """
@@ -185,7 +184,7 @@ class CrawlerCriptoCurrency:
             volume_postgres_text_f = kube_client.create_volume_yml(
                 disk_name=self.disk_name,
                 disk_size=self.disk_size,
-                volume_claim_name="postgres-crawler-criptocurrency")
+                volume_claim_name="postgres-crawler-cryptocurrency")
             deployment_postgres_text_f = deployment_postgres.format(
                 requests_memory=self.postgres_requests_memory,
                 requests_cpu=self.postgres_requests_cpu,
@@ -200,6 +199,7 @@ class CrawlerCriptoCurrency:
                 workers_timeout=self.app_timeout,
                 debug=self.app_debug,
                 replicas=self.app_replicas,
+                n_workers=self.app_workers,
                 db_username=self.db_username,
                 db_host=self.db_host,
                 db_port=self.db_port,
@@ -237,29 +237,29 @@ class CrawlerCriptoCurrency:
 
         list_return = [{
             'type': 'secrets',
-            'name': 'crawler_criptocurrency__secrets',
+            'name': 'crawler_cryptocurrency__secrets',
             'content': secrets_text_formated, 'sleep': 5}]
         if volume_postgres_text_f is not None:
             list_return.append({
-                'type': 'volume', 'name': 'crawler_criptocurrency__volume',
+                'type': 'volume', 'name': 'crawler_cryptocurrency__volume',
                 'content': volume_postgres_text_f, 'sleep': 10})
         if deployment_postgres_text_f is not None:
             list_return.append({
                 'type': 'deploy',
-                'name': 'crawler_criptocurrency__postgres',
+                'name': 'crawler_cryptocurrency__postgres',
                 'content': deployment_postgres_text_f, 'sleep': 0})
 
         list_return.append({
-            'type': 'deploy', 'name': 'crawler_criptocurrency__app',
+            'type': 'deploy', 'name': 'crawler_cryptocurrency__app',
             'content': deployment_text_frmtd, 'sleep': 0})
         list_return.append({
-            'type': 'deploy', 'name': 'crawler_criptocurrency__worker_candle',
+            'type': 'deploy', 'name': 'crawler_cryptocurrency__worker_candle',
             'content': worker_candle_deployment_frmted, 'sleep': 0})
         list_return.append({
-            'type': 'deploy', 'name': 'crawler_criptocurrency__worker_balance',
+            'type': 'deploy', 'name': 'crawler_cryptocurrency__worker_balance',
             'content': worker_balance_deployment_frmted, 'sleep': 0})
         list_return.append({
-            'type': 'deploy', 'name': 'crawler_criptocurrency__worker_order',
+            'type': 'deploy', 'name': 'crawler_cryptocurrency__worker_order',
             'content': worker_order_deployment_frmted, 'sleep': 0})
 
         if self.firewall_ips is not None and \
@@ -271,6 +271,6 @@ class CrawlerCriptoCurrency:
                 firewall_ips=self.firewall_ips)
             list_return.append({
                 'type': 'services',
-                'name': 'crawler_criptocurrency__services_loadbalancer',
+                'name': 'crawler_cryptocurrency__services_loadbalancer',
                 'content': svcs__load_balancer_text, 'sleep': 0})
         return list_return

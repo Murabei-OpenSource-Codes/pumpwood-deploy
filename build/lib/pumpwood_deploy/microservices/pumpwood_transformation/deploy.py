@@ -16,15 +16,19 @@ class PumpWoodTransformationMicroservice:
 
     def __init__(self, db_password: str,
                  microservice_password: str,
-                 bucket_name: str, version_app: str,
-                 disk_name: str = None, disk_size: str = None,
+                 bucket_name: str,
+                 version_app: str,
+                 disk_name: str = None,
+                 disk_size: str = None,
                  postgres_public_ip: str = None,
                  repository: str = "gcr.io/repositorio-geral-170012",
                  firewall_ips: List[str] = None,
-                 workers_timeout: int = 300, replicas: int = 1,
                  test_db_version: str = None,
                  test_db_repository: str = "gcr.io/repositorio-geral-170012",
-                 debug: str = "FALSE",
+                 app_debug: str = "FALSE",
+                 app_replicas: int = 1,
+                 app_timeout: int = 300,
+                 app_workers: int = 10,
                  db_username: str = "pumpwood",
                  db_host: str = "postgres-pumpwood-transformation",
                  db_port: str = "5432",
@@ -84,16 +88,20 @@ class PumpWoodTransformationMicroservice:
         self.disk_size = disk_size
         self.disk_name = disk_name
         self.base_path = os.path.dirname(__file__)
+        self.repository = repository
 
+        # App
+        self.version_app = version_app
+        self.app_debug = app_debug
+        self.app_replicas = app_replicas
+        self.app_timeout = app_timeout
+        self.app_workers = app_workers
+
+        # Database
         self.db_username = db_username
         self.db_host = db_host
         self.db_port = db_port
         self.db_database = db_database
-
-        self.workers_timeout = workers_timeout
-        self.repository = repository
-        self.version_app = version_app
-        self.replicas = replicas
 
         self.test_db_version = test_db_version
         self.test_db_repository = test_db_repository
@@ -129,9 +137,10 @@ class PumpWoodTransformationMicroservice:
                 repository=self.repository,
                 version=self.version_app,
                 bucket_name=self.bucket_name,
-                workers_timeout=self.workers_timeout,
-                replicas=self.replicas,
-                debug=self.debug,
+                replicas=self.app_replicas,
+                debug=self.app_debug,
+                n_workers=self.app_workers,
+                workers_timeout=self.app_timeout,
                 db_username=self.db_username,
                 db_host=self.db_host,
                 db_port=self.db_port,

@@ -2,20 +2,20 @@ app_deployment = """
 apiVersion : "apps/v1"
 kind: Deployment
 metadata:
-  name: pumpwood-datalake-app
+  name: pumpwood-dummy-models-app
 spec:
   replicas: {replicas}
   selector:
     matchLabels:
       type: app
-      endpoint: pumpwood-datalake-app
-      function: datalake
+      endpoint: pumpwood-dummy-models-app
+      function: dummy-models
   template:
     metadata:
       labels:
         type: app
-        endpoint: pumpwood-datalake-app
-        function: datalake
+        endpoint: pumpwood-dummy-models-app
+        function: dummy-models
     spec:
       imagePullSecrets:
         - name: dockercfg
@@ -33,8 +33,8 @@ spec:
                 values:
                 - system
       containers:
-      - name: pumpwood-datalake
-        image: {repository}/pumpwood-datalake-app:{version}
+      - name: pumpwood-dummy-models
+        image: {repository}/pumpwood-dummy-models-app:{version}
         imagePullPolicy: Always
         resources:
           requests:
@@ -49,7 +49,7 @@ spec:
             mountPath: /etc/secrets
         readinessProbe:
           httpGet:
-            path: /health-check/pumpwood-datalake-app/
+            path: /health-check/pumpwood-dummy-models-app/
             port: 5000
         env:
         - name: DEBUG
@@ -78,7 +78,7 @@ spec:
         - name: DB_PASSWORD
           valueFrom:
             secretKeyRef:
-              name: pumpwood-datalake
+              name: pumpwood-dummy-models
               key: db_password
 
         # RABBITMQ ETL
@@ -94,7 +94,7 @@ spec:
         - name: MICROSERVICE_PASSWORD
           valueFrom:
               secretKeyRef:
-                name: pumpwood-datalake
+                name: pumpwood-dummy-models
                 key: microservice_password
 
         ###########
@@ -135,11 +135,11 @@ spec:
 apiVersion : "v1"
 kind: Service
 metadata:
-  name: pumpwood-datalake-app
+  name: pumpwood-dummy-models-app
   labels:
     type: app
-    endpoint: pumpwood-datalake-app
-    function: datalake
+    endpoint: pumpwood-dummy-models-app
+    function: dummy-models
 spec:
   type: ClusterIP
   ports:
@@ -147,146 +147,15 @@ spec:
       targetPort: 5000
   selector:
     type: app
-    endpoint: pumpwood-datalake-app
-    function: datalake
-"""
-
-
-worker_deployment = """
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: pumpwood-datalake-dataloader-worker
-spec:
-  replicas: {replicas}
-  selector:
-    matchLabels:
-      type: worker
-      endpoint: pumpwood-datalake-app
-      function: dataloader
-  template:
-    metadata:
-      labels:
-          type: worker
-          endpoint: pumpwood-datalake-app
-          function: dataloader
-    spec:
-      imagePullSecrets:
-        - name: dockercfg
-      volumes:
-      - name: gcp--storage-key
-        secret:
-          secretName: gcp--storage-key
-      affinity:
-        nodeAffinity:
-          requiredDuringSchedulingIgnoredDuringExecution:
-            nodeSelectorTerms:
-            - matchExpressions:
-              - key: function
-                operator: NotIn
-                values:
-                - system
-      containers:
-      - name: pumpwood-dataloader-worker
-        image: {repository}/pumpwood-datalake-dataloader-worker:{version}
-        imagePullPolicy: Always
-        resources:
-          requests:
-            memory: "{requests_memory}"
-            cpu:  "{requests_cpu}"
-          limits:
-            memory: "{limits_memory}"
-            cpu:  "{limits_cpu}"
-        volumeMounts:
-          - name: gcp--storage-key
-            readOnly: true
-            mountPath: /etc/secrets
-        env:
-        # HASH_SALT
-        - name: HASH_SALT
-          valueFrom:
-            secretKeyRef:
-              name: hash-salt
-              key: hash_salt
-
-        # Database
-        - name: DB_USERNAME
-          value: {db_username}
-        - name: DB_HOST
-          value: {db_host}
-        - name: DB_PORT
-          value: "{db_port}"
-        - name: DB_DATABASE
-          value: {db_database}
-        - name: DB_PASSWORD
-          valueFrom:
-            secretKeyRef:
-              name: pumpwood-datalake
-              key: db_password
-
-        #RABBITMQ
-        - name: RABBITMQ_HOST
-          value: "rabbitmq-main"
-        - name: RABBITMQ_PASSWORD
-          valueFrom:
-            secretKeyRef:
-              name: rabbitmq-main-secrets
-              key: password
-
-        #Microsservice
-        - name: MICROSERVICE_PASSWORD
-          valueFrom:
-              secretKeyRef:
-                name: pumpwood-datalake
-                key: microservice_password
-
-        # Limit process
-        - name: N_PARALLEL
-          value: '{n_parallel}'
-        - name: CHUNK_SIZE
-          value: '{chunk_size}'
-        - name: QUERY_LIMIT
-          value: '{query_limit}'
-
-        ###########
-        # STORAGE #
-        - name: STORAGE_BUCKET_NAME
-          value: {bucket_name}
-        - name: STORAGE_TYPE
-          valueFrom:
-            configMapKeyRef:
-              name: storage
-              key: storage_type
-
-        # GCP
-        - name: GOOGLE_APPLICATION_CREDENTIALS
-          value: "/etc/secrets/key-storage.json"
-
-        # AZURE
-        - name: AZURE_STORAGE_CONNECTION_STRING
-          valueFrom:
-              secretKeyRef:
-                name: azure--storage-key
-                key: azure_storage_connection_string
-
-        # AWS
-        - name: AWS_ACCESS_KEY_ID
-          valueFrom:
-              secretKeyRef:
-                name: aws--storage-key
-                key: aws_access_key_id
-        - name: AWS_SECRET_ACCESS_KEY
-          valueFrom:
-              secretKeyRef:
-                name: aws--storage-key
-                key: aws_secret_access_key
+    endpoint: pumpwood-dummy-models-app
+    function: dummy-models
 """
 
 secrets = """
 apiVersion: v1
 kind: Secret
 metadata:
-  name: pumpwood-datalake
+  name: pumpwood-dummy-models
 type: Opaque
 data:
   db_password: {db_password}
@@ -299,11 +168,11 @@ services__load_balancer = """
 apiVersion : "v1"
 kind: Service
 metadata:
-  name: loadbalancer-postgres-pumpwood-datalake
+  name: loadbalancer-postgres-pumpwood-dummy-models
   labels:
       type: loadbalancer-db
-      endpoint: pumpwood-datalake-app
-      function: datalake
+      endpoint: pumpwood-dummy-models-app
+      function: dummy-models
 spec:
   type: LoadBalancer
   ports:
@@ -311,8 +180,8 @@ spec:
       targetPort: 5432
   selector:
       type: db
-      endpoint: pumpwood-datalake-app
-      function: datalake
+      endpoint: pumpwood-dummy-models-app
+      function: dummy-models
   loadBalancerIP: {{ postgres_public_ip }}
   loadBalancerSourceRanges:
     {%- for ip in firewall_ips %}
@@ -324,28 +193,28 @@ deployment_postgres = """
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: postgres-pumpwood-datalake
+  name: postgres-pumpwood-dummy-models
 spec:
   replicas: 1
   selector:
     matchLabels:
       type: db
-      endpoint: pumpwood-datalake-app
-      function: datalake
+      endpoint: pumpwood-dummy-models-app
+      function: dummy-models
   template:
     metadata:
       labels:
         type: db
-        endpoint: pumpwood-datalake-app
-        function: datalake
+        endpoint: pumpwood-dummy-models-app
+        function: dummy-models
     spec:
       volumes:
-      - name: pumpwood-datalake-data
+      - name: pumpwood-dummy-models-data
         persistentVolumeClaim:
-          claimName: postgres-pumpwood-datalake
+          claimName: postgres-pumpwood-dummy-models
       - name: secrets
         secret:
-          secretName: pumpwood-datalake
+          secretName: pumpwood-dummy-models
       - name: dshm
         emptyDir:
           medium: Memory
@@ -359,20 +228,15 @@ spec:
                 values:
                 - system
       containers:
-      - name: postgres-pumpwood-datalake
+      - name: postgres-pumpwood-dummy-models
         image: timescale/timescaledb-postgis:2.3.0-pg13
         args: [
             "-c", "max_connections=1000",
             "-c", "work_mem=50MB",
-            "-c", "shared_buffers=5GB",
+            "-c", "shared_buffers=1GB",
             "-c", "max_locks_per_transaction=500",
-            "-c", "synchronous_commit=off",
             "-c", "max_wal_size=10GB",
-            "-c", "min_wal_size=80MB",
-            "-c", "effective_io_concurrency=200",
-            "-c", "max_worker_processes=50",
-            "-c", "max_parallel_workers=20",
-            "-c", "max_parallel_workers_per_gather=10"]
+            "-c", "min_wal_size=80MB"]
         imagePullPolicy: Always
         resources:
           requests:
@@ -389,13 +253,13 @@ spec:
         - name: POSTGRES_PASSWORD
           valueFrom:
             secretKeyRef:
-              name: pumpwood-datalake
+              name: pumpwood-dummy-models
               key: db_password
         - name: PGDATA
           value: /var/lib/postgresql/data/pgdata
 
         volumeMounts:
-        - name: pumpwood-datalake-data
+        - name: pumpwood-dummy-models-data
           mountPath: /var/lib/postgresql/data/
         - name: secrets
           mountPath: /etc/secrets
@@ -408,11 +272,11 @@ spec:
 apiVersion : "v1"
 kind: Service
 metadata:
-  name: postgres-pumpwood-datalake
+  name: postgres-pumpwood-dummy-models
   labels:
     type: db
-    endpoint: pumpwood-datalake-app
-    function: datalake
+    endpoint: pumpwood-dummy-models-app
+    function: dummy-models
 spec:
   type: ClusterIP
   ports:
@@ -420,29 +284,28 @@ spec:
       targetPort: 5432
   selector:
     type: db
-    endpoint: pumpwood-datalake-app
-    function: datalake
+    endpoint: pumpwood-dummy-models-app
+    function: dummy-models
 """
-
 
 test_postgres = """
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: postgres-pumpwood-datalake
+  name: postgres-pumpwood-dummy-models
 spec:
   replicas: 1
   selector:
     matchLabels:
       type: db
-      endpoint: pumpwood-datalake-app
-      function: datalake
+      endpoint: pumpwood-dummy-models-app
+      function: dummy-models
   template:
     metadata:
       labels:
         type: db
-        endpoint: pumpwood-datalake-app
-        function: datalake
+        endpoint: pumpwood-dummy-models-app
+        function: dummy-models
     spec:
       imagePullSecrets:
         - name: dockercfg
@@ -460,8 +323,8 @@ spec:
                 values:
                 - system
       containers:
-      - name: postgres-pumpwood-datalake
-        image: {repository}/test-db-pumpwood-datalake:{version}
+      - name: postgres-pumpwood-dummy-models
+        image: {repository}/test-db-dummy-models:{version}
         imagePullPolicy: Always
         resources:
           requests:
@@ -479,11 +342,11 @@ spec:
 apiVersion : "v1"
 kind: Service
 metadata:
-  name: postgres-pumpwood-datalake
+  name: postgres-pumpwood-dummy-models
   labels:
     type: db
-    endpoint: pumpwood-datalake-app
-    function: datalake
+    endpoint: pumpwood-dummy-models-app
+    function: dummy-models
 spec:
   type: ClusterIP
   ports:
@@ -491,6 +354,6 @@ spec:
       targetPort: 5432
   selector:
     type: db
-    endpoint: pumpwood-datalake-app
-    function: datalake
+    endpoint: pumpwood-dummy-models-app
+    function: dummy-models
 """

@@ -54,6 +54,10 @@ spec:
         env:
         - name: DEBUG
           value: "{debug}"
+        - name: WORKERS_TIMEOUT
+          value: "{workers_timeout}"
+        - name: N_WORKERS
+          value: "{n_workers}"
 
         - name: HASH_SALT
           valueFrom:
@@ -91,10 +95,13 @@ spec:
               secretKeyRef:
                 name: pumpwood-etl
                 key: microservice_password
-
-        # workers_timeout
-        - name: WORKERS_TIMEOUT
-          value: "{workers_timeout}"
+        
+        # Airflow connection
+        - name: AIRFLOW_PASSWORD
+          valueFrom:
+              secretKeyRef:
+                name: pumpwood-etl
+                key: microservice_password
 
         ###########
         # STORAGE #

@@ -70,6 +70,10 @@ spec:
         env:
         - name: DEBUG
           value: "{debug}"
+        - name: WORKERS_TIMEOUT
+          value: "{workers_timeout}"
+        - name: N_WORKERS
+          value: "{n_workers}"
 
         - name: HASH_SALT
           valueFrom:
@@ -140,10 +144,6 @@ spec:
               secretKeyRef:
                 name: aws--storage-key
                 key: aws_secret_access_key
-
-        # Timeout
-        - name: WORKERS_TIMEOUT
-          value: "{workers_timeout}"
 ---
 apiVersion : "v1"
 kind: Service

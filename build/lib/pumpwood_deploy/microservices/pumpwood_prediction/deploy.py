@@ -15,16 +15,18 @@ class PumpWoodPredictionMicroservice:
     """PumpWoodTransformationMicroservice."""
 
     def __init__(self, db_password: str,
-                 microservice_password: str, bucket_name: str,
-                 version_app: str, version_rawdata: str,
-                 version_dataloader: str, postgres_public_ip: str = None,
-                 disk_name: str = None, disk_size: str = None,
+                 microservice_password: str,
+                 bucket_name: str,
+                 version_app: str,
+                 version_rawdata: str,
+                 version_dataloader: str,
+                 postgres_public_ip: str = None,
+                 disk_name: str = None,
+                 disk_size: str = None,
                  firewall_ips: List[str] = None,
                  repository: str = "gcr.io/repositorio-geral-170012",
-                 workers_timeout: int = 300, replicas: int = 1,
                  test_db_version: str = None,
                  test_db_repository: str = "gcr.io/repositorio-geral-170012",
-                 debug: str = "FALSE",
                  db_username: str = "pumpwood",
                  db_host: str = "postgres-pumpwood-prediction",
                  db_port: str = "5432",
@@ -33,7 +35,10 @@ class PumpWoodPredictionMicroservice:
                  datalake_db_host: str = "postgres-pumpwood-datalake",
                  datalake_db_port: str = "5432",
                  datalake_db_database: str = "pumpwood",
+                 app_debug: str = "FALSE",
                  app_replicas: int = 1,
+                 app_timeout: int = 300,
+                 app_workers: int = 10,
                  app_limits_memory: str = "60Gi",
                  app_limits_cpu: str = "12000m",
                  app_requests_memory: str = "20Mi",
@@ -120,6 +125,7 @@ class PumpWoodPredictionMicroservice:
         self.disk_name = disk_name
         self.base_path = os.path.dirname(__file__)
 
+        # Datalake connection
         self.db_username = db_username
         self.db_host = db_host
         self.db_port = db_port
@@ -130,9 +136,10 @@ class PumpWoodPredictionMicroservice:
         self.datalake_db_database = datalake_db_database
 
         # App
-        self.debug = debug
+        self.app_debug = app_debug
         self.app_replicas = app_replicas
-        self.workers_timeout = workers_timeout
+        self.app_timeout = app_timeout
+        self.app_workers = app_workers
         self.repository = repository
         self.version_app = version_app
         self.app_limits_memory = app_limits_memory
@@ -205,7 +212,9 @@ class PumpWoodPredictionMicroservice:
             version=self.version_app,
             bucket_name=self.bucket_name,
             replicas=self.app_replicas,
-            debug=self.debug,
+            debug=self.app_debug,
+            n_workers=self.app_workers,
+            workers_timeout=self.app_timeout,
             db_username=self.db_username,
             db_host=self.db_host,
             db_port=self.db_port,

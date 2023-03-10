@@ -14,20 +14,25 @@ class PumpWoodSchedulerMicroservice:
     """PumpWoodSchedulerMicroservice."""
 
     def __init__(self, db_password: str,
-                 microservice_password: str, bucket_name: str,
-                 version_app: str, version_worker: str,
-                 disk_name: str = None, disk_size: str = None,
-                 postgres_public_ip: str = None, firewall_ips: list = None,
+                 microservice_password: str,
+                 bucket_name: str,
+                 version_app: str,
+                 version_worker: str,
+                 disk_name: str = None,
+                 disk_size: str = None,
+                 postgres_public_ip: str = None,
+                 firewall_ips: list = None,
                  repository: str = "gcr.io/repositorio-geral-170012",
-                 workers_timeout: int = 300, replicas: int = 1,
                  test_db_version: str = None,
                  test_db_repository: str = "gcr.io/repositorio-geral-170012",
-                 debug: str = "FALSE",
                  db_username: str = "pumpwood",
                  db_host: str = "postgres-pumpwood-scheduler",
                  db_port: str = "5432",
                  db_database: str = "pumpwood",
+                 app_debug: str = "FALSE",
                  app_replicas: int = 1,
+                 app_timeout: int = 300,
+                 app_workers: int = 10,
                  app_limits_memory: str = "60Gi",
                  app_limits_cpu: str = "12000m",
                  app_requests_memory: str = "20Mi",
@@ -93,7 +98,6 @@ class PumpWoodSchedulerMicroservice:
         self.postgres_public_ip = postgres_public_ip
         self.firewall_ips = firewall_ips
 
-        self.debug = debug
         self.bucket_name = bucket_name
         self.disk_size = disk_size
         self.disk_name = disk_name
@@ -107,8 +111,10 @@ class PumpWoodSchedulerMicroservice:
         # App
         self.repository = repository
         self.version_app = version_app
-        self.workers_timeout = workers_timeout
+        self.app_debug = app_debug
         self.app_replicas = app_replicas
+        self.app_timeout = app_timeout
+        self.app_workers = app_workers
         self.app_limits_memory = app_limits_memory
         self.app_limits_cpu = app_limits_cpu
         self.app_requests_memory = app_requests_memory
@@ -169,9 +175,10 @@ class PumpWoodSchedulerMicroservice:
                 repository=self.repository,
                 version=self.version_app,
                 bucket_name=self.bucket_name,
-                workers_timeout=self.workers_timeout,
                 replicas=self.app_replicas,
-                debug=self.debug,
+                debug=self.app_debug,
+                n_workers=self.app_workers,
+                workers_timeout=self.app_timeout,
                 db_username=self.db_username,
                 db_host=self.db_host,
                 db_port=self.db_port,

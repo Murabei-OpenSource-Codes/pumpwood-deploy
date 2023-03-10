@@ -58,6 +58,10 @@ spec:
         env:
         - name: DEBUG
           value: "{debug}"
+        - name: WORKERS_TIMEOUT
+          value: "{workers_timeout}"
+        - name: N_WORKERS
+          value: "{n_workers}"
 
         - name: HASH_SALT
           valueFrom:

@@ -1,31 +1,28 @@
-"""PumpWood DataLake Microservice Deploy."""
+"""PumpWood Dummy Models Microservice Deploy."""
 import os
 import base64
 from pumpwood_deploy.microservices.postgres.postgres import \
     create_ssl_key_ssl_crt
 from jinja2 import Template
-from .resources.yml__resources import (
-    app_deployment, deployment_postgres, secrets, services__load_balancer,
-    test_postgres)
+from pumpwood_deploy.microservices.pumpwood_dummy_models.resources.yml__resources import (
+    app_deployment, secrets, services__load_balancer, test_postgres)
 
 
-class PumpWoodDescriptionMatcherMicroservice:
-    """PumpWoodDatalakeMicroservice."""
+class PumpWoodDummyModelsMicroservice:
+    """PumpWoodDummyModelsMicroservice."""
 
     def __init__(self, db_password: str,
                  microservice_password: str,
                  bucket_name: str,
                  version_app: str,
-                 disk_name: str = None,
-                 disk_size: str = None,
+                 test_db_version: str,
                  postgres_public_ip: str = None,
                  firewall_ips: list = None,
                  repository: str = "gcr.io/repositorio-geral-170012",
-                 workers_timeout: int = 300,
-                 test_db_version: str = None,
+                 workers_timeout: int = 300,                 
                  test_db_repository: str = "gcr.io/repositorio-geral-170012",
                  db_username: str = "pumpwood",
-                 db_host: str = "postgres-pumpwood-description-matcher",
+                 db_host: str = "postgres-pumpwood-dummy-models",
                  db_port: str = "5432",
                  db_database: str = "pumpwood",
                  app_debug: str = "FALSE",
@@ -50,7 +47,6 @@ class PumpWoodDescriptionMatcherMicroservice:
             firewall_ips (list): List the IPs allowed to connect to datalake.
             bucket_name (str): Name of the bucket (Storage)
             version_app (str): Verison of the App Image.
-            version_worker (str): Verison of the Worker Image.
 
         Kwargs:
           app_limits_memory (str) = "60Gi": Memory limits for app pods.
@@ -81,16 +77,11 @@ class PumpWoodDescriptionMatcherMicroservice:
           db_database (str): Database connection database.
 
         Returns:
-          PumpWoodDatalakeMicroservice: New Object
+          PumpWoodDummyModelsMicroservice: New Object
 
         Raises:
-          No especific raises.
+          No specific raises.
         """
-        disk_deploy = (disk_name is not None and disk_size is not None)
-        if disk_deploy and test_db_version is not None:
-            raise Exception(
-                "When working with test database, disk is not used.")
-
         postgres_certificates = create_ssl_key_ssl_crt()
         self._db_password = base64.b64encode(db_password.encode()).decode()
         self._microservice_password = base64.b64encode(
@@ -105,8 +96,6 @@ class PumpWoodDescriptionMatcherMicroservice:
         self.firewall_ips = firewall_ips
 
         self.bucket_name = bucket_name
-        self.disk_size = disk_size
-        self.disk_name = disk_name
         self.base_path = os.path.dirname(__file__)
         self.repository = repository
 
@@ -146,26 +135,13 @@ class PumpWoodDescriptionMatcherMicroservice:
             ssl_key=self._ssl_key,
             ssl_crt=self._ssl_crt)
 
-        volume_postgres_text_f = None
-        deployment_postgres_text_f = None
-        if self.test_db_version is not None:
-            deployment_postgres_text_f = test_postgres.format(
-                repository=self.test_db_repository,
-                version=self.test_db_version,
-                limits_memory=self.postgres_limits_memory,
-                limits_cpu=self.postgres_limits_cpu,
-                requests_memory=self.postgres_requests_memory,
-                requests_cpu=self.postgres_requests_cpu)
-        elif self.disk_size is not None:
-            volume_postgres_text_f = kube_client.create_volume_yml(
-                disk_name=self.disk_name,
-                disk_size=self.disk_size,
-                volume_claim_name="postgres-pumpwood-description-matcher")
-            deployment_postgres_text_f = deployment_postgres.format(
-                limits_memory=self.postgres_limits_memory,
-                limits_cpu=self.postgres_limits_cpu,
-                requests_memory=self.postgres_requests_memory,
-                requests_cpu=self.postgres_requests_cpu)
+        deployment_postgres_text_f = test_postgres.format(
+            repository=self.test_db_repository,
+            version=self.test_db_version,
+            limits_memory=self.postgres_limits_memory,
+            limits_cpu=self.postgres_limits_cpu,
+            requests_memory=self.postgres_requests_memory,
+            requests_cpu=self.postgres_requests_cpu)
 
         deployment_text_frmtd = \
             app_deployment.format(
@@ -187,20 +163,14 @@ class PumpWoodDescriptionMatcherMicroservice:
 
         list_return = [
             {'type': 'secrets',
-             'name': 'pumpwood_description_matcher__secrets',
+             'name': 'pumpwood_dummy_models__secrets',
              'content': secrets_text_formated, 'sleep': 5}]
-        if volume_postgres_text_f is not None:
-            list_return.append(
-                {'type': 'volume',
-                 'name': 'pumpwood_description_matcher__volume',
-                 'content': volume_postgres_text_f, 'sleep': 10})
-        if deployment_postgres_text_f is not None:
-            list_return.append(
-                {'type': 'deploy',
-                 'name': 'pumpwood_description_matcher__postgres',
-                 'content': deployment_postgres_text_f, 'sleep': 0})
         list_return.append(
-            {'type': 'deploy', 'name': 'pumpwood_description_matcher__deploy',
+            {'type': 'deploy',
+                'name': 'pumpwood_dummy_models__postgres',
+                'content': deployment_postgres_text_f, 'sleep': 0})
+        list_return.append(
+            {'type': 'deploy', 'name': 'pumpwood_dummy_models__deploy',
              'content': deployment_text_frmtd, 'sleep': 0})
 
         if self.firewall_ips is not None and \
@@ -212,6 +182,6 @@ class PumpWoodDescriptionMatcherMicroservice:
                 firewall_ips=self.firewall_ips)
             list_return.append({
                 'type': 'services',
-                'name': 'pumpwood_description_matcher__services_loadbalancer',
+                'name': 'pumpwood_dummy_models__services_loadbalancer',
                 'content': svcs__load_balancer_text, 'sleep': 0})
         return list_return

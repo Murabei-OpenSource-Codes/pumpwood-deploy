@@ -21,6 +21,10 @@ class PumpWoodAuthMicroservice:
                  bucket_name: str,
                  version_app: str,
                  version_static: str,
+                 app_debug: str = "FALSE",
+                 app_replicas: int = 1,
+                 app_timeout: int = 300,
+                 app_workers: int = 10,
                  app_limits_memory: str = "60Gi",
                  app_limits_cpu: str = "12000m",
                  app_requests_memory: str = "20Mi",
@@ -34,10 +38,8 @@ class PumpWoodAuthMicroservice:
                  postgres_public_ip: str = None,
                  firewall_ips: list = None,
                  repository: str = "gcr.io/repositorio-geral-170012",
-                 replicas: int = 1,
                  test_db_version: str = None,
                  test_db_repository: str = "gcr.io/repositorio-geral-170012",
-                 debug: str = "FALSE",
                  db_username: str = "pumpwood",
                  db_host: str = "postgres-pumpwood-auth",
                  db_port: str = "5432",
@@ -102,7 +104,6 @@ class PumpWoodAuthMicroservice:
 
         self.postgres_public_ip = postgres_public_ip
         self.firewall_ips = firewall_ips
-        self.debug = debug
 
         self.disk_size = disk_size
         self.disk_name = disk_name
@@ -113,21 +114,25 @@ class PumpWoodAuthMicroservice:
         self.db_host = db_host
         self.db_port = db_port
         self.db_database = db_database
-        self.version_static = version_static
-
-        self.app_image = app_image
-        self.static_image = static_image
 
         # App
         self.repository = (
             repository + "/"
             if repository is not None else "")
+        self.app_image = app_image
         self.version_app = version_app
+
+        self.static_image = static_image
+        self.version_static = version_static
+        
+        self.app_debug = app_debug
+        self.app_replicas = app_replicas
+        self.app_timeout = app_timeout
+        self.app_workers = app_workers
         self.app_limits_memory = app_limits_memory
         self.app_limits_cpu = app_limits_cpu
         self.app_requests_memory = app_requests_memory
         self.app_requests_cpu = app_requests_cpu
-        self.replicas = replicas
 
         # Postgres
         self.postgres_version = postgres_version
@@ -157,22 +162,26 @@ class PumpWoodAuthMicroservice:
             secret_key=self._secret_key)
 
         deployment_auth_app_text_f = app_deployment.format(
-              repository=self.repository,
-              version=self.version_app,
-              bucket_name=self.bucket_name,
-              replicas=self.replicas,
-              debug=self.debug,
-              # DB Config
-              db_username=self.db_username,
-              db_host=self.db_host,
-              db_port=self.db_port,
-              db_database=self.db_database,
-              # Resources
-              requests_memory=self.app_limits_memory,
-              requests_cpu=self.app_limits_cpu,
-              limits_memory=self.app_requests_memory,
-              limits_cpu=self.app_requests_cpu,
-              app_image=self.app_image)
+            repository=self.repository,
+            version=self.version_app,
+            bucket_name=self.bucket_name,
+            replicas=self.app_replicas,
+            debug=self.app_debug,
+            n_workers=self.app_workers,
+            workers_timeout=self.app_timeout,
+              
+            # DB Config
+            db_username=self.db_username,
+            db_host=self.db_host,
+            db_port=self.db_port,
+            db_database=self.db_database,
+
+            # Resources
+            requests_memory=self.app_limits_memory,
+            requests_cpu=self.app_limits_cpu,
+            limits_memory=self.app_requests_memory,
+            limits_cpu=self.app_requests_cpu,
+            app_image=self.app_image)
 
         deployment_auth_admin_static_f = \
             auth_admin_static.format(

@@ -21,13 +21,14 @@ class PumpWoodDescisionMicroservice:
                  postgres_public_ip: str = None,
                  firewall_ips: list = None,
                  repository: str = "gcr.io/repositorio-geral-170012",
-                 debug: str = "FALSE",
                  db_username: str = "pumpwood",
                  db_host: str = "postgres-pumpwood-decision",
                  db_port: str = "5432",
                  db_database: str = "pumpwood",
+                 app_debug: str = "FALSE",
                  app_replicas: int = 1,
-                 workers_timeout: int = 300,
+                 app_timeout: int = 300,
+                 app_workers: int = 10,
                  app_limits_memory: str = "60Gi",
                  app_limits_cpu: str = "12000m",
                  app_requests_memory: str = "20Mi",
@@ -101,8 +102,6 @@ class PumpWoodDescisionMicroservice:
         self.postgres_public_ip = postgres_public_ip
         self.firewall_ips = firewall_ips
 
-        self.debug = debug
-        self.app_replicas = app_replicas
         self.bucket_name = bucket_name
         self.disk_size = disk_size
         self.disk_name = disk_name
@@ -112,6 +111,10 @@ class PumpWoodDescisionMicroservice:
         # App
         self.repository = repository
         self.version_app = version_app
+        self.app_debug = app_debug
+        self.app_replicas = app_replicas
+        self.app_timeout = app_timeout
+        self.app_workers = app_workers
         self.app_limits_memory = app_limits_memory
         self.app_limits_cpu = app_limits_cpu
         self.app_requests_memory = app_requests_memory
@@ -168,9 +171,10 @@ class PumpWoodDescisionMicroservice:
                 repository=self.repository,
                 version=self.version_app,
                 bucket_name=self.bucket_name,
-                workers_timeout=self.workers_timeout,
-                debug=self.debug,
                 replicas=self.app_replicas,
+                debug=self.app_debug,
+                n_workers=self.app_workers,
+                workers_timeout=self.app_timeout,
                 db_username=self.db_username,
                 db_host=self.db_host,
                 db_port=self.db_port,

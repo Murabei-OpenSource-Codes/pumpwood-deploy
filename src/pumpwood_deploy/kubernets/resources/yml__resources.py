@@ -24,6 +24,7 @@ metadata:
 spec:
   accessModes:
     - ReadWriteOnce
+  storageClassName: standard
   resources:
     requests:
       storage: {disk_size}
