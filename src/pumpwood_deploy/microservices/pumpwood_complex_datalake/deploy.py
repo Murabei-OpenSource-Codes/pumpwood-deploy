@@ -200,7 +200,7 @@ class PumpWoodComplexDatalakeMicroservice:
             datalake_dataloader_requests_memory
         self.datalake_dataloader_requests_cpu = \
             datalake_dataloader_requests_cpu
-        
+
         # Worker Simple Annotation
         self.simple_dataloader_replicas = \
             simple_dataloader_replicas
@@ -218,7 +218,7 @@ class PumpWoodComplexDatalakeMicroservice:
             simple_dataloader_requests_memory
         self.simple_dataloader_requests_cpu = \
             simple_dataloader_requests_cpu
-        
+
         # Worker Complex Annotation
         self.complex_dataloader_replicas = \
             complex_dataloader_replicas
@@ -358,7 +358,7 @@ class PumpWoodComplexDatalakeMicroservice:
             'name': 'pumpwood_complex_datalake__secrets',
             'content': secrets_text_formated,
             'sleep': 5}]
-        
+
         # Postgres
         if volume_postgres_text_f is not None:
             list_return.append({
@@ -372,13 +372,13 @@ class PumpWoodComplexDatalakeMicroservice:
                 'name': 'pumpwood_complex_datalake__postgres',
                 'content': deployment_postgres_text_f,
                 'sleep': 0})
-        
+
         # App
         list_return.append({
             'type': 'deploy', 'name': 'pumpwood_complex_datalake__deploy',
             'content': app_deployment_frmtd,
             'sleep': 0})
-        
+
         # Workers
         list_return.append({
             'type': 'deploy',
@@ -387,12 +387,12 @@ class PumpWoodComplexDatalakeMicroservice:
             'sleep': 0})
         list_return.append({
             'type': 'deploy',
-            'name': 'pumpwood_complex_datalake_dataloader__worker',
+            'name': 'pumpwood_simple_annotation_dataloader__worker',
             'content': worker_simple_annotation_deployment_frmted,
             'sleep': 0})
         list_return.append({
             'type': 'deploy',
-            'name': 'pumpwood_complex_datalake_dataloader__worker',
+            'name': 'pumpwood_complex_annotation_dataloader__worker',
             'content': worker_complex_annotation_deployment_frmted,
             'sleep': 0})
 
