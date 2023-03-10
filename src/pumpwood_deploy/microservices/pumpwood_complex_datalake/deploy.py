@@ -382,17 +382,17 @@ class PumpWoodComplexDatalakeMicroservice:
         # Workers
         list_return.append({
             'type': 'deploy',
-            'name': 'pumpwood_datalake_deployment_dataloader__worker',
+            'name': 'pumpwood_complex__datalake_dataloader_worker',
             'content': worker_datalake_deployment_frmted,
             'sleep': 0})
         list_return.append({
             'type': 'deploy',
-            'name': 'pumpwood_simple_annotation_dataloader__worker',
+            'name': 'pumpwood_complex__simple_annotation_dataloader_worker',
             'content': worker_simple_annotation_deployment_frmted,
             'sleep': 0})
         list_return.append({
             'type': 'deploy',
-            'name': 'pumpwood_complex_annotation_dataloader__worker',
+            'name': 'pumpwood_complex__complex_annotation_dataloader_worker',
             'content': worker_complex_annotation_deployment_frmted,
             'sleep': 0})
 
