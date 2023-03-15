@@ -65,7 +65,7 @@ class PumpWoodDescisionMicroservice:
           postgres_requests_cpu (str) = "1m":  CPU request for postgres pod.
           disk_size (str): Disk size (ex.: 50Gi, 100Gi)
           disk_name (str): Name of the disk that will be used in postgres.
-          workers_timeout (str): Time to workout time for guicorn workers.
+          app_timeout (str): Time to workout time for guicorn workers.
           n_chunks (str) = 5: n chunks working o data loader.
           chunk_size (str) = 5000: Size of the datalake chunks.
           repository (str) = "gcr.io/repositorio-geral-170012": Repository to
@@ -106,7 +106,6 @@ class PumpWoodDescisionMicroservice:
         self.disk_size = disk_size
         self.disk_name = disk_name
         self.base_path = os.path.dirname(__file__)
-        self.workers_timeout = workers_timeout
 
         # App
         self.repository = repository
