@@ -4,8 +4,9 @@ import ipaddress
 from jinja2 import Template
 from typing import List
 from pumpwood_deploy.microservices.api_gateway.resources.yml_resources import (
-    external_service, internal_service,
+    external_service, internal_service, aws_service,
     nginx_gateway_deployment, nginx_gateway_secrets_deployment)
+from pumpwood_deploy.kubernets.kubernets import KubernetsAWS
 
 
 class ApiGateway:
@@ -16,12 +17,17 @@ class ApiGateway:
                  health_check_url: str = "health-check/pumpwood-auth-app/",
                  server_name: str = "not_set",
                  repository: str = "gcr.io/repositorio-geral-170012",
-                 souce_ranges: List[str] = ["0.0.0.0/0"]):
+                 souce_ranges: List[str] = ["0.0.0.0/0"],
+                 aws_vpc_id: str = None):
         """
         Build deployment files for the Kong ApiGateway.
 
         Args:
-            gateway_public_ip(str): Set the IP for the ApiGateway.
+            gateway_public_ip(str): Set the IP for the ApiGateway, when using
+                AWS Elastic IP it must be passed it's id. It must have one
+                Elastic IP for each public subnet on VPC used on K8s, values
+                must be separated using coma, ex:
+                    - "eipalloc-XXXXXX,eipalloc-YYYYY"
             email_contact(str): E-mail contact for let's encript.
             version (str): Version of the API gateway.
 
@@ -31,9 +37,13 @@ class ApiGateway:
             souce_ranges (list[str]): List of the IPs to restrict source
                 conections to the ApiGateway. By default is 0.0.0.0/0, no
                 restriction.
+            aws_vpc_id [str]: When using AWS deploy it necessary to set
+                vpc id to correctly deploy LoadBalancer.
+
         """
         self.repository = repository
         self.gateway_public_ip = gateway_public_ip
+        self.aws_vpc_id = aws_vpc_id
         self.server_name = server_name
         self.email_contact = email_contact
         self.version = version
@@ -56,7 +66,20 @@ class ApiGateway:
             health_check_url=self.health_check_url)
 
         service__formated = None
-        if ipaddress.ip_address(self.gateway_public_ip).is_private:
+        is_aws_deploy = isinstance(kube_client.kube_client, KubernetsAWS)
+        # If a aws deploy it is necessary to configure the loadBalancer
+        # to use an Elastic IP already deployed on AWS.
+        if is_aws_deploy:
+            if self.aws_vpc_id is None:
+                raise Exception(
+                    "For AWS deploy 'aws_vpc_id' atribute must not be None "
+                    "to deploy API Gateway with external fixed ip.")
+            aws_service_template = Template(aws_service)
+            service__formated = aws_service_template.render(
+                vpc_id=self.aws_vpc_id,
+                vpc_eip_id=self.gateway_public_ip,
+                firewall_ips=self.souce_ranges)
+        elif ipaddress.ip_address(self.gateway_public_ip).is_private:
             service__formated = internal_service.format(
                 public_ip=self.gateway_public_ip)
         else:

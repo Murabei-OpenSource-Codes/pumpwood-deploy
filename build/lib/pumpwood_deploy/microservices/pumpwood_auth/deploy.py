@@ -19,8 +19,8 @@ class PumpWoodAuthMicroservice:
                  email_host_user: str,
                  email_host_password: str,
                  bucket_name: str,
-                 version_app: str,
-                 version_static: str,
+                 app_version: str,
+                 static_version: str,
                  app_debug: str = "FALSE",
                  app_replicas: int = 1,
                  app_timeout: int = 300,
@@ -54,8 +54,8 @@ class PumpWoodAuthMicroservice:
             db_password (str): Auth DB password.
             email_host_user (str): Auth email conection username.
             email_host_password (str): Auth email conection password.
-            version_app (str): Version of the auth microservice.
-            version_static (str): Version of the static image.
+            app_version (str): Version of the auth microservice.
+            static_version (str): Version of the static image.
 
         Kwargs:
             app_limits_memory (str): str = "60Gi"
@@ -120,11 +120,11 @@ class PumpWoodAuthMicroservice:
             repository + "/"
             if repository is not None else "")
         self.app_image = app_image
-        self.version_app = version_app
+        self.app_version = app_version
 
         self.static_image = static_image
-        self.version_static = version_static
-        
+        self.static_version = static_version
+
         self.app_debug = app_debug
         self.app_replicas = app_replicas
         self.app_timeout = app_timeout
@@ -163,13 +163,13 @@ class PumpWoodAuthMicroservice:
 
         deployment_auth_app_text_f = app_deployment.format(
             repository=self.repository,
-            version=self.version_app,
+            version=self.app_version,
             bucket_name=self.bucket_name,
             replicas=self.app_replicas,
             debug=self.app_debug,
             n_workers=self.app_workers,
             workers_timeout=self.app_timeout,
-              
+
             # DB Config
             db_username=self.db_username,
             db_host=self.db_host,
@@ -177,16 +177,16 @@ class PumpWoodAuthMicroservice:
             db_database=self.db_database,
 
             # Resources
-            requests_memory=self.app_limits_memory,
-            requests_cpu=self.app_limits_cpu,
-            limits_memory=self.app_requests_memory,
-            limits_cpu=self.app_requests_cpu,
+            requests_memory=self.app_requests_memory,
+            requests_cpu=self.app_requests_cpu,
+            limits_memory=self.app_limits_memory,
+            limits_cpu=self.app_limits_cpu,
             app_image=self.app_image)
 
         deployment_auth_admin_static_f = \
             auth_admin_static.format(
                 repository=self.repository,
-                version=self.version_static,
+                version=self.static_version,
                 static_image=self.static_image)
 
         volume_postgres_text_f = None

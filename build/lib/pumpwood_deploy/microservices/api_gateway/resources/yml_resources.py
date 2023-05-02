@@ -151,3 +151,33 @@ spec:
       targetPort: 80
   loadBalancerIP: {public_ip}
 """
+
+aws_service = """
+apiVersion: v1
+kind: Service
+metadata:
+  name: apigateway-nginx
+  labels:
+    type: apigateway
+    destination: external
+  annotations:
+    service.beta.kubernetes.io/aws-load-balancer-type: "nlb"
+    service.beta.kubernetes.io/aws-load-balancer-internal: "false"
+    service.beta.kubernetes.io/aws-load-balancer-vpc-id: "{{ vpc_id }}"
+    service.beta.kubernetes.io/aws-load-balancer-eip-allocations: "{{ vpc_eip_id }}"
+spec:
+  type: LoadBalancer
+  selector:
+    type: apigateway-nginx
+  ports:
+    - name: https
+      port: 443
+      targetPort: 443
+    - name: http
+      port: 80
+      targetPort: 80
+  loadBalancerSourceRanges:
+    {%- for ip in firewall_ips %}
+      - {{ip}}
+    {%- endfor %}
+"""

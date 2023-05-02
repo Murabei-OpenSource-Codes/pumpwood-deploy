@@ -1,6 +1,7 @@
 """Interface with kubernets."""
 import subprocess
-from .resources.yml__resources import volume_gcp, volume_azure
+from pumpwood_deploy.kubernets.resources.yml__resources import (
+    volume_gcp, volume_azure, volume_aws)
 
 
 class Kubernets:
@@ -25,6 +26,8 @@ class Kubernets:
             self.kube_client = KubernetsGCP(**k8_deploy_args)
         elif k8_provider == "azure":
             self.kube_client = KubernetsAzure(**k8_deploy_args)
+        elif k8_provider == "aws":
+            self.kube_client = KubernetsAWS(**k8_deploy_args)
         else:
             raise Exception("Kubernets Provider not Found")
 
@@ -89,7 +92,8 @@ class Kubernets:
 class KubernetsGCP:
     """Class to auxiliate GCP Kubernets interface."""
 
-    def __init__(self, cluster_name: str, zone: str, project: str):
+    def __init__(self, cluster_name: str, zone: str, project: str,
+                 **kwargs):
         """
         __init__.
 
@@ -137,7 +141,8 @@ class KubernetsAzure:
     """Class to auxiliate Azure AKS Kubernets interface."""
 
     def __init__(self, subscription: str, resource_group: str,
-                 k8s_resource_group: str, aks_resource: str):
+                 k8s_resource_group: str, aks_resource: str,
+                 **kwargs):
         """
         __init__.
 
@@ -189,3 +194,45 @@ class KubernetsAzure:
             disk_name=disk_name,
             disk_size=disk_size,
             volume_claim_name=volume_claim_name)
+
+
+class KubernetsAWS:
+    """Class to auxiliate AWS EKS Kubernets interface."""
+
+    def __init__(self, region: str, cluster_name: str, **kwargs):
+        """
+        __init__.
+
+        Args:
+            region (str): AWS Region.
+            cluster_name (str): Cluster name.
+        """
+        self.region = region
+        self.cluster_name = cluster_name
+
+        print('## Loging to kubernets cluster')
+        cmd = (
+            "aws eks --region {region} "
+            "update-kubeconfig --name {cluster_name}")
+        cmd_formated = cmd.format(
+            region=region, cluster_name=cluster_name)
+        process = subprocess.Popen(cmd_formated.split())
+        output, error = process.communicate()
+
+    def create_volume_yml(self, disk_name: str, disk_size: str,
+                          volume_claim_name: str) -> str:
+        """
+        Create volume yml using provider and k8_deploy_args.
+
+        Args:
+            disk_name [str]: Disk name at the provider.
+            disk_size [str]: Size of the disk that will be mapped to K8s
+                cluster.
+            volume_claim_name [str]: Name of the volume claim.
+        Return [str]:
+            Return the yml content of the deploy file
+        """
+        return volume_aws.format(
+            aws_volume_id=disk_name,
+            volume_claim_name=volume_claim_name,
+            disk_size=disk_size)

@@ -15,8 +15,8 @@ class PumpWoodETLMicroservice:
     def __init__(self, db_password: str,
                  microservice_password: str,
                  bucket_name: str,
-                 version_app: str,
-                 version_worker: str,
+                 app_version: str,
+                 worker_version: str,
                  disk_name: str = None,
                  disk_size: str = None,
                  postgres_public_ip: str = None,
@@ -57,8 +57,8 @@ class PumpWoodETLMicroservice:
           disk_name (str): Name of the disk that will be used in postgres
           postgres_public_ip (str): Postgres public IP.
           bucket_name (str): Name of the bucket (Storage)
-          version_app (str): Verison of the estimation app imageself.
-          version_worker (str): Version of the raw data worker.
+          app_version (str): Verison of the estimation app imageself.
+          worker_version (str): Version of the raw data worker.
 
         Kwargs:
           firewall_ips (list[str]): List with the IPs to allow connection to
@@ -105,7 +105,7 @@ class PumpWoodETLMicroservice:
         self.repository = repository
 
         # App
-        self.version_app = version_app
+        self.app_version = app_version
         self.app_debug = app_debug
         self.app_replicas = app_replicas
         self.app_timeout = app_timeout
@@ -116,7 +116,7 @@ class PumpWoodETLMicroservice:
         self.app_requests_cpu = app_requests_cpu
 
         # Worker
-        self.version_worker = version_worker
+        self.worker_version = worker_version
         self.worker_replicas = worker_replicas
         self.worker_limits_memory = worker_limits_memory
         self.worker_limits_cpu = worker_limits_cpu
@@ -172,7 +172,7 @@ class PumpWoodETLMicroservice:
         deployment_queue_manager_text_frmtd = \
             app_deployment.format(
                 repository=self.repository,
-                version=self.version_app,
+                version=self.app_version,
                 bucket_name=self.bucket_name,
                 replicas=self.app_replicas,
                 debug=self.app_debug,
@@ -188,7 +188,7 @@ class PumpWoodETLMicroservice:
                 requests_cpu=self.app_requests_cpu)
         worker_deployment_text_frmted = worker_deployment.format(
             repository=self.repository,
-            version=self.version_worker,
+            version=self.worker_version,
             replicas=self.worker_replicas,
             bucket_name=self.bucket_name,
             db_username=self.db_username,

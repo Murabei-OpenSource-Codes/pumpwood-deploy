@@ -16,8 +16,8 @@ class PumpWoodDatalakeMicroservice:
     def __init__(self, db_password: str,
                  microservice_password: str,
                  bucket_name: str,
-                 version_app: str,
-                 version_worker: str,
+                 app_version: str,
+                 worker_version: str,
                  disk_name: str = None,
                  disk_size: str = None,
                  postgres_public_ip: str = None,
@@ -58,8 +58,8 @@ class PumpWoodDatalakeMicroservice:
             postgres_public_ip (str): Postgres public IP.
             firewall_ips (list): List the IPs allowed to connect to datalake.
             bucket_name (str): Name of the bucket (Storage)
-            version_app (str): Verison of the App Image.
-            version_worker (str): Verison of the Worker Image.
+            app_version (str): Verison of the App Image.
+            worker_version (str): Verison of the Worker Image.
 
         Kwargs:
           disk_size (str): Disk size (ex.: 50Gi, 100Gi)
@@ -140,8 +140,8 @@ class PumpWoodDatalakeMicroservice:
         self.app_replicas = app_replicas
         self.app_timeout = app_timeout
         self.app_workers = app_workers
-        self.version_app = version_app
-        self.version_worker = version_worker
+        self.app_version = app_version
+        self.worker_version = worker_version
 
         # App
         self.app_replicas = app_replicas
@@ -209,7 +209,7 @@ class PumpWoodDatalakeMicroservice:
         app_deployment_frmtd = \
             app_deployment.format(
                 repository=self.repository,
-                version=self.version_app,
+                version=self.app_version,
                 bucket_name=self.bucket_name,
                 replicas=self.app_replicas,
                 requests_memory=self.app_requests_memory,
@@ -226,7 +226,7 @@ class PumpWoodDatalakeMicroservice:
 
         worker_deployment_text_frmted = worker_deployment.format(
             repository=self.repository,
-            version=self.version_worker,
+            version=self.worker_version,
             bucket_name=self.bucket_name,
             db_username=self.db_username,
             db_host=self.db_host,

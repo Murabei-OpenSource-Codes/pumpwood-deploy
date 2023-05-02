@@ -65,3 +65,34 @@ spec:
       storage: {disk_size}
   volumeName: {disk_name}
 """
+
+volume_aws = """
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: {aws_volume_id}
+  labels:
+    usage: {aws_volume_id}
+spec:
+  accessModes:
+    - ReadWriteOnce
+  capacity:
+    storage: {disk_size}
+  csi:
+    driver: ebs.csi.aws.com
+    fsType: ext4
+    volumeHandle: {aws_volume_id}
+---
+kind: PersistentVolumeClaim
+apiVersion: v1
+metadata:
+    name: {volume_claim_name}
+spec:
+  storageClassName: ""
+  volumeName: {aws_volume_id}
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: {disk_size}
+"""

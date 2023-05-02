@@ -15,13 +15,12 @@ class PumpWoodDescriptionMatcherMicroservice:
     def __init__(self, db_password: str,
                  microservice_password: str,
                  bucket_name: str,
-                 version_app: str,
+                 app_version: str,
                  disk_name: str = None,
                  disk_size: str = None,
                  postgres_public_ip: str = None,
                  firewall_ips: list = None,
                  repository: str = "gcr.io/repositorio-geral-170012",
-                 workers_timeout: int = 300,
                  test_db_version: str = None,
                  test_db_repository: str = "gcr.io/repositorio-geral-170012",
                  db_username: str = "pumpwood",
@@ -49,7 +48,7 @@ class PumpWoodDescriptionMatcherMicroservice:
             postgres_public_ip (str): Postgres public IP.
             firewall_ips (list): List the IPs allowed to connect to datalake.
             bucket_name (str): Name of the bucket (Storage)
-            version_app (str): Verison of the App Image.
+            app_version (str): Verison of the App Image.
             version_worker (str): Verison of the Worker Image.
 
         Kwargs:
@@ -115,7 +114,7 @@ class PumpWoodDescriptionMatcherMicroservice:
         self.app_replicas = app_replicas
         self.app_timeout = app_timeout
         self.app_workers = app_workers
-        self.version_app = version_app
+        self.app_version = app_version
         self.app_limits_memory = app_limits_memory
         self.app_limits_cpu = app_limits_cpu
         self.app_requests_memory = app_requests_memory
@@ -170,7 +169,7 @@ class PumpWoodDescriptionMatcherMicroservice:
         deployment_text_frmtd = \
             app_deployment.format(
                 repository=self.repository,
-                version=self.version_app,
+                version=self.app_version,
                 bucket_name=self.bucket_name,
                 replicas=self.app_replicas,
                 debug=self.app_debug,
