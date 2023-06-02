@@ -15,7 +15,7 @@ class PumpWoodDescisionMicroservice:
     def __init__(self, db_password: str,
                  microservice_password: str,
                  bucket_name: str,
-                 version_app: str,
+                 app_version: str,
                  disk_name: str = None,
                  disk_size: str = None,
                  postgres_public_ip: str = None,
@@ -48,7 +48,7 @@ class PumpWoodDescisionMicroservice:
             postgres_public_ip (str): Postgres public IP.
             firewall_ips (list): List the IPs allowed to connect to datalake.
             bucket_name (str): Name of the bucket (Storage)
-            version_app (str): Verison of the App Image.
+            app_version (str): Verison of the App Image.
             version_worker (str): Verison of the Worker Image.
 
         Kwargs:
@@ -109,7 +109,7 @@ class PumpWoodDescisionMicroservice:
 
         # App
         self.repository = repository
-        self.version_app = version_app
+        self.app_version = app_version
         self.app_debug = app_debug
         self.app_replicas = app_replicas
         self.app_timeout = app_timeout
@@ -168,7 +168,7 @@ class PumpWoodDescisionMicroservice:
         deployment_text_frmtd = \
             app_deployment.format(
                 repository=self.repository,
-                version=self.version_app,
+                version=self.app_version,
                 bucket_name=self.bucket_name,
                 replicas=self.app_replicas,
                 debug=self.app_debug,

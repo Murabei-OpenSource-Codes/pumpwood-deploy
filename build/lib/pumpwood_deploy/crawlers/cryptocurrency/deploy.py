@@ -21,10 +21,10 @@ class CrawlerCryptoCurrency:
                  disk_size: str,
                  disk_name: str,
                  bucket_name: str,
-                 version_app: str,
-                 version_worker_candle: str,
-                 version_worker_balance: str,
-                 version_worker_order: str,
+                 app_version: str,
+                 worker_candle_version: str,
+                 worker_balance_version: str,
+                 worker_order_version: str,
                  postgres_public_ip: str = None,
                  test_db_version: str = None,
                  test_db_repository: str = "gcr.io/repositorio-geral-170012",
@@ -69,11 +69,11 @@ class CrawlerCryptoCurrency:
             disk_size (str): Disk size (ex.: 50Gi, 100Gi)
             disk_name (str): Name of the disk that will be used in postgres
             bucket_name (str): Name of the bucket (Storage)
-            version_app (str): Verison of the App image
-            version_worker_candle (str): Version of the worker for candle data.
-            version_worker_balance (str): Version of the worker for portfolio
+            app_version (str): Verison of the App image
+            worker_candle_version (str): Version of the worker for candle data.
+            worker_balance_version (str): Version of the worker for portfolio
                 balance data.
-            version_worker_order (str): Version of the worker for place
+            worker_order_version (str): Version of the worker for place
                 orders in exchange.
         Kwargs:
             repository (str): Repository to pull Image
@@ -114,7 +114,7 @@ class CrawlerCryptoCurrency:
         self.repository = repository
 
         # App
-        self.version_app = version_app
+        self.app_version = app_version
         self.app_replicas = app_replicas
         self.app_debug = app_debug
         self.app_timeout = app_timeout
@@ -125,21 +125,21 @@ class CrawlerCryptoCurrency:
         self.app_requests_cpu = app_requests_cpu
 
         # Candle worker
-        self.version_worker_candle = version_worker_candle
+        self.worker_candle_version = worker_candle_version
         self.candle_limits_memory = candle_limits_memory
         self.candle_limits_cpu = candle_limits_cpu
         self.candle_requests_memory = candle_requests_memory
         self.candle_requests_cpu = candle_requests_cpu
 
         # Balance worker
-        self.version_worker_balance = version_worker_balance
+        self.worker_balance_version = worker_balance_version
         self.balance_limits_memory = balance_limits_memory
         self.balance_limits_cpu = balance_limits_cpu
         self.balance_requests_memory = balance_requests_memory
         self.balance_requests_cpu = balance_requests_cpu
 
         # Order worker
-        self.version_worker_order = version_worker_order
+        self.worker_order_version = worker_order_version
         self.order_limits_memory = order_limits_memory
         self.order_limits_cpu = order_limits_cpu
         self.order_requests_memory = order_requests_memory
@@ -194,7 +194,7 @@ class CrawlerCryptoCurrency:
         deployment_text_frmtd = \
             app_deployment.format(
                 repository=self.repository,
-                version=self.version_app,
+                version=self.app_version,
                 bucket_name=self.bucket_name,
                 workers_timeout=self.app_timeout,
                 debug=self.app_debug,
@@ -212,7 +212,7 @@ class CrawlerCryptoCurrency:
         # Worker
         worker_candle_deployment_frmted = worker_candle_deployment.format(
             repository=self.repository,
-            version=self.version_worker_candle,
+            version=self.worker_candle_version,
             bucket_name=self.bucket_name,
             requests_memory=self.candle_requests_memory,
             requests_cpu=self.candle_requests_cpu,
@@ -220,7 +220,7 @@ class CrawlerCryptoCurrency:
             limits_cpu=self.candle_limits_cpu)
         worker_balance_deployment_frmted = worker_balance_deployment.format(
             repository=self.repository,
-            version=self.version_worker_balance,
+            version=self.worker_balance_version,
             bucket_name=self.bucket_name,
             requests_memory=self.balance_requests_memory,
             requests_cpu=self.balance_requests_cpu,
@@ -228,7 +228,7 @@ class CrawlerCryptoCurrency:
             limits_cpu=self.balance_limits_cpu)
         worker_order_deployment_frmted = worker_order_deployment.format(
             repository=self.repository,
-            version=self.version_worker_order,
+            version=self.worker_order_version,
             bucket_name=self.bucket_name,
             requests_memory=self.order_requests_memory,
             requests_cpu=self.order_requests_cpu,

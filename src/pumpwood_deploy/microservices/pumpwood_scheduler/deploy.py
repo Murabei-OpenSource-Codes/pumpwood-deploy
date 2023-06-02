@@ -16,8 +16,8 @@ class PumpWoodSchedulerMicroservice:
     def __init__(self, db_password: str,
                  microservice_password: str,
                  bucket_name: str,
-                 version_app: str,
-                 version_worker: str,
+                 app_version: str,
+                 worker_version: str,
                  disk_name: str = None,
                  disk_size: str = None,
                  postgres_public_ip: str = None,
@@ -56,7 +56,7 @@ class PumpWoodSchedulerMicroservice:
           disk_name (str): Name of the disk that will be used in postgres
           postgres_public_ip (str): Postgres public IP.
           bucket_name (str): Name of the bucket (Storage)
-          version_app (str): App version.
+          app_version (str): App version.
           version_rawdata (str): Version of the raw data worker.
           version_dataloader (str): Version of the raw data worker.
 
@@ -110,7 +110,7 @@ class PumpWoodSchedulerMicroservice:
 
         # App
         self.repository = repository
-        self.version_app = version_app
+        self.app_version = app_version
         self.app_debug = app_debug
         self.app_replicas = app_replicas
         self.app_timeout = app_timeout
@@ -121,7 +121,7 @@ class PumpWoodSchedulerMicroservice:
         self.app_requests_cpu = app_requests_cpu
 
         # Worker
-        self.version_worker = version_worker
+        self.worker_version = worker_version
         self.worker_replicas = worker_replicas
         self.worker_limits_memory = worker_limits_memory
         self.worker_limits_cpu = worker_limits_cpu
@@ -173,7 +173,7 @@ class PumpWoodSchedulerMicroservice:
         deployment_app_text_frmtd = \
             app_deployment.format(
                 repository=self.repository,
-                version=self.version_app,
+                version=self.app_version,
                 bucket_name=self.bucket_name,
                 replicas=self.app_replicas,
                 debug=self.app_debug,
@@ -189,7 +189,7 @@ class PumpWoodSchedulerMicroservice:
                 requests_cpu=self.app_requests_cpu)
         deployment_worker_text_formated = worker_deployment.format(
             repository=self.repository,
-            version=self.version_worker,
+            version=self.worker_version,
             replicas=self.worker_replicas,
             bucket_name=self.bucket_name,
             db_username=self.db_username,

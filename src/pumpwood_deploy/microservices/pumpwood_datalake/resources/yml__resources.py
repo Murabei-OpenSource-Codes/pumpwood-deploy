@@ -360,7 +360,7 @@ spec:
                 - system
       containers:
       - name: postgres-pumpwood-datalake
-        image: timescale/timescaledb-postgis:2.3.0-pg13
+        image: postgis/postgis:15-3.3-alpine
         args: [
             "-c", "max_connections=1000",
             "-c", "work_mem=50MB",
