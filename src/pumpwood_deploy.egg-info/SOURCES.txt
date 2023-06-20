@@ -22,6 +22,10 @@ src/pumpwood_deploy/kubernets/__init__.py
 src/pumpwood_deploy/kubernets/kubernets.py
 src/pumpwood_deploy/kubernets/resources/__init__.py
 src/pumpwood_deploy/kubernets/resources/yml__resources.py
+src/pumpwood_deploy/metabase/__init__.py
+src/pumpwood_deploy/metabase/deploy.py
+src/pumpwood_deploy/metabase/resources/__init__.py
+src/pumpwood_deploy/metabase/resources/yml__resources.py
 src/pumpwood_deploy/microservices/__init__.py
 src/pumpwood_deploy/microservices/api_gateway/__init__.py
 src/pumpwood_deploy/microservices/api_gateway/deploy.py

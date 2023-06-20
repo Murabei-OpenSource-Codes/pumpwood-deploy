@@ -44,9 +44,8 @@ class PumpWoodAuthMicroservice:
                  db_host: str = "postgres-pumpwood-auth",
                  db_port: str = "5432",
                  db_database: str = "pumpwood",
-                 app_image: str="pumpwood-auth-app",
-                 static_image: str="pumpwood-auth-static",
-                 postgres_version="2.3.0-pg13"):
+                 app_image: str = "pumpwood-auth-app",
+                 static_image: str = "pumpwood-auth-static"):
         """Deploy PumpWood Auth Microservice.
 
         Args:
@@ -135,7 +134,6 @@ class PumpWoodAuthMicroservice:
         self.app_requests_cpu = app_requests_cpu
 
         # Postgres
-        self.postgres_version = postgres_version
         self.postgres_limits_memory = postgres_limits_memory
         self.postgres_limits_cpu = postgres_limits_cpu
         self.postgres_requests_memory = postgres_requests_memory
@@ -208,8 +206,7 @@ class PumpWoodAuthMicroservice:
                 requests_memory=self.postgres_requests_memory,
                 requests_cpu=self.postgres_requests_cpu,
                 limits_memory=self.postgres_limits_memory,
-                limits_cpu=self.postgres_limits_cpu,
-                postgres_version=self.postgres_version)
+                limits_cpu=self.postgres_limits_cpu)
 
         list_return = [{
             'type': 'secrets', 'name': 'pumpwood_auth__secrets',

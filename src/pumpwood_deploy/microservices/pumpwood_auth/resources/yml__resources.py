@@ -191,21 +191,34 @@ spec:
         # AZURE
         - name: AZURE_STORAGE_CONNECTION_STRING
           valueFrom:
-              secretKeyRef:
-                name: azure--storage-key
-                key: azure_storage_connection_string
+            secretKeyRef:
+              name: azure--storage-key
+              key: azure_storage_connection_string
 
         # AWS
         - name: AWS_ACCESS_KEY_ID
           valueFrom:
-              secretKeyRef:
-                name: aws--storage-key
-                key: aws_access_key_id
+            secretKeyRef:
+              name: aws--storage-key
+              key: aws_access_key_id
         - name: AWS_SECRET_ACCESS_KEY
           valueFrom:
-              secretKeyRef:
-                name: aws--storage-key
-                key: aws_secret_access_key
+            secretKeyRef:
+              name: aws--storage-key
+              key: aws_secret_access_key
+
+        ############
+        # Metabase #
+        - name: METABASE_SITE_URL
+          valueFrom:
+            configMapKeyRef:
+              name: metabase
+              key: site_url
+        - name: METABASE_SECRET_KEY
+          valueFrom:
+            secretKeyRef:
+              name: metabase
+              key: embedding_secret_key
 ---
 apiVersion : "v1"
 kind: Service
@@ -266,7 +279,7 @@ spec:
                 - system
       containers:
       - name: postgres-pumpwood-auth
-        image: timescale/timescaledb-postgis:{postgres_version}
+        image: postgis/postgis:15-3.3-alpine
         args: [
             "-c", "max_connections=1000",
             "-c", "work_mem=50MB",
