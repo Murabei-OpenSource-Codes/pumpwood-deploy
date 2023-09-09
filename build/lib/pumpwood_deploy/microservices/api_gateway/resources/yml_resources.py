@@ -1,3 +1,5 @@
+"""Resorces to deploy."""
+
 nginx_gateway_deployment = """
 apiVersion: apps/v1
 kind: Deployment
@@ -126,6 +128,74 @@ spec:
     {%- for ip in firewall_ips %}
       - {{ip}}
     {%- endfor %}
+"""
+
+nginx_gateway_no_ssl_deployment = """
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: apigateway-nginx-no-ssl
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      type: apigateway-nginx
+  template:
+    metadata:
+      labels:
+        type: apigateway-nginx
+    spec:
+      imagePullSecrets:
+        - name: dockercfg
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: function
+                operator: NotIn
+                values:
+                - system
+      containers:
+      - name: apigateway-nginx-no-ssl
+        image: {repository}/pumpwood-nginx-without-ssl:{nginx_ssl_version}
+        imagePullPolicy: Always
+        resources:
+          requests:
+            cpu: "1m"
+        readinessProbe:
+          httpGet:
+            path: {health_check_url}
+            port: 80
+        env:
+        - name: NGINX_PORT
+          value: "80"
+        - name: SERVER_NAME
+          value: "{server_name}"
+        - name: TARGET_SERVICE
+          value: "{target_service}"
+        - name: TARGET_HEALTH
+          value: "{target_health}"
+        ports:
+        # Consumers Ports
+        - containerPort: 80
+
+---
+apiVersion : "v1"
+kind: Service
+metadata:
+  name: apigateway-nginx
+  labels:
+    type: apigateway
+    destination: cluster
+spec:
+  type: ClusterIP
+  selector:
+    type: apigateway-nginx
+  ports:
+    - name: http
+      port: 80
+      targetPort: 80
 """
 
 internal_service = """

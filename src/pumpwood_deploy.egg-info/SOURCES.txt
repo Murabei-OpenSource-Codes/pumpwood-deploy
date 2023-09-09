@@ -18,6 +18,11 @@ src/pumpwood_deploy/crawlers/cryptocurrency/__init__.py
 src/pumpwood_deploy/crawlers/cryptocurrency/deploy.py
 src/pumpwood_deploy/crawlers/cryptocurrency/resources/__init__.py
 src/pumpwood_deploy/crawlers/cryptocurrency/resources/yml__resources.py
+src/pumpwood_deploy/ingress/__init__.py
+src/pumpwood_deploy/ingress/aws/__init__.py
+src/pumpwood_deploy/ingress/aws/ingress.py
+src/pumpwood_deploy/ingress/aws/resources/__init__.py
+src/pumpwood_deploy/ingress/aws/resources/yml_resources.py
 src/pumpwood_deploy/kubernets/__init__.py
 src/pumpwood_deploy/kubernets/kubernets.py
 src/pumpwood_deploy/kubernets/resources/__init__.py

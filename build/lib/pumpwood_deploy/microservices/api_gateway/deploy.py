@@ -5,7 +5,8 @@ from jinja2 import Template
 from typing import List
 from pumpwood_deploy.microservices.api_gateway.resources.yml_resources import (
     external_service, internal_service, aws_service,
-    nginx_gateway_deployment, nginx_gateway_secrets_deployment)
+    nginx_gateway_deployment, nginx_gateway_secrets_deployment,
+    nginx_gateway_no_ssl_deployment)
 from pumpwood_deploy.kubernets.kubernets import KubernetsAWS
 
 
@@ -161,4 +162,52 @@ class ApiGatewaySecretsSSL:
              'content': nginx_gateway_deployment__formated, 'sleep': 0},
             {'type': 'services', 'name': 'nginx-gateway__endpoint',
              'content': service__formated, 'sleep': 0}]
+        return to_return
+
+
+class CORSTerminaton:
+    """Create a NGINX termination to add default CORS headers."""
+
+    def __init__(self, version: str,
+                 health_check_url: str = "health-check/pumpwood-auth-app/",
+                 repository: str = "gcr.io/repositorio-geral-170012",
+                 server_name: str = "localhost",
+                 target_service: str = "load-balancer:8000",
+                 target_health: str = "load-balancer:8001"):
+        """
+        Build deployment files for the Kong ApiGateway.
+
+        Args:
+            version (str): Version of the API gateway.
+
+        Kwargs:
+            health_check_url (str): Url for the health checks.
+        """
+        self.repository = repository
+        self.version = version
+        self.health_check_url = health_check_url
+        self.server_name = server_name
+        self.target_service = target_service
+        self.target_health = target_health
+        self.base_path = os.path.dirname(__file__)
+
+    def create_deployment_file(self, kube_client):
+        """
+        Create_deployment_file.
+
+        Args:
+          kube_client: Client to communicate with Kubernets cluster.
+        """
+        nginx_gateway_deployment__formated = \
+            nginx_gateway_no_ssl_deployment.format(
+                repository=self.repository,
+                nginx_ssl_version=self.version,
+                health_check_url=self.health_check_url,
+                server_name=self.server_name,
+                target_service=self.target_service,
+                target_health=self.target_health)
+
+        to_return = [
+            {'type': 'deploy', 'name': 'nginx_gateway_no_ssl__deploy',
+             'content': nginx_gateway_deployment__formated, 'sleep': 0}, ]
         return to_return
