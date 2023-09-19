@@ -5,7 +5,6 @@ apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: alb-ingress
-  namespace: dev
   annotations:
     kubernetes.io/ingress.class: alb
     alb.ingress.kubernetes.io/load-balancer-name: '{{ alb_name }}'
@@ -36,7 +35,6 @@ apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: alb-ingress
-  namespace: dev
   annotations:
     kubernetes.io/ingress.class: alb
     alb.ingress.kubernetes.io/load-balancer-name: '{{ alb_name }}'

@@ -18,8 +18,8 @@ class PumpWoodEstimationMicroservice:
 
     def __init__(self, db_password: str,
                  microservice_password: str,
-                 bucket_name: str, version_app: str,
-                 version_worker: str,
+                 bucket_name: str, app_version: str,
+                 worker_version: str,
                  disk_name: str = None, disk_size: str = None,
                  postgres_public_ip: str = None, firewall_ips: list = None,
                  repository: str = "gcr.io/repositorio-geral-170012",
@@ -61,8 +61,8 @@ class PumpWoodEstimationMicroservice:
           disk_name (str): Name of the disk that will be used in postgres
           postgres_public_ip (str): Postgres public IP.
           bucket_name (str): Name of the bucket (Storage)
-          version_app (str): Verison of the estimation app imageself.
-          version_worker (str): Version of the raw data worker.
+          app_version (str): Verison of the estimation app imageself.
+          worker_version (str): Version of the raw data worker.
 
         Kwargs:
           app_limits_memory (str) = "60Gi": Memory limits for app pods.
@@ -133,7 +133,7 @@ class PumpWoodEstimationMicroservice:
         self.app_replicas = app_replicas
         self.app_timeout = app_timeout
         self.app_workers = app_workers
-        self.version_app = version_app
+        self.app_version = app_version
         self.repository = repository
         self.app_limits_memory = app_limits_memory
         self.app_limits_cpu = app_limits_cpu
@@ -142,7 +142,7 @@ class PumpWoodEstimationMicroservice:
 
         # Worker
         self.worker_replicas = worker_replicas
-        self.version_worker = version_worker
+        self.worker_version = worker_version
         self.worker_limits_memory = worker_limits_memory
         self.worker_limits_cpu = worker_limits_cpu
         self.worker_requests_memory = worker_requests_memory
@@ -192,8 +192,9 @@ class PumpWoodEstimationMicroservice:
 
         app_deployment_formated = \
             app_deployment.format(
-                repository=self.repository, version=self.version_app,
-                bucket_name=self.bucket_name,                
+                repository=self.repository,
+                version=self.app_version,
+                bucket_name=self.bucket_name,
                 replicas=self.app_replicas,
                 debug=self.app_debug,
                 n_workers=self.app_workers,
@@ -208,7 +209,7 @@ class PumpWoodEstimationMicroservice:
                 requests_cpu=self.app_requests_cpu)
         worker_deployment_text_formated = worker_deployment.format(
             repository=self.repository,
-            version=self.version_worker,
+            version=self.worker_version,
             replicas=self.worker_replicas,
             bucket_name=self.bucket_name,
             datalake_db_username=self.datalake_db_username,
