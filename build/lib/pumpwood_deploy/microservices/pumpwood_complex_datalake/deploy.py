@@ -338,7 +338,7 @@ class PumpWoodComplexDatalakeMicroservice:
         worker_complex_annotation_deployment_frmted = \
             worker_complex_annotation_deployment.format(
                 repository=self.repository,
-                version=self.version_worker_simple_dataloader,
+                version=self.version_worker_complex_dataloader,
                 bucket_name=self.bucket_name,
                 db_username=self.db_username,
                 db_host=self.db_host,
