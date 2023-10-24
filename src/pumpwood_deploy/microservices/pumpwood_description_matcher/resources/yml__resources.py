@@ -35,7 +35,7 @@ spec:
       containers:
       - name: pumpwood-description-matcher
         image: {repository}/pumpwood-description-matcher-app:{version}
-        imagePullPolicy: Always
+        imagePullPolicy: IfNotPresent
         resources:
           requests:
             memory: "{requests_memory}"
@@ -237,7 +237,7 @@ spec:
             "-c", "max_locks_per_transaction=500",
             "-c", "max_wal_size=10GB",
             "-c", "min_wal_size=80MB"]
-        imagePullPolicy: Always
+        imagePullPolicy: IfNotPresent
         resources:
           requests:
             memory: "{requests_memory}"
@@ -325,7 +325,7 @@ spec:
       containers:
       - name: postgres-pumpwood-description-matcher
         image: {repository}/test-db-description-matcher:{version}
-        imagePullPolicy: Always
+        imagePullPolicy: IfNotPresent
         resources:
           requests:
             memory: "{requests_memory}"

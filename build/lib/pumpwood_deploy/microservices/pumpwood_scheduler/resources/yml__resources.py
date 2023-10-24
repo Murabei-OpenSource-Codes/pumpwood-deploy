@@ -35,7 +35,7 @@ spec:
       containers:
       - name: pumpwood-scheduler
         image: {repository}/pumpwood-scheduler-app:{version}
-        imagePullPolicy: Always
+        imagePullPolicy: IfNotPresent
         resources:
           requests:
             memory: "{requests_memory}"
@@ -188,7 +188,7 @@ spec:
       containers:
       - name: pumpwood-worker
         image: {repository}/pumpwood-scheduler-worker:{version}
-        imagePullPolicy: Always
+        imagePullPolicy: IfNotPresent
         resources:
           requests:
             memory: "{requests_memory}"
@@ -352,7 +352,7 @@ spec:
             "-c", "max_locks_per_transaction=500",
             "-c", "max_wal_size=10GB",
             "-c", "min_wal_size=80MB"]
-        imagePullPolicy: Always
+        imagePullPolicy: IfNotPresent
         resources:
           requests:
             memory: "{requests_memory}"
@@ -447,7 +447,7 @@ spec:
           limits:
             memory: "{limits_memory}"
             cpu:  "{limits_cpu}"
-        imagePullPolicy: Always
+        imagePullPolicy: IfNotPresent
         resources:
           requests:
             cpu: "1m"

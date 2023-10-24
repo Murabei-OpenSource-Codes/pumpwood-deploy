@@ -48,7 +48,7 @@ spec:
       containers:
       - name: pumpwood-transformation
         image: {repository}/pumpwood-transformation-app:{version}
-        imagePullPolicy: Always
+        imagePullPolicy: IfNotPresent
         resources:
           requests:
             memory: "{requests_memory}"
@@ -201,7 +201,7 @@ spec:
       containers:
       - name: pumpwood-transformation
         image: {repository}/pumpwood-transformation-app:{version}
-        imagePullPolicy: Always
+        imagePullPolicy: IfNotPresent
         resources:
           requests:
             memory: "{requests_memory}"
@@ -320,7 +320,7 @@ spec:
       containers:
       - name: pumpwood-transformation
         image: {repository}/pumpwood-transformation-app:{version}
-        imagePullPolicy: Always
+        imagePullPolicy: IfNotPresent
         resources:
           requests:
             memory: "{requests_memory}"
@@ -480,7 +480,7 @@ spec:
             "-c", "max_locks_per_transaction=500",
             "-c", "max_wal_size=10GB",
             "-c", "min_wal_size=80MB"]
-        imagePullPolicy: Always
+        imagePullPolicy: IfNotPresent
         resources:
           requests:
             memory: "{requests_memory}"
@@ -591,7 +591,7 @@ spec:
       containers:
       - name: postgres-pumpwood-transformation
         image: {repository}/test-db-pumpwood-transformation:{version}
-        imagePullPolicy: Always
+        imagePullPolicy: IfNotPresent
         resources:
           requests:
             memory: "{requests_memory}"

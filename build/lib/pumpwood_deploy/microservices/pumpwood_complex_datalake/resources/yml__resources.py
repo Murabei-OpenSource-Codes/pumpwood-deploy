@@ -35,7 +35,7 @@ spec:
       containers:
       - name: pumpwood-complex-datalake
         image: {repository}/pumpwood-complex-datalake-app:{version}
-        imagePullPolicy: Always
+        imagePullPolicy: IfNotPresent
         resources:
           requests:
             memory: "{requests_memory}"
@@ -189,7 +189,7 @@ spec:
       containers:
       - name: pumpwood-dataloader-worker
         image: {repository}/pumpwood-complex-datalake-worker-complex-database:{version}
-        imagePullPolicy: Always
+        imagePullPolicy: IfNotPresent
         resources:
           requests:
             memory: "{requests_memory}"
@@ -320,7 +320,7 @@ spec:
       containers:
       - name: pumpwood-dataloader-worker
         image: {repository}/pumpwood-complex-datalake-worker-simple-annotation:{version}
-        imagePullPolicy: Always
+        imagePullPolicy: IfNotPresent
         resources:
           requests:
             memory: "{requests_memory}"
@@ -450,7 +450,7 @@ spec:
       containers:
       - name: pumpwood-dataloader-worker
         image: {repository}/pumpwood-complex-datalake-worker-complex-annotation:{version}
-        imagePullPolicy: Always
+        imagePullPolicy: IfNotPresent
         resources:
           requests:
             memory: "{requests_memory}"
@@ -634,7 +634,7 @@ spec:
             "-c", "max_worker_processes=50",
             "-c", "max_parallel_workers=20",
             "-c", "max_parallel_workers_per_gather=10"]
-        imagePullPolicy: Always
+        imagePullPolicy: IfNotPresent
         resources:
           requests:
             memory: "{requests_memory}"
@@ -730,7 +730,7 @@ spec:
       containers:
       - name: postgres-pumpwood-complex-datalake
         image: {repository}/test-db-pumpwood-complex-datalake:{version}
-        imagePullPolicy: Always
+        imagePullPolicy: IfNotPresent
         resources:
           requests:
             cpu: "1m"

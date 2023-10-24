@@ -38,10 +38,14 @@ spec:
       containers:
       - name: pumpwood-frontend-react
         image: {repository}/pumpwood-frontend-react:{version}
-        imagePullPolicy: Always
+        imagePullPolicy: IfNotPresent
         env:
-        - name: REACT_APP_API_HOST
+        - name: NEXT_PUBLIC_APP_API_HOST
           value: '{gateway_public_ip}'
+        - name: NEXT_PUBLIC_METABASE_SITE_URL
+          value: '{gateway_public_ip}/metabase'
+        - name: NEXT_PUBLIC_METABASE_SECRET_KEY
+          value: 'oi-sou-a-senha-metabase'
         - name: DEBUG
           value: '{debug}'
 

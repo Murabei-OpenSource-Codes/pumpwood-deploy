@@ -29,7 +29,7 @@ spec:
       containers:
       - name: apigateway-nginx
         image: {repository}/pumpwood-nginx-ssl-gateway:{nginx_ssl_version}
-        imagePullPolicy: Always
+        imagePullPolicy: IfNotPresent
         resources:
           requests:
             cpu: "1m"
@@ -80,7 +80,7 @@ spec:
       containers:
       - name: apigateway-nginx
         image: {repository}/pumpwood-nginx-ssl-secrets-gateway:{nginx_ssl_version}
-        imagePullPolicy: Always
+        imagePullPolicy: IfNotPresent
         resources:
           requests:
             cpu: "1m"
@@ -159,7 +159,7 @@ spec:
       containers:
       - name: apigateway-nginx-no-ssl
         image: {repository}/pumpwood-nginx-without-ssl:{nginx_ssl_version}
-        imagePullPolicy: Always
+        imagePullPolicy: IfNotPresent
         resources:
           requests:
             cpu: "1m"

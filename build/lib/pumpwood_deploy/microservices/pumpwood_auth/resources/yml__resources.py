@@ -31,7 +31,7 @@ spec:
       containers:
       - name: pumpwood-auth-static
         image: {repository}{static_image}:{version}
-        imagePullPolicy: Always
+        imagePullPolicy: IfNotPresent
         resources:
           requests:
             cpu: "10m"
@@ -105,7 +105,7 @@ spec:
           limits:
             memory: "{limits_memory}"
             cpu:  "{limits_cpu}"
-        imagePullPolicy: Always
+        imagePullPolicy: IfNotPresent
         resources:
           requests:
             cpu: "1m"
@@ -287,7 +287,7 @@ spec:
             "-c", "max_locks_per_transaction=500",
             "-c", "max_wal_size=10GB",
             "-c", "min_wal_size=80MB"]
-        imagePullPolicy: Always
+        imagePullPolicy: IfNotPresent
         resources:
           requests:
             memory: "{requests_memory}"
@@ -423,7 +423,7 @@ spec:
       containers:
       - name: postgres-pumpwood-auth
         image: {repository}test-db-pumpwood-auth:{version}
-        imagePullPolicy: Always
+        imagePullPolicy: IfNotPresent
         resources:
           requests:
             memory: "{requests_memory}"

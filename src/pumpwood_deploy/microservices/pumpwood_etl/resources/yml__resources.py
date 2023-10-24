@@ -35,7 +35,7 @@ spec:
       containers:
       - name: pumpwood-etl-app
         image: {repository}/pumpwood-etl-app:{version}
-        imagePullPolicy: Always
+        imagePullPolicy: IfNotPresent
         resources:
           requests:
             memory: "{requests_memory}"
@@ -193,7 +193,7 @@ spec:
       containers:
       - name: pumpwood-etl-worker
         image: {repository}/pumpwood-etl-worker:{version}
-        imagePullPolicy: Always
+        imagePullPolicy: IfNotPresent
         resources:
           requests:
             memory: "{requests_memory}"
@@ -364,7 +364,7 @@ spec:
             "-c", "max_locks_per_transaction=500",
             "-c", "max_wal_size=10GB",
             "-c", "min_wal_size=80MB"]
-        imagePullPolicy: Always
+        imagePullPolicy: IfNotPresent
         resources:
           requests:
             memory: "{requests_memory}"
@@ -452,7 +452,7 @@ spec:
       containers:
       - name: postgres-pumpwood-etl
         image: {repository}/test-db-pumpwood-etl:{version}
-        imagePullPolicy: Always
+        imagePullPolicy: IfNotPresent
         resources:
           requests:
             memory: "{requests_memory}"

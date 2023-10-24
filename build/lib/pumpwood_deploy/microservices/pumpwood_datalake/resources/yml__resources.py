@@ -35,7 +35,7 @@ spec:
       containers:
       - name: pumpwood-datalake
         image: {repository}/pumpwood-datalake-app:{version}
-        imagePullPolicy: Always
+        imagePullPolicy: IfNotPresent
         resources:
           requests:
             memory: "{requests_memory}"
@@ -189,7 +189,7 @@ spec:
       containers:
       - name: pumpwood-dataloader-worker
         image: {repository}/pumpwood-datalake-dataloader-worker:{version}
-        imagePullPolicy: Always
+        imagePullPolicy: IfNotPresent
         resources:
           requests:
             memory: "{requests_memory}"
@@ -373,7 +373,7 @@ spec:
             "-c", "max_worker_processes=50",
             "-c", "max_parallel_workers=20",
             "-c", "max_parallel_workers_per_gather=10"]
-        imagePullPolicy: Always
+        imagePullPolicy: IfNotPresent
         resources:
           requests:
             memory: "{requests_memory}"
@@ -462,7 +462,7 @@ spec:
       containers:
       - name: postgres-pumpwood-datalake
         image: {repository}/test-db-pumpwood-datalake:{version}
-        imagePullPolicy: Always
+        imagePullPolicy: IfNotPresent
         resources:
           requests:
             memory: "{requests_memory}"

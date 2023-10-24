@@ -35,7 +35,7 @@ spec:
       containers:
       - name: pumpwood-estimation
         image: {repository}/pumpwood-estimation-app:{version}
-        imagePullPolicy: Always
+        imagePullPolicy: IfNotPresent
         resources:
           requests:
             memory: "{requests_memory}"
@@ -188,7 +188,7 @@ spec:
       containers:
       - name: pumpwood-estimation-rawdata-workers
         image: {repository}/pumpwood-estimation-rawdata-worker:{version}
-        imagePullPolicy: Always
+        imagePullPolicy: IfNotPresent
         resources:
           requests:
             memory: "{requests_memory}"
@@ -359,7 +359,7 @@ spec:
             "-c", "max_locks_per_transaction=500",
             "-c", "max_wal_size=10GB",
             "-c", "min_wal_size=80MB"]
-        imagePullPolicy: Always
+        imagePullPolicy: IfNotPresent
         resources:
           requests:
             memory: "{requests_memory}"
@@ -445,7 +445,7 @@ spec:
       containers:
       - name: postgres-pumpwood-estimation
         image: {repository}/test-db-pumpwood-estimation:{version}
-        imagePullPolicy: Always
+        imagePullPolicy: IfNotPresent
         resources:
           requests:
             memory: "{requests_memory}"

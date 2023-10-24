@@ -33,7 +33,7 @@ spec:
       containers:
       - name: pumpwood-prediction
         image: {repository}/pumpwood-prediction-app:{version}
-        imagePullPolicy: Always
+        imagePullPolicy: IfNotPresent
         resources:
           requests:
             memory: "{requests_memory}"
@@ -196,7 +196,7 @@ spec:
       containers:
       - name: pumpwood-prediction-dataloader-workers
         image: {repository}/pumpwood-prediction-dataloader-worker:{version}
-        imagePullPolicy: Always
+        imagePullPolicy: IfNotPresent
         resources:
           requests:
             memory: "{requests_memory}"
@@ -318,7 +318,7 @@ spec:
       containers:
       - name: pumpwood-prediction-rawdata-workers
         image: {repository}/pumpwood-prediction-rawdata-worker:{version}
-        imagePullPolicy: Always
+        imagePullPolicy: IfNotPresent
         resources:
           requests:
             memory: "{requests_memory}"
@@ -530,7 +530,7 @@ spec:
             "-c", "max_locks_per_transaction=500",
             "-c", "max_wal_size=10GB",
             "-c", "min_wal_size=80MB"]
-        imagePullPolicy: Always
+        imagePullPolicy: IfNotPresent
         resources:
           requests:
             memory: "{requests_memory}"
@@ -611,7 +611,7 @@ spec:
       containers:
       - name: postgres-pumpwood-prediction
         image: {repository}/test-db-pumpwood-prediction:{version}
-        imagePullPolicy: Always
+        imagePullPolicy: IfNotPresent
         resources:
           requests:
             memory: "{requests_memory}"

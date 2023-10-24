@@ -173,7 +173,6 @@ spec:
       containers:
       - name: postgres-kong-database
         image: postgres:11
-        imagePullPolicy: Always
         resources:
           requests:
             cpu: "1m"
@@ -237,7 +236,6 @@ spec:
       containers:
       - name: apigateway-kong
         image: andrebaceti/autoboostrap-kong:1.0
-        imagePullPolicy: Always
         resources:
           requests:
             cpu: "1m"

@@ -26,7 +26,7 @@ spec:
       containers:
       - name: pumpwood-model--{model_type}--app
         image: {repository}/pumpwood-model--{model_type}--app:{version}
-        imagePullPolicy: Always
+        imagePullPolicy: IfNotPresent
         resources:
           requests:
             cpu: "1m"
@@ -120,7 +120,7 @@ spec:
       containers:
       - name: pumpwood-model--{model_type}--estimation
         image: {repository}/pumpwood-model--{model_type}--estimation-worker:{version}
-        imagePullPolicy: Always
+        imagePullPolicy: IfNotPresent
         resources:
           requests:
             cpu: "1m"
@@ -184,7 +184,7 @@ spec:
       containers:
       - name: pumpwood-model--{model_type}--prediction
         image: {repository}/pumpwood-model--{model_type}--prediction-worker:{version}
-        imagePullPolicy: Always
+        imagePullPolicy: IfNotPresent
         resources:
           requests:
             cpu: "1m"

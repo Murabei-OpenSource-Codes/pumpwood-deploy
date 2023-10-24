@@ -28,7 +28,7 @@ spec:
       containers:
       - name: crawler-cryptocurrency
         image: {repository}/crawler-cryptocurrency-app:{version}
-        imagePullPolicy: Always
+        imagePullPolicy: IfNotPresent
         resources:
           requests:
             memory: "{requests_memory}"
@@ -178,7 +178,7 @@ spec:
       containers:
       - name: crawler-cryptocurrency-worker
         image: {repository}/crawler-cryptocurrency--worker-candle:{version}
-        imagePullPolicy: Always
+        imagePullPolicy: IfNotPresent
         resources:
           requests:
             memory: "{requests_memory}"
@@ -244,7 +244,7 @@ spec:
       containers:
       - name: crawler-cryptocurrency-worker
         image: {repository}/crawler-cryptocurrency--worker-balance:{version}
-        imagePullPolicy: Always
+        imagePullPolicy: IfNotPresent
         resources:
           requests:
             memory: "{requests_memory}"
@@ -322,7 +322,7 @@ spec:
       containers:
       - name: crawler-cryptocurrency-worker
         image: {repository}/crawler-cryptocurrency--worker-order:{version}
-        imagePullPolicy: Always
+        imagePullPolicy: IfNotPresent
         resources:
           requests:
             memory: "{requests_memory}"
@@ -455,7 +455,7 @@ spec:
             "-c", "max_locks_per_transaction=500",
             "-c", "max_wal_size=10GB",
             "-c", "min_wal_size=80MB"]
-        imagePullPolicy: Always
+        imagePullPolicy: IfNotPresent
         resources:
           requests:
             memory: "{requests_memory}"

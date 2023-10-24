@@ -35,7 +35,7 @@ spec:
       containers:
       - name: pumpwood-decision
         image: {repository}/pumpwood-decision-app:{version}
-        imagePullPolicy: Always
+        imagePullPolicy: IfNotPresent
         resources:
           requests:
             memory: "{requests_memory}"
@@ -237,7 +237,7 @@ spec:
             "-c", "max_locks_per_transaction=500",
             "-c", "max_wal_size=10GB",
             "-c", "min_wal_size=80MB"]
-        imagePullPolicy: Always
+        imagePullPolicy: IfNotPresent
         resources:
           requests:
             memory: "{requests_memory}"
@@ -325,7 +325,7 @@ spec:
       containers:
       - name: postgres-pumpwood-decision
         image: {repository}/test-db-pumpwood-decision:{version}
-        imagePullPolicy: Always
+        imagePullPolicy: IfNotPresent
         resources:
           requests:
             memory: "{requests_memory}"
@@ -397,7 +397,7 @@ spec:
       containers:
       - name: decision-model--{decision_model_name}
         image: {repository}/decision-model--{decision_model_name}:{version}
-        imagePullPolicy: Always
+        imagePullPolicy: IfNotPresent
         resources:
           requests:
             memory: "{requests_memory}"

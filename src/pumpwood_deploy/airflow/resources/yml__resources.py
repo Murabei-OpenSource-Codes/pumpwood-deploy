@@ -38,7 +38,7 @@ spec:
       containers:
       - name: simple-airflow--webserver
         image: andrebaceti/simple-airflow:{version}
-        imagePullPolicy: Always
+        imagePullPolicy: IfNotPresent
         resources:
           requests:
             cpu: "1m"
@@ -203,7 +203,7 @@ spec:
       containers:
       - name: simple-airflow--scheduler
         image: andrebaceti/simple-airflow:{version}
-        imagePullPolicy: Always
+        imagePullPolicy: IfNotPresent
         command: ["bash"]
         args: ["/airflow/start_airflow__scheduler.bash"]
         resources:
@@ -343,7 +343,7 @@ spec:
       containers:
       - name: simple-airflow--scheduler
         image: andrebaceti/simple-airflow:{version}
-        imagePullPolicy: Always
+        imagePullPolicy: IfNotPresent
         command: ["bash"]
         args: ["/airflow/start_airflow__worker.bash"]
         resources:
@@ -534,7 +534,7 @@ spec:
             "-c", "max_locks_per_transaction=500",
             "-c", "max_wal_size=10GB",
             "-c", "min_wal_size=80MB"]
-        imagePullPolicy: Always
+        imagePullPolicy: IfNotPresent
         resources:
           requests:
             cpu: "1m"
