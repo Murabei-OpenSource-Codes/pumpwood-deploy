@@ -11,13 +11,13 @@ spec:
     matchLabels:
       type: db
       endpoint: {name}
-      function: not-microservice
+      function: postgres
   template:
     metadata:
       labels:
         type: db
         endpoint: {name}
-        function: not-microservice
+        function: postgres
     spec:
       volumes:
       - name: postgres-data
@@ -39,30 +39,6 @@ spec:
                 values:
                 - system
       containers:
-      # PGBouncer Container
-      - name: pgbouncer
-        image: bitnami/pgbouncer:1.21.0
-        env:
-        - name: POSTGRESQL_USERNAME
-          value: pumpwood
-        - name: POSTGRESQL_PASSWORD
-          valueFrom:
-            secretKeyRef:
-              name: postgres-test-bouncer
-              key: db_password
-        - name: POSTGRESQL_HOST
-          value: 0.0.0.0
-        - name: PGBOUNCER_DATABASE
-          value: pumpwood
-        - name: PGBOUNCER_SET_DATABASE_USER
-          value: 'yes'
-        - name: PGBOUNCER_SET_DATABASE_PASSWORD
-          value: 'yes'
-        - name: PGBOUNCER_POOL_MODE
-          value: transaction
-        ports:
-        - containerPort: 6432
-
       # Postgres Container
       - name: postgres
         image: postgis/postgis:15-3.3-alpine
@@ -83,7 +59,10 @@ spec:
             cpu:  "{limits_cpu}"
         env:
         - name: POSTGRES_USER
-          value: pumpwood
+          valueFrom:
+            secretKeyRef:
+              name: {name}
+              key: db_username
         - name: POSTGRES_PASSWORD
           valueFrom:
             secretKeyRef:
@@ -109,25 +88,7 @@ metadata:
   labels:
     type: db
     endpoint: {name}
-    function: not-microservice
-spec:
-  type: ClusterIP
-  ports:
-    - port: 5432
-      targetPort: 6432
-  selector:
-    type: db
-    endpoint: {name}
-    function: not-microservice
----
-apiVersion : "v1"
-kind: Service
-metadata:
-  name: {name}-not-bouncer
-  labels:
-    type: db-not-bouncer
-    endpoint: {name}
-    function: not-microservice
+    function: postgres
 spec:
   type: ClusterIP
   ports:
@@ -136,16 +97,17 @@ spec:
   selector:
     type: db
     endpoint: {name}
-    function: not-microservice
+    function: postgres
 """
 
-secrets = """
+secrets_postgres = """
 apiVersion: v1
 kind: Secret
 metadata:
   name: {name}
 type: Opaque
 data:
+  db_username: {db_username}
   db_password: {db_password}
   ssl_key: {ssl_key}
   ssl_crt: {ssl_crt}
@@ -158,4 +120,85 @@ type: Opaque
 data:
   ssl_key: {ssl_key}
   ssl_crt: {ssl_crt}
+"""
+
+pgbouncer_deploy = """
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {name}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      type: db
+      endpoint: {name}
+      function: pgbouncer
+  template:
+    metadata:
+      labels:
+        type: db
+        endpoint: {name}
+        function: pgbouncer
+    spec:
+      volumes:
+      - name: dshm
+        emptyDir:
+          medium: Memory
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: function
+                operator: NotIn
+                values:
+                - system
+      containers:
+      # PGBouncer Container
+      - name: pgbouncer
+        image: andrebaceti/pgbouncer-auto-bootstrap:1.21.0-1.0
+        env:
+        - name: POSTGRESQL_USERNAME
+          valueFrom:
+            secretKeyRef:
+              name: {postgres_secret}
+              key: db_username
+        - name: POSTGRESQL_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: {postgres_secret}
+              key: db_password
+        - name: POSTGRESQL_HOST
+          value: '{host}'
+        - name: POSTGRESQL_PORT
+          value: '{port}'
+        - name: PGBOUNCER_DATABASE
+          value: '{database}'
+        - name: PGBOUNCER_SET_DATABASE_USER
+          value: 'yes'
+        - name: PGBOUNCER_SET_DATABASE_PASSWORD
+          value: 'yes'
+        - name: PGBOUNCER_POOL_MODE
+          value: transaction
+        ports:
+        - containerPort: 6432
+---
+apiVersion : "v1"
+kind: Service
+metadata:
+  name: {name}
+  labels:
+    type: db
+    endpoint: {name}
+    function: pgbouncer
+spec:
+  type: ClusterIP
+  ports:
+    - port: 5432
+      targetPort: 6432
+  selector:
+    type: db
+    endpoint: {name}
+    function: pgbouncer
 """
