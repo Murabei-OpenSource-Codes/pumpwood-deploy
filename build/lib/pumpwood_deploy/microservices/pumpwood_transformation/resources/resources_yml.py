@@ -471,7 +471,31 @@ spec:
                 values:
                 - system
       containers:
-      - name: postgres-pumpwood-transformation
+      # PGBouncer Container
+      - name: pgbouncer
+        image: bitnami/pgbouncer:1.21.0
+        env:
+        - name: POSTGRESQL_USERNAME
+          value: pumpwood
+        - name: POSTGRESQL_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: pumpwood-transformation
+              key: db_password
+        - name: POSTGRESQL_HOST
+          value: 0.0.0.0
+        - name: PGBOUNCER_DATABASE
+          value: pumpwood
+        - name: PGBOUNCER_SET_DATABASE_USER
+          value: 'yes'
+        - name: PGBOUNCER_SET_DATABASE_PASSWORD
+          value: 'yes'
+        - name: PGBOUNCER_POOL_MODE
+          value: transaction
+        ports:
+        - containerPort: 6432
+
+      - name: postgres
         image: postgis/postgis:15-3.3-alpine
         args: [
             "-c", "max_connections=1000",
@@ -488,8 +512,6 @@ spec:
           limits:
             memory: "{limits_memory}"
             cpu:  "{limits_cpu}"
-        ports:
-        - containerPort: 5432
         env:
         - name: POSTGRES_USER
           value: pumpwood
@@ -511,6 +533,9 @@ spec:
           readOnly: true
         - name: dshm
           mountPath: /dev/shm
+
+        ports:
+        - containerPort: 5432
 ---
 apiVersion : "v1"
 kind: Service
@@ -518,6 +543,24 @@ metadata:
   name: postgres-pumpwood-transformation
   labels:
     type: db
+    endpoint: pumpwood-transformation-app
+    function: prediction
+spec:
+  type: ClusterIP
+  ports:
+    - port: 5432
+      targetPort: 6432
+  selector:
+    type: db
+    endpoint: pumpwood-transformation-app
+    function: prediction
+---
+apiVersion : "v1"
+kind: Service
+metadata:
+  name: postgres-pumpwood-transformation-no-bouncer
+  labels:
+    type: db-no-bouncer
     endpoint: pumpwood-transformation-app
     function: prediction
 spec:
@@ -589,7 +632,31 @@ spec:
                 values:
                 - system
       containers:
-      - name: postgres-pumpwood-transformation
+      # PGBouncer Container
+      - name: pgbouncer
+        image: bitnami/pgbouncer:1.21.0
+        env:
+        - name: POSTGRESQL_USERNAME
+          value: pumpwood
+        - name: POSTGRESQL_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: pumpwood-transformation
+              key: db_password
+        - name: POSTGRESQL_HOST
+          value: 0.0.0.0
+        - name: PGBOUNCER_DATABASE
+          value: pumpwood
+        - name: PGBOUNCER_SET_DATABASE_USER
+          value: 'yes'
+        - name: PGBOUNCER_SET_DATABASE_PASSWORD
+          value: 'yes'
+        - name: PGBOUNCER_POOL_MODE
+          value: transaction
+        ports:
+        - containerPort: 6432
+
+      - name: postgres
         image: {repository}/test-db-pumpwood-transformation:{version}
         imagePullPolicy: IfNotPresent
         resources:
@@ -604,6 +671,8 @@ spec:
         volumeMounts:
         - name: dshm
           mountPath: /dev/shm
+        ports:
+        - containerPort: 5432
 ---
 apiVersion : "v1"
 kind: Service
@@ -611,6 +680,24 @@ metadata:
   name: postgres-pumpwood-transformation
   labels:
     type: db
+    endpoint: pumpwood-transformation-app
+    function: prediction
+spec:
+  type: ClusterIP
+  ports:
+    - port: 5432
+      targetPort: 6432
+  selector:
+    type: db
+    endpoint: pumpwood-transformation-app
+    function: prediction
+---
+apiVersion : "v1"
+kind: Service
+metadata:
+  name: postgres-pumpwood-transformation-no-bouncer
+  labels:
+    type: db-no-bouncer
     endpoint: pumpwood-transformation-app
     function: prediction
 spec:

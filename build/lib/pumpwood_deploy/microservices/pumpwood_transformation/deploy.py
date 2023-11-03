@@ -14,10 +14,11 @@ from .resources.resources_yml import (
 class PumpWoodTransformationMicroservice:
     """PumpWoodTransformationMicroservice."""
 
-    def __init__(self, db_password: str,
+    def __init__(self,
                  microservice_password: str,
                  bucket_name: str,
                  version_app: str,
+                 db_password: str = "pumpwood",
                  disk_name: str = None,
                  disk_size: str = None,
                  postgres_public_ip: str = None,

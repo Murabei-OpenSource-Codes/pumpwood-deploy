@@ -95,7 +95,7 @@ spec:
               secretKeyRef:
                 name: pumpwood-etl
                 key: microservice_password
-        
+
         # Airflow connection
         - name: AIRFLOW_PASSWORD
           valueFrom:
@@ -355,7 +355,31 @@ spec:
                 values:
                 - system
       containers:
-      - name: postgres-pumpwood-etl
+      # PGBouncer Container
+      - name: pgbouncer
+        image: bitnami/pgbouncer:1.21.0
+        env:
+        - name: POSTGRESQL_USERNAME
+          value: pumpwood
+        - name: POSTGRESQL_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: pumpwood-etl
+              key: db_password
+        - name: POSTGRESQL_HOST
+          value: 0.0.0.0
+        - name: PGBOUNCER_DATABASE
+          value: pumpwood
+        - name: PGBOUNCER_SET_DATABASE_USER
+          value: 'yes'
+        - name: PGBOUNCER_SET_DATABASE_PASSWORD
+          value: 'yes'
+        - name: PGBOUNCER_POOL_MODE
+          value: transaction
+        ports:
+        - containerPort: 6432
+
+      - name: postgres
         image: postgis/postgis:15-3.3-alpine
         args: [
             "-c", "max_connections=1000",
@@ -393,6 +417,7 @@ spec:
           readOnly: true
         - name: dshm
           mountPath: /dev/shm
+
         ports:
         - containerPort: 5432
 ---
@@ -402,6 +427,24 @@ metadata:
   name: postgres-pumpwood-etl
   labels:
     type: db
+    endpoint: pumpwood-etl-app
+    function: datalake
+spec:
+  type: ClusterIP
+  ports:
+    - port: 5432
+      targetPort: 6432
+  selector:
+    type: db
+    endpoint: pumpwood-etl-app
+    function: datalake
+---
+apiVersion : "v1"
+kind: Service
+metadata:
+  name: postgres-pumpwood-etl-no-bouncer
+  labels:
+    type: db-no-bouncer
     endpoint: pumpwood-etl-app
     function: datalake
 spec:
@@ -450,7 +493,31 @@ spec:
                 values:
                 - system
       containers:
-      - name: postgres-pumpwood-etl
+      # PGBouncer Container
+      - name: pgbouncer
+        image: bitnami/pgbouncer:1.21.0
+        env:
+        - name: POSTGRESQL_USERNAME
+          value: pumpwood
+        - name: POSTGRESQL_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: pumpwood-etl
+              key: db_password
+        - name: POSTGRESQL_HOST
+          value: 0.0.0.0
+        - name: PGBOUNCER_DATABASE
+          value: pumpwood
+        - name: PGBOUNCER_SET_DATABASE_USER
+          value: 'yes'
+        - name: PGBOUNCER_SET_DATABASE_PASSWORD
+          value: 'yes'
+        - name: PGBOUNCER_POOL_MODE
+          value: transaction
+        ports:
+        - containerPort: 6432
+
+      - name: postgres
         image: {repository}/test-db-pumpwood-etl:{version}
         imagePullPolicy: IfNotPresent
         resources:
@@ -472,6 +539,24 @@ metadata:
   name: postgres-pumpwood-etl
   labels:
     type: db
+    endpoint: pumpwood-etl-app
+    function: datalake
+spec:
+  type: ClusterIP
+  ports:
+    - port: 5432
+      targetPort: 6432
+  selector:
+    type: db
+    endpoint: pumpwood-etl-app
+    function: datalake
+---
+apiVersion : "v1"
+kind: Service
+metadata:
+  name: postgres-pumpwood-etl-no-bouncer
+  labels:
+    type: db-no-bouncer
     endpoint: pumpwood-etl-app
     function: datalake
 spec:

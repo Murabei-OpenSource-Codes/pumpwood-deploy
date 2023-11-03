@@ -12,10 +12,11 @@ from .resources.yml__resources import (
 class PumpWoodDescisionMicroservice:
     """PumpWoodDatalakeMicroservice."""
 
-    def __init__(self, db_password: str,
+    def __init__(self,
                  microservice_password: str,
                  bucket_name: str,
                  app_version: str,
+                 db_password: str = "pumpwood",
                  disk_name: str = None,
                  disk_size: str = None,
                  postgres_public_ip: str = None,
