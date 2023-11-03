@@ -13,13 +13,15 @@ from .resources.yml__resources import (
 class PumpWoodComplexDatalakeMicroservice:
     """PumpWood Complex Datalake Microservice."""
 
-    def __init__(self, db_password: str,
-                 microservice_password: str, bucket_name: str,
+    def __init__(self,
+                 microservice_password: str,
+                 bucket_name: str,
                  version_app: str,
                  version_worker_datalake_dataloader: str,
                  version_worker_simple_dataloader: str,
                  version_worker_complex_dataloader: str,
 
+                 db_password: str = "pumpwood",
                  disk_name: str = None, disk_size: str = None,
                  postgres_public_ip: str = None, firewall_ips: list = None,
                  repository: str = "gcr.io/repositorio-geral-170012",

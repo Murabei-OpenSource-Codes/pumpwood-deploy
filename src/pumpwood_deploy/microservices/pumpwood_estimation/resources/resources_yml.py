@@ -350,6 +350,30 @@ spec:
                 values:
                 - system
       containers:
+      # PGBouncer Container
+      - name: pgbouncer
+        image: bitnami/pgbouncer:1.21.0
+        env:
+        - name: POSTGRESQL_USERNAME
+          value: pumpwood
+        - name: POSTGRESQL_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: pumpwood-estimation
+              key: db_password
+        - name: POSTGRESQL_HOST
+          value: 0.0.0.0
+        - name: PGBOUNCER_DATABASE
+          value: pumpwood
+        - name: PGBOUNCER_SET_DATABASE_USER
+          value: 'yes'
+        - name: PGBOUNCER_SET_DATABASE_PASSWORD
+          value: 'yes'
+        - name: PGBOUNCER_POOL_MODE
+          value: transaction
+        ports:
+        - containerPort: 6432
+
       - name: postgres-pumpwood-estimation
         image: postgis/postgis:15-3.3-alpine
         args: [
@@ -388,6 +412,9 @@ spec:
           readOnly: true
         - name: dshm
           mountPath: /dev/shm
+
+        ports:
+        - containerPort: 5432
 ---
 apiVersion : "v1"
 kind: Service
@@ -395,6 +422,24 @@ metadata:
   name: postgres-pumpwood-estimation
   labels:
     type: db
+    endpoint: pumpwood-estimation-app
+    function: estimation
+spec:
+  type: ClusterIP
+  ports:
+    - port: 5432
+      targetPort: 6432
+  selector:
+    type: db
+    endpoint: pumpwood-estimation-app
+    function: estimation
+---
+apiVersion : "v1"
+kind: Service
+metadata:
+  name: postgres-pumpwood-estimation-no-bouncer
+  labels:
+    type: db-no-bouncer
     endpoint: pumpwood-estimation-app
     function: estimation
 spec:
@@ -443,6 +488,30 @@ spec:
                 values:
                 - system
       containers:
+      # PGBouncer Container
+      - name: pgbouncer
+        image: bitnami/pgbouncer:1.21.0
+        env:
+        - name: POSTGRESQL_USERNAME
+          value: pumpwood
+        - name: POSTGRESQL_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: pumpwood-estimation
+              key: db_password
+        - name: POSTGRESQL_HOST
+          value: 0.0.0.0
+        - name: PGBOUNCER_DATABASE
+          value: pumpwood
+        - name: PGBOUNCER_SET_DATABASE_USER
+          value: 'yes'
+        - name: PGBOUNCER_SET_DATABASE_PASSWORD
+          value: 'yes'
+        - name: PGBOUNCER_POOL_MODE
+          value: transaction
+        ports:
+        - containerPort: 6432
+
       - name: postgres-pumpwood-estimation
         image: {repository}/test-db-pumpwood-estimation:{version}
         imagePullPolicy: IfNotPresent
@@ -456,6 +525,8 @@ spec:
         volumeMounts:
         - name: dshm
           mountPath: /dev/shm
+        ports:
+        - containerPort: 5432
 ---
 apiVersion : "v1"
 kind: Service
@@ -463,6 +534,24 @@ metadata:
   name: postgres-pumpwood-estimation
   labels:
     type: db
+    endpoint: pumpwood-estimation-app
+    function: estimation
+spec:
+  type: ClusterIP
+  ports:
+    - port: 5432
+      targetPort: 6432
+  selector:
+    type: db
+    endpoint: pumpwood-estimation-app
+    function: estimation
+---
+apiVersion : "v1"
+kind: Service
+metadata:
+  name: postgres-pumpwood-estimation-no-bouncer
+  labels:
+    type: db-no-bouncer
     endpoint: pumpwood-estimation-app
     function: estimation
 spec:

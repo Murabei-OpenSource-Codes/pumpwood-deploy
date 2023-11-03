@@ -11,15 +11,16 @@ from pumpwood_deploy.microservices.pumpwood_dummy_models.resources.yml__resource
 class PumpWoodDummyModelsMicroservice:
     """PumpWoodDummyModelsMicroservice."""
 
-    def __init__(self, db_password: str,
+    def __init__(self,
                  microservice_password: str,
                  bucket_name: str,
                  version_app: str,
                  test_db_version: str,
+                 db_password: str = "pumpwood",
                  postgres_public_ip: str = None,
                  firewall_ips: list = None,
                  repository: str = "gcr.io/repositorio-geral-170012",
-                 workers_timeout: int = 300,                 
+                 workers_timeout: int = 300,
                  test_db_repository: str = "gcr.io/repositorio-geral-170012",
                  db_username: str = "pumpwood",
                  db_host: str = "postgres-pumpwood-dummy-models",

@@ -34,7 +34,7 @@ spec:
                 - system
       containers:
       - name: metabase
-        image: metabase/metabase:v0.46.4
+        image: andrebaceti/metabase-pumpwood:v0.47.6
         imagePullPolicy: IfNotPresent
         resources:
           requests:

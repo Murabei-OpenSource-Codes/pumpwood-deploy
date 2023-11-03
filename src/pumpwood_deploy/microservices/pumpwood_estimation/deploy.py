@@ -16,11 +16,13 @@ class PumpWoodEstimationMicroservice:
     .
     """
 
-    def __init__(self, db_password: str,
+    def __init__(self,
                  microservice_password: str,
                  bucket_name: str, app_version: str,
                  worker_version: str,
-                 disk_name: str = None, disk_size: str = None,
+                 db_password: str = "pumpwood",
+                 disk_name: str = None,
+                 disk_size: str = None,
                  postgres_public_ip: str = None, firewall_ips: list = None,
                  repository: str = "gcr.io/repositorio-geral-170012",
                  workers_timeout: int = 300,

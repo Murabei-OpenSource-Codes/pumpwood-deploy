@@ -359,7 +359,31 @@ spec:
                 values:
                 - system
       containers:
-      - name: postgres-pumpwood-datalake
+      # PGBouncer Container
+      - name: pgbouncer
+        image: bitnami/pgbouncer:1.21.0
+        env:
+        - name: POSTGRESQL_USERNAME
+          value: pumpwood
+        - name: POSTGRESQL_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: pumpwood-datalake
+              key: db_password
+        - name: POSTGRESQL_HOST
+          value: 0.0.0.0
+        - name: PGBOUNCER_DATABASE
+          value: pumpwood
+        - name: PGBOUNCER_SET_DATABASE_USER
+          value: 'yes'
+        - name: PGBOUNCER_SET_DATABASE_PASSWORD
+          value: 'yes'
+        - name: PGBOUNCER_POOL_MODE
+          value: transaction
+        ports:
+        - containerPort: 6432
+
+      - name: postgres
         image: postgis/postgis:15-3.3-alpine
         args: [
             "-c", "max_connections=1000",
@@ -417,6 +441,24 @@ spec:
   type: ClusterIP
   ports:
     - port: 5432
+      targetPort: 6432
+  selector:
+    type: db
+    endpoint: pumpwood-datalake-app
+    function: datalake
+---
+apiVersion : "v1"
+kind: Service
+metadata:
+  name: postgres-pumpwood-datalake-no-bouncer
+  labels:
+    type: db-no-bouncer
+    endpoint: pumpwood-datalake-app
+    function: datalake
+spec:
+  type: ClusterIP
+  ports:
+    - port: 5432
       targetPort: 5432
   selector:
     type: db
@@ -460,7 +502,31 @@ spec:
                 values:
                 - system
       containers:
-      - name: postgres-pumpwood-datalake
+      # PGBouncer Container
+      - name: pgbouncer
+        image: bitnami/pgbouncer:1.21.0
+        env:
+        - name: POSTGRESQL_USERNAME
+          value: pumpwood
+        - name: POSTGRESQL_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: pumpwood-datalake
+              key: db_password
+        - name: POSTGRESQL_HOST
+          value: 0.0.0.0
+        - name: PGBOUNCER_DATABASE
+          value: pumpwood
+        - name: PGBOUNCER_SET_DATABASE_USER
+          value: 'yes'
+        - name: PGBOUNCER_SET_DATABASE_PASSWORD
+          value: 'yes'
+        - name: PGBOUNCER_POOL_MODE
+          value: transaction
+        ports:
+        - containerPort: 6432
+
+      - name: postgres
         image: {repository}/test-db-pumpwood-datalake:{version}
         imagePullPolicy: IfNotPresent
         resources:
@@ -482,6 +548,24 @@ metadata:
   name: postgres-pumpwood-datalake
   labels:
     type: db
+    endpoint: pumpwood-datalake-app
+    function: datalake
+spec:
+  type: ClusterIP
+  ports:
+    - port: 5432
+      targetPort: 6432
+  selector:
+    type: db
+    endpoint: pumpwood-datalake-app
+    function: datalake
+---
+apiVersion : "v1"
+kind: Service
+metadata:
+  name: postgres-pumpwood-datalake-no-bouncer
+  labels:
+    type: db-no-bouncer
     endpoint: pumpwood-datalake-app
     function: datalake
 spec:
