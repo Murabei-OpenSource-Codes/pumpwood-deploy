@@ -24,7 +24,7 @@ os.chdir(os.path.normpath(os.path.join(os.path.abspath(__file__), os.pardir)))
 
 setuptools.setup(
     name='pumpwood-deploy',
-    version='0.39',
+    version='1.0',
     include_package_data=True,
     license='BSD-3-Clause License',
     description='Package to assist deploy Pumpwood Systems on Kubenets',
@@ -38,6 +38,7 @@ setuptools.setup(
         "Operating System :: OS Independent",
     ],
     package_dir={"": "src"},
+    package_data={'': ['*.yml']},
     install_requires=requirements,
     packages=setuptools.find_packages(where="src"),
     python_requires=">=3.6",

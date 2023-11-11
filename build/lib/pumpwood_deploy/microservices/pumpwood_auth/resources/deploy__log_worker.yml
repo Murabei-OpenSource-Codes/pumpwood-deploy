@@ -1,0 +1,133 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: pumpwood-auth-worker-log
+spec:
+  replicas: {replicas}
+  selector:
+    matchLabels:
+      type: worker
+      endpoint: pumpwood-auth-worker-log
+      function: log
+  template:
+    metadata:
+      labels:
+        type: worker
+        endpoint: pumpwood-auth-worker-log
+        function: log
+    spec:
+      imagePullSecrets:
+        - name: dockercfg
+      volumes:
+      - name: gcp--storage-key
+        secret:
+          secretName: gcp--storage-key
+      - name: log-data
+        persistentVolumeClaim:
+          claimName: {volume_claim_name}
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: function
+                operator: NotIn
+                values:
+                - system
+      containers:
+      - image: {repository}pumpwood-auth-log-worker:{version}
+        imagePullPolicy: IfNotPresent
+        volumeMounts:
+          - name: gcp--storage-key
+            readOnly: true
+            mountPath: /etc/secrets
+          - name: postgres-data
+            persistentVolumeClaim:
+              claimName: {volume_claim_name}
+
+          - name: gcp--storage-key
+            readOnly: true
+            mountPath: /etc/secrets
+        env:
+        - name: WORKER_LOG_PATH
+          value: "/logs/"
+
+        # Microservice
+        - name: MICROSERVICE_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: pumpwood-auth
+              key: microservice_password
+
+        # RABBITMQ ETL
+        - name: RABBITMQ_HOST
+          value: "rabbitmq-main"
+        - name: RABBITMQ_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: rabbitmq-main-secrets
+              key: password
+
+        ###########
+        # STORAGE #
+        - name: STORAGE_BUCKET_NAME
+          value: {bucket_name}
+        - name: STORAGE_TYPE
+          valueFrom:
+            configMapKeyRef:
+              name: storage
+              key: storage_type
+
+        # GCP
+        - name: GOOGLE_APPLICATION_CREDENTIALS
+          value: "/etc/secrets/key-storage.json"
+
+        # AZURE
+        - name: AZURE_STORAGE_CONNECTION_STRING
+          valueFrom:
+            secretKeyRef:
+              name: azure--storage-key
+              key: azure_storage_connection_string
+
+        # AWS
+        - name: AWS_ACCESS_KEY_ID
+          valueFrom:
+            secretKeyRef:
+              name: aws--storage-key
+              key: aws_access_key_id
+        - name: AWS_SECRET_ACCESS_KEY
+          valueFrom:
+            secretKeyRef:
+              name: aws--storage-key
+              key: aws_secret_access_key
+
+        ############
+        # Metabase #
+        - name: METABASE_SITE_URL
+          valueFrom:
+            configMapKeyRef:
+              name: metabase
+              key: site_url
+        - name: METABASE_SECRET_KEY
+          valueFrom:
+            secretKeyRef:
+              name: metabase
+              key: embedding_secret_key
+---
+apiVersion : "v1"
+kind: Service
+metadata:
+  name: pumpwood-auth-app
+  labels:
+    type: app
+    endpoint: pumpwood-auth-app
+    function: auth
+spec:
+  type: ClusterIP
+  ports:
+    - port: 5000
+      targetPort: 5000
+  selector:
+    type: app
+    endpoint: pumpwood-auth-app
+    function: auth

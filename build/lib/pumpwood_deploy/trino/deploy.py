@@ -1,17 +1,26 @@
 """PumpWood DataLake Microservice Deploy."""
 import os
 import base64
-from pumpwood_deploy.microservices.postgres.postgres import \
-    create_ssl_key_ssl_crt
-from jinja2 import Template
-from pumpwood_deploy.trino.resources.yml__resources import (
-    secrets_trino, coordinator_deployment, worker_deployment)
+import pkg_resources
+
+
+coordinator_deployment = pkg_resources.resource_stream(
+    'pumpwood_deploy',
+    'trino/resources/deploy__coordenator.yml').read().decode()
+worker_deployment = pkg_resources.resource_stream(
+    'pumpwood_deploy',
+    'trino/resources/deploy__worker.yml').read().decode()
+secrets_trino = pkg_resources.resource_stream(
+    'pumpwood_deploy',
+    'trino/resources/secrets.yml').read().decode()
 
 
 class TrinoMicroservice:
     """Deploy Metabase as microservice."""
 
-    def __init__(self, shared_secret: str, catalog_dir_zip_path: str,
+    def __init__(self,
+                 shared_secret: str,
+                 catalog_dir_zip_path: str,
                  worker_replicas: int = 1,
                  worker_limits_memory: str = "60Gi",
                  worker_limits_cpu: str = "12000m",
@@ -53,7 +62,7 @@ class TrinoMicroservice:
         self.coordenator_requests_memory = coordenator_requests_memory
         self.coordenator_requests_cpu = coordenator_requests_cpu
 
-    def create_deployment_file(self, kube_client):
+    def create_deployment_file(self, **kwargs):
         """create_deployment_file."""
         # General secrets
         frm_secrets_trino = secrets_trino.format(
