@@ -1,8 +1,18 @@
 """PumpWood Frontend Module."""
 import os
+import pkg_resources
 import base64
-from pumpwood_deploy.microservices.frontend.resources.yml__resources import (
-    deployment_yml, secrets_yml)
+
+
+deployment_yml = pkg_resources.resource_stream(
+    'pumpwood_deploy',
+    'microservices/frontend/'
+    'resources/deploy__frontend.yml').read().decode()
+
+secrets_yml = pkg_resources.resource_stream(
+    'pumpwood_deploy',
+    'microservices/frontend/'
+    'resources/secrets.yml').read().decode()
 
 
 class PumpwoodFrontEndMicroservice:
@@ -20,12 +30,11 @@ class PumpwoodFrontEndMicroservice:
             microservice_password.encode()).decode()
         self.base_path = os.path.dirname(__file__)
 
-    def create_deployment_file(self, kube_client):
+    def create_deployment_file(self, **kwargs):
         """
         Create_deployment_file.
 
-        Args:
-          kube_client: Client to communicate with Kubernets cluster.
+        No args.
         """
         deployment_text_f = deployment_yml.format(
             repository=self.repository,

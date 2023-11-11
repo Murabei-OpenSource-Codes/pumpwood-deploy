@@ -1,0 +1,111 @@
+apiVersion : "apps/v1"
+kind: Deployment
+metadata:
+  name: metabase-app
+spec:
+  replicas: {replicas}
+  selector:
+    matchLabels:
+      type: app
+      endpoint: metabase-app
+      function: dashboard
+  template:
+    metadata:
+      labels:
+          type: app
+          endpoint: metabase-app
+          function: dashboard
+    spec:
+      imagePullSecrets:
+        - name: dockercfg
+      volumes:
+      - name: gcp--storage-key
+        secret:
+          secretName: gcp--storage-key
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: function
+                operator: NotIn
+                values:
+                - system
+      containers:
+      - name: metabase
+        image: andrebaceti/metabase-pumpwood:v0.47.6
+        imagePullPolicy: IfNotPresent
+        resources:
+          requests:
+            memory: "{requests_memory}"
+            cpu:  "{requests_cpu}"
+          limits:
+            memory: "{limits_memory}"
+            cpu:  "{limits_cpu}"
+        volumeMounts:
+          - name: gcp--storage-key
+            readOnly: true
+            mountPath: /etc/secrets
+        readinessProbe:
+          httpGet:
+            path: api/health
+            port: 3000
+        ports:
+        - containerPort: 3000
+        env:
+        ############
+        # Metabase #
+        - name: MB_SITE_URL
+          valueFrom:
+            configMapKeyRef:
+              name: metabase
+              key: site_url
+        - name: MB_EMBEDDING_SECRET_KEY
+          valueFrom:
+            secretKeyRef:
+              name: metabase
+              key: embedding_secret_key
+        - name: MB_ENCRYPTION_SECRET_KEY
+          valueFrom:
+            secretKeyRef:
+              name: metabase
+              key: encryption_secret_key
+
+        ############
+        # Database #
+        - name: MB_DB_TYPE
+          value: "postgres"
+        - name: MB_DB_DBNAME
+          value: "metabase"
+        - name: MB_DB_PORT
+          value: "5432"
+        - name: MB_DB_HOST
+          value: {db_host}
+        - name: MB_DB_USER
+          valueFrom:
+            secretKeyRef:
+              name: metabase
+              key: db_usename
+        - name: MB_DB_PASS
+          valueFrom:
+            secretKeyRef:
+              name: metabase
+              key: db_password
+---
+apiVersion : "v1"
+kind: Service
+metadata:
+  name: metabase-app
+  labels:
+      type: app
+      endpoint: metabase-app
+      function: dashboard
+spec:
+  type: ClusterIP
+  ports:
+    - port: 3000
+      targetPort: 3000
+  selector:
+      type: app
+      endpoint: metabase-app
+      function: dashboard

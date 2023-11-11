@@ -1,13 +1,36 @@
 """PumpWood Complex DataLake Microservice Deploy."""
+import pkg_resources
 import os
 import base64
 from pumpwood_deploy.microservices.postgres.postgres import \
     create_ssl_key_ssl_crt
 from jinja2 import Template
-from .resources.yml__resources import (
-    app_deployment, worker_datalake_deployment,
-    worker_simple_annotation_deployment, worker_complex_annotation_deployment,
-    deployment_postgres, secrets, services__load_balancer, test_postgres)
+
+
+secrets = pkg_resources.resource_stream(
+    'pumpwood_deploy',
+    'microservices/pumpwood_complex_datalake/'
+    'resources/secrets.yml').read().decode()
+app_deployment = pkg_resources.resource_stream(
+    'pumpwood_deploy',
+    'microservices/pumpwood_complex_datalake/'
+    'resources/deploy__app.yml').read().decode()
+worker_datalake_deployment = pkg_resources.resource_stream(
+    'pumpwood_deploy',
+    'microservices/pumpwood_complex_datalake/'
+    'resources/worker__datalake.yml').read().decode()
+worker_simple_annotation_deployment = pkg_resources.resource_stream(
+    'pumpwood_deploy',
+    'microservices/pumpwood_complex_datalake/'
+    'resources/worker__simple_anotation.yml').read().decode()
+worker_complex_annotation_deployment = pkg_resources.resource_stream(
+    'pumpwood_deploy',
+    'microservices/pumpwood_complex_datalake/'
+    'resources/worker__complex_anotation.yml').read().decode()
+test_postgres = pkg_resources.resource_stream(
+    'pumpwood_deploy',
+    'microservices/pumpwood_complex_datalake/'
+    'resources/postgres__test.yml').read().decode()
 
 
 class PumpWoodComplexDatalakeMicroservice:
@@ -16,30 +39,28 @@ class PumpWoodComplexDatalakeMicroservice:
     def __init__(self,
                  microservice_password: str,
                  bucket_name: str,
-                 version_app: str,
-                 version_worker_datalake_dataloader: str,
-                 version_worker_simple_dataloader: str,
-                 version_worker_complex_dataloader: str,
-
-                 db_password: str = "pumpwood",
-                 disk_name: str = None, disk_size: str = None,
-                 postgres_public_ip: str = None, firewall_ips: list = None,
-                 repository: str = "gcr.io/repositorio-geral-170012",
-                 test_db_version: str = None,
-                 test_db_repository: str = "gcr.io/repositorio-geral-170012",
-                 debug: str = "FALSE",
+                 app_version: str,
+                 worker_datalake_dataloader_version: str,
+                 worker_simple_dataloader_version: str,
+                 worker_complex_dataloader_version: str,
                  db_username: str = "pumpwood",
                  db_host: str = "postgres-pumpwood-complex-datalake",
                  db_port: str = "5432",
                  db_database: str = "pumpwood",
+                 db_password: str = "pumpwood",
 
+                 repository: str = "gcr.io/repositorio-geral-170012",
+                 app_debug: str = "FALSE",
                  app_replicas: int = 1,
                  app_timeout: int = 300,
-                 app_workers: int = 20,
+                 app_workers: int = 10,
                  app_limits_memory: str = "60Gi",
                  app_limits_cpu: str = "12000m",
                  app_requests_memory: str = "20Mi",
                  app_requests_cpu: str = "1m",
+
+                 test_db_version: str = None,
+                 test_db_repository: str = "gcr.io/repositorio-geral-170012",
 
                  datalake_dataloader_replicas: int = 1,
                  datalake_dataloader_n_parallel: int = 4,
@@ -66,12 +87,7 @@ class PumpWoodComplexDatalakeMicroservice:
                  complex_dataloader_limits_memory: str = "60Gi",
                  complex_dataloader_limits_cpu: str = "12000m",
                  complex_dataloader_requests_memory: str = "20Mi",
-                 complex_dataloader_requests_cpu: str = "1m",
-
-                 postgres_limits_memory: str = "60Gi",
-                 postgres_limits_cpu: str = "12000m",
-                 postgres_requests_memory: str = "20Mi",
-                 postgres_requests_cpu: str = "1m"):
+                 complex_dataloader_requests_cpu: str = "1m"):
         """
         __init__: Class constructor.
 
@@ -81,12 +97,12 @@ class PumpWoodComplexDatalakeMicroservice:
             postgres_public_ip (str): Postgres public IP.
             firewall_ips (list): List the IPs allowed to connect to datalake.
             bucket_name (str): Name of the bucket (Storage)
-            version_app (str): Version of the App Image.
-            version_worker_datalake_dataloader (str): Version of the complex
+            app_version (str): Version of the App Image.
+            worker_datalake_dataloader_version (str): Version of the complex
                 datalake dataloader.
-            version_worker_simple_dataloader (str): Version of the complex
+            worker_simple_dataloader_version (str): Version of the complex
                 simple annotation dataloader.
-            version_worker_complex_dataloader (str): Version of the complex
+            worker_complex_dataloader_version (str): Version of the complex
                 complex annotation dataloader.
 
         Kwargs:
@@ -136,45 +152,28 @@ class PumpWoodComplexDatalakeMicroservice:
           No example yet.
 
         """
-        disk_deploy = (disk_name is not None and disk_size is not None)
-        if disk_deploy and test_db_version is not None:
-            raise Exception(
-                "When working with test database, disk is not used.")
-
-        postgres_certificates = create_ssl_key_ssl_crt()
         self._db_password = base64.b64encode(db_password.encode()).decode()
         self._microservice_password = base64.b64encode(
             microservice_password.encode()).decode()
 
-        self._ssl_crt = base64.b64encode(
-            postgres_certificates['ssl_crt'].encode()).decode()
-        self._ssl_key = base64.b64encode(
-            postgres_certificates['ssl_key'].encode()).decode()
-
-        self.postgres_public_ip = postgres_public_ip
-        self.firewall_ips = firewall_ips
-
         self.bucket_name = bucket_name
-        self.disk_size = disk_size
-        self.disk_name = disk_name
         self.base_path = os.path.dirname(__file__)
 
         self.db_username = db_username
         self.db_host = db_host
         self.db_port = db_port
         self.db_database = db_database
-
-        self.repository = repository
-        self.debug = debug
+        self.repository = repository.rstrip("/")
 
         # Image versions
-        self.version_app = version_app
-        self.version_worker_datalake_dataloader = \
-            version_worker_datalake_dataloader
-        self.version_worker_simple_dataloader = \
-            version_worker_simple_dataloader
-        self.version_worker_complex_dataloader = \
-            version_worker_complex_dataloader
+        self.app_debug = app_debug
+        self.app_version = app_version
+        self.worker_datalake_dataloader_version = \
+            worker_datalake_dataloader_version
+        self.worker_simple_dataloader_version = \
+            worker_simple_dataloader_version
+        self.worker_complex_dataloader_version = \
+            worker_complex_dataloader_version
 
         # App
         self.app_replicas = app_replicas
@@ -240,53 +239,30 @@ class PumpWoodComplexDatalakeMicroservice:
             complex_dataloader_requests_cpu
 
         # Database
-        self.postgres_limits_memory = postgres_limits_memory
-        self.postgres_limits_cpu = postgres_limits_cpu
-        self.postgres_requests_memory = postgres_requests_memory
-        self.postgres_requests_cpu = postgres_requests_cpu
-
         self.test_db_version = test_db_version
-        self.test_db_repository = test_db_repository
+        self.test_db_repository = test_db_repository.rstrip("/")
 
-    def create_deployment_file(self, kube_client):
+    def create_deployment_file(self, **kwargs):
         """
         Create deployment file.
 
         Args:
-            kube_client: Client to communicate with Kubernets cluster.
+            No args.
         """
         secrets_text_formated = secrets.format(
             db_password=self._db_password,
-            microservice_password=self._microservice_password,
-            ssl_key=self._ssl_key,
-            ssl_crt=self._ssl_crt)
+            microservice_password=self._microservice_password)
 
-        volume_postgres_text_f = None
         deployment_postgres_text_f = None
         if self.test_db_version is not None:
             deployment_postgres_text_f = test_postgres.format(
                 repository=self.test_db_repository,
-                version=self.test_db_version,
-                requests_memory=self.postgres_requests_memory,
-                requests_cpu=self.postgres_requests_cpu,
-                limits_memory=self.postgres_limits_memory,
-                limits_cpu=self.postgres_limits_cpu)
-
-        elif self.disk_size is not None:
-            volume_postgres_text_f = kube_client.create_volume_yml(
-                disk_name=self.disk_name,
-                disk_size=self.disk_size,
-                volume_claim_name="postgres-pumpwood-complex-datalake")
-            deployment_postgres_text_f = deployment_postgres.format(
-                requests_memory=self.postgres_requests_memory,
-                requests_cpu=self.postgres_requests_cpu,
-                limits_memory=self.postgres_limits_memory,
-                limits_cpu=self.postgres_limits_cpu)
+                version=self.test_db_version)
 
         app_deployment_frmtd = \
             app_deployment.format(
                 repository=self.repository,
-                version=self.version_app,
+                version=self.app_version,
                 bucket_name=self.bucket_name,
                 replicas=self.app_replicas,
                 requests_memory=self.app_requests_memory,
@@ -295,7 +271,7 @@ class PumpWoodComplexDatalakeMicroservice:
                 limits_memory=self.app_limits_memory,
                 workers_timeout=self.app_timeout,
                 n_workers=self.app_workers,
-                debug=self.debug,
+                debug=self.app_debug,
                 db_username=self.db_username,
                 db_host=self.db_host,
                 db_port=self.db_port,
@@ -304,7 +280,7 @@ class PumpWoodComplexDatalakeMicroservice:
         worker_datalake_deployment_frmted = \
             worker_datalake_deployment.format(
                 repository=self.repository,
-                version=self.version_worker_datalake_dataloader,
+                version=self.worker_datalake_dataloader_version,
                 bucket_name=self.bucket_name,
                 db_username=self.db_username,
                 db_host=self.db_host,
@@ -322,7 +298,7 @@ class PumpWoodComplexDatalakeMicroservice:
         worker_simple_annotation_deployment_frmted = \
             worker_simple_annotation_deployment.format(
                 repository=self.repository,
-                version=self.version_worker_simple_dataloader,
+                version=self.worker_simple_dataloader_version,
                 bucket_name=self.bucket_name,
                 db_username=self.db_username,
                 db_host=self.db_host,
@@ -340,7 +316,7 @@ class PumpWoodComplexDatalakeMicroservice:
         worker_complex_annotation_deployment_frmted = \
             worker_complex_annotation_deployment.format(
                 repository=self.repository,
-                version=self.version_worker_complex_dataloader,
+                version=self.worker_complex_dataloader_version,
                 bucket_name=self.bucket_name,
                 db_username=self.db_username,
                 db_host=self.db_host,
@@ -362,12 +338,6 @@ class PumpWoodComplexDatalakeMicroservice:
             'sleep': 5}]
 
         # Postgres
-        if volume_postgres_text_f is not None:
-            list_return.append({
-                'type': 'volume',
-                'name': 'pumpwood_complex__datalake__volume',
-                'content': volume_postgres_text_f,
-                'sleep': 10})
         if deployment_postgres_text_f is not None:
             list_return.append({
                 'type': 'deploy',
@@ -397,17 +367,4 @@ class PumpWoodComplexDatalakeMicroservice:
             'name': 'pumpwood_complex__complex_annotation_dataloader_worker',
             'content': worker_complex_annotation_deployment_frmted,
             'sleep': 0})
-
-        if self.firewall_ips is not None and self.postgres_public_ip:
-            services__load_balancer_template = Template(
-                services__load_balancer)
-            svcs__load_balancer_text = services__load_balancer_template.render(
-                postgres_public_ip=self.postgres_public_ip,
-                firewall_ips=self.firewall_ips)
-            list_return.append({
-                'type': 'services',
-                'name': 'pumpwood_complex_datalake__services_loadbalancer',
-                'content': svcs__load_balancer_text,
-                'sleep': 0})
-
         return list_return

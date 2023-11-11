@@ -1,0 +1,106 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: postgres-pumpwood-auth
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      type: db
+      endpoint: pumpwood-auth-app
+      function: auth
+  template:
+    metadata:
+      labels:
+        type: db
+        endpoint: pumpwood-auth-app
+        function: auth
+    spec:
+      imagePullSecrets:
+        - name: dockercfg
+      volumes:
+      - name: dshm
+        emptyDir:
+          medium: Memory
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: function
+                operator: NotIn
+                values:
+                - system
+      containers:
+      # PGBouncer Container
+      - name: pgbouncer
+        image: bitnami/pgbouncer:1.21.0
+        env:
+        - name: POSTGRESQL_USERNAME
+          value: pumpwood
+        - name: POSTGRESQL_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: pumpwood-auth
+              key: db_password
+        - name: POSTGRESQL_HOST
+          value: 0.0.0.0
+        - name: PGBOUNCER_DATABASE
+          value: pumpwood
+        - name: PGBOUNCER_SET_DATABASE_USER
+          value: 'yes'
+        - name: PGBOUNCER_SET_DATABASE_PASSWORD
+          value: 'yes'
+        - name: PGBOUNCER_POOL_MODE
+          value: transaction
+        ports:
+        - containerPort: 6432
+
+      - name: postgres
+        image: {repository}test-db-pumpwood-auth:{version}
+        imagePullPolicy: IfNotPresent
+        resources:
+          limits:
+            memory: "1Gi"
+            cpu:  "1000m"
+        volumeMounts:
+        - name: dshm
+          mountPath: /dev/shm
+        ports:
+        - containerPort: 5432
+---
+apiVersion : "v1"
+kind: Service
+metadata:
+  name: postgres-pumpwood-auth
+  labels:
+    type: db
+    endpoint: pumpwood-auth-app
+    function: auth
+spec:
+  type: ClusterIP
+  ports:
+    - port: 5432
+      targetPort: 6432
+  selector:
+    type: db
+    endpoint: pumpwood-auth-app
+    function: auth
+---
+apiVersion : "v1"
+kind: Service
+metadata:
+  name: postgres-pumpwood-auth-no-bouncer
+  labels:
+    type: db-no-bouncer
+    endpoint: pumpwood-auth-app
+    function: auth
+spec:
+  type: ClusterIP
+  ports:
+    - port: 5432
+      targetPort: 5432
+  selector:
+    type: db
+    endpoint: pumpwood-auth-app
+    function: auth

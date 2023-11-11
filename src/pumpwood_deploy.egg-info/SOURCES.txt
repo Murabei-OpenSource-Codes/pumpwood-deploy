@@ -49,7 +49,8 @@ src/pumpwood_deploy/microservices/postgres/resources/yml__resources.py
 src/pumpwood_deploy/microservices/pumpwood_auth/__init__.py
 src/pumpwood_deploy/microservices/pumpwood_auth/deploy.py
 src/pumpwood_deploy/microservices/pumpwood_auth/resources/__init__.py
-src/pumpwood_deploy/microservices/pumpwood_auth/resources/yml__resources.py
+src/pumpwood_deploy/microservices/pumpwood_auth/tests/__init__.py
+src/pumpwood_deploy/microservices/pumpwood_auth/tests/test__PumpWoodAuthMicroservice.py
 src/pumpwood_deploy/microservices/pumpwood_complex_datalake/__init__.py
 src/pumpwood_deploy/microservices/pumpwood_complex_datalake/deploy.py
 src/pumpwood_deploy/microservices/pumpwood_complex_datalake/resources/__init__.py
