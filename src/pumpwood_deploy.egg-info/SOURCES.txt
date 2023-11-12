@@ -36,6 +36,11 @@ src/pumpwood_deploy/ingress/aws/tests/__init__.py
 src/pumpwood_deploy/ingress/aws/tests/test__IngressALB.py
 src/pumpwood_deploy/kubernets/__init__.py
 src/pumpwood_deploy/kubernets/kubernets.py
+src/pumpwood_deploy/kubernets/bash_templates/__init__.py
+src/pumpwood_deploy/kubernets/bash_templates/configmap.sh
+src/pumpwood_deploy/kubernets/bash_templates/configmap_keyname.sh
+src/pumpwood_deploy/kubernets/bash_templates/kubectl_apply.sh
+src/pumpwood_deploy/kubernets/bash_templates/secret_file.sh
 src/pumpwood_deploy/kubernets/resources/__init__.py
 src/pumpwood_deploy/kubernets/resources/volume__aws.yml
 src/pumpwood_deploy/kubernets/resources/volume__azure.yml
