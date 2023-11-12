@@ -1,12 +1,11 @@
 Metadata-Version: 2.1
 Name: pumpwood-deploy
-Version: 1.3
+Version: 1.4
 Summary: Package to assist deploy Pumpwood Systems on Kubenets
 Home-page: https://github.com/Murabei-OpenSource-Codes/pumpwood-deploy
 Author: Murabei Data Science
 Author-email: a.baceti@murabei.com
 License: BSD-3-Clause License
-Platform: UNKNOWN
 Classifier: Programming Language :: Python :: 3
 Classifier: Operating System :: OS Independent
 Requires-Python: >=3.6
@@ -30,5 +29,3 @@ license.
 # Quick Start
 Each microservice is defined as and object which is added to the deployment
 stack.
-
-

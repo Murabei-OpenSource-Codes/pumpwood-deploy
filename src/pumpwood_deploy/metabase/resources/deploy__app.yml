@@ -76,7 +76,7 @@ spec:
         - name: MB_DB_TYPE
           value: "postgres"
         - name: MB_DB_DBNAME
-          value: "metabase"
+          value: "{db_database}"
         - name: MB_DB_PORT
           value: "5432"
         - name: MB_DB_HOST

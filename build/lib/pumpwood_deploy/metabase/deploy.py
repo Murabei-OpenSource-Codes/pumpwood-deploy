@@ -26,7 +26,7 @@ class MetabaseMicroservice:
                  embedding_secret_key: str,
                  encryption_secret_key: str,
                  db_usename: str = "metabase",
-                 db_host: str = "postgres-pumpwood-metabase",
+                 db_host: str = "postgres-metabase",
                  db_database: str = "metabase",
                  db_port: str = "5432",
                  app_replicas: int = 1,
