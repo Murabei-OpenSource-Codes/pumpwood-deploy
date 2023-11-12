@@ -69,6 +69,7 @@ src/pumpwood_deploy/microservices/postgres/__init__.py
 src/pumpwood_deploy/microservices/postgres/deploy.py
 src/pumpwood_deploy/microservices/postgres/postgres.py
 src/pumpwood_deploy/microservices/postgres/config_files/__init__.py
+src/pumpwood_deploy/microservices/postgres/config_files/server_init.sh
 src/pumpwood_deploy/microservices/postgres/resources/__init__.py
 src/pumpwood_deploy/microservices/postgres/resources/deploy__pgbouncer.yml
 src/pumpwood_deploy/microservices/postgres/resources/deploy__postgres.yml
