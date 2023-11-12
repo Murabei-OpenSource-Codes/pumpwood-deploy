@@ -2,7 +2,6 @@
 import pkg_resources
 import os
 import base64
-from jinja2 import Template
 
 
 secrets = pkg_resources.resource_stream(
@@ -17,6 +16,10 @@ auth_admin_static = pkg_resources.resource_stream(
     'pumpwood_deploy',
     'microservices/pumpwood_auth/'
     'resources/deploy__static.yml').read().decode()
+auth_log_worker = pkg_resources.resource_stream(
+    'pumpwood_deploy',
+    'microservices/pumpwood_auth/'
+    'resources/deploy__log_worker.yml').read().decode()
 test_postgres = pkg_resources.resource_stream(
     'pumpwood_deploy',
     'microservices/pumpwood_auth/'
@@ -130,7 +133,7 @@ class PumpWoodAuthMicroservice:
         self.worker_log_disk_name = worker_log_disk_name
         self.worker_log_disk_size = worker_log_disk_size
 
-    def create_deployment_file(self, **Kwargs):
+    def create_deployment_file(self, kube_client=None, **kwargs):
         """Create_deployment_file."""
         rabbitmq_log = "FALSE" if self.worker_log_version is None else "TRUE"
         secrets_text_f = secrets.format(
@@ -169,6 +172,20 @@ class PumpWoodAuthMicroservice:
                 repository=self.repository,
                 version=self.static_version)
 
+        deployment_auth_admin_log_worker = None
+        deployment_auth_admin_log_volume = None
+        if rabbitmq_log == "TRUE":
+            volume_claim_name = "pumpwood-auth-log-data"
+            deployment_auth_admin_log_volume = kube_client.create_volume_yml(
+                disk_name=self.worker_log_disk_name,
+                disk_size=self.worker_log_disk_size,
+                volume_claim_name=volume_claim_name)
+            deployment_auth_admin_log_worker = auth_log_worker.format(
+                repository=self.repository,
+                version=self.worker_log_version,
+                bucket_name=self.bucket_name,
+                volume_claim_name=volume_claim_name)
+
         deployment_postgres_text_f = None
         if self.test_db_version is not None:
             deployment_postgres_text_f = test_postgres.format(
@@ -187,5 +204,14 @@ class PumpWoodAuthMicroservice:
             'content': deployment_auth_app_text_f, 'sleep': 10})
         list_return.append({
             'type': 'deploy', 'name': 'pumpwood_auth_admin_static__deploy',
-            'content': deployment_auth_admin_static_f, 'sleep': 10})
+            'content': deployment_auth_admin_static_f, 'sleep': 0})
+
+        if deployment_auth_admin_log_volume is not None:
+            list_return.append({
+                'type': 'deploy', 'name': 'pumpwood_auth__volume_logs',
+                'content': deployment_auth_admin_log_volume, 'sleep': 0})
+        if deployment_auth_admin_log_worker is not None:
+            list_return.append({
+                'type': 'deploy', 'name': 'pumpwood_auth__worker_logs',
+                'content': deployment_auth_admin_log_worker, 'sleep': 0})
         return list_return

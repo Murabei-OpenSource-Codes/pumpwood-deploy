@@ -1,4 +1,4 @@
-simplejson
+jinja2
 pandas
 python-slugify
-jinja2
+simplejson

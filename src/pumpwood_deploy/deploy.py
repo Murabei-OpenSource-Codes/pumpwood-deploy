@@ -2,25 +2,29 @@
 import os
 import stat
 import shutil
+import pkg_resources
 from pumpwood_deploy.microservices.standard.deploy import (
     StandardMicroservices)
 from pumpwood_deploy.kubernets.kubernets import Kubernets
 from jinja2 import Template
 
 
-# Template to create secrets from files
-secret_file_template = Template("""
-SCRIPTPATH="$( cd "$(dirname "$0")" ; pwd -P )"
-kubectl delete secret --namespace={{namespace}} {{name}};
-kubectl create secret generic {{name}} --namespace={{namespace}}{%- for path in paths %} --from-file='{{path}}'{%- endfor %}""")
+create_kube_cmd = pkg_resources.resource_stream(
+    'pumpwood_deploy',
+    'kubernets/bash_templates/kubectl_apply.sh').read().decode()
+secret_file_template = Template(pkg_resources.resource_stream(
+    'pumpwood_deploy',
+    'kubernets/bash_templates/secret_file.sh').read().decode())
+configmap_template = Template(pkg_resources.resource_stream(
+    'pumpwood_deploy',
+    'kubernets/bash_templates/configmap.sh').read().decode())
+configmap_keyname_template = Template(pkg_resources.resource_stream(
+    'pumpwood_deploy',
+    'kubernets/bash_templates/configmap_keyname.sh').read().decode())
 
 
 class DeployPumpWood():
     """Class to perform PumpWood Deploy."""
-
-    create_kube_cmd = (
-        'SCRIPTPATH="$( cd "$(dirname "$0")" ; pwd -P )"\n'
-        'kubectl apply -f $SCRIPTPATH/{file} --namespace={namespace}')
 
     def __init__(self, model_user_password: str,
                  rabbitmq_secret: str, hash_salt: str, kong_db_disk_name: str,
@@ -144,9 +148,10 @@ class DeployPumpWood():
                     file_name_sh = file_name_sh_temp.format(
                         counter=str_counter, name=d['name'])
 
+                    deploy_namespace = d.get("namespace", self.namespace)
                     with open(file_name_sh, 'w') as file:
-                        content = self.create_kube_cmd.format(
-                            file=file_name, namespace=self.namespace)
+                        content = create_kube_cmd.format(
+                            file=file_name, namespace=deploy_namespace)
                         file.write(content)
                     os.chmod(file_name_sh, stat.S_IRWXU)
 
@@ -160,9 +165,11 @@ class DeployPumpWood():
                     # Legacy path set as string
                     if type(d["path"]) == str:
                         d["path"] = [d["path"]]
+
+                    deploy_namespace = d.get("namespace", self.namespace)
                     command_formated = secret_file_template.render(
                         name=d["name"], paths=d["path"],
-                        namespace=self.namespace)
+                        namespace=deploy_namespace)
                     file_name_temp = (
                         'outputs/deploy_output/{counter}__{name}.sh')
                     file_name = file_name_temp.format(
@@ -195,37 +202,27 @@ class DeployPumpWood():
                             file.write(file_data)
 
                     command_formated = None
+                    deploy_namespace = d.get("namespace", self.namespace)
                     if d.get('keyname') is None:
-                        command_text = (
-                            'SCRIPTPATH="$( cd "$(dirname "$0")" ; pwd -P )"\n'
-                            "kubectl delete configmap {name};\n"
-                            "kubectl create configmap {name} "
-                            '--from-file="$SCRIPTPATH/{file_name}" '
-                            '--namespace={namespace}')
-                        command_formated = command_text.format(
+                        command_formated = configmap_template.format(
                             name=d['name'], file_name=file_name_resource,
-                            namespace=self.namespace)
+                            namespace=deploy_namespace)
                     else:
-                        command_text = (
-                            'SCRIPTPATH="$( cd "$(dirname "$0")" ; pwd -P )"\n'
-                            "kubectl delete configmap {name};\n"
-                            "kubectl create configmap {name} "
-                            '--from-file="{keyname}=$SCRIPTPATH/{file_name}" '
-                            '--namespace={namespace}')
-                        command_formated = command_text.format(
+                        command_formated = configmap_keyname_template.format(
                             name=d['name'], file_name=file_name_resource,
-                            keyname=d['keyname'], namespace=self.namespace)
+                            keyname=d['keyname'], namespace=deploy_namespace)
 
-                    file_name_temp = 'outputs/deploy_output/' + \
-                                     '{counter}__{name}.sh'
+                    file_name_temp = (
+                        'outputs/deploy_output/{counter}__{name}.sh')
                     file_name = file_name_temp.format(
                         counter=str_counter, name=d['name'])
 
                     print('Creating configmap: ' + file_name)
                     with open(file_name, 'w') as file:
                         file.write(command_formated)
-                    deploy_cmds.append({'command': 'run', 'file': file_name,
-                                        'sleep': d.get('sleep')})
+                    deploy_cmds.append({
+                        'command': 'run', 'file': file_name,
+                        'sleep': d.get('sleep')})
                     os.chmod(file_name, stat.S_IRWXU)
                     counter = counter + 1
 
@@ -248,9 +245,10 @@ class DeployPumpWood():
                         service_counter=str_service_counter,
                         name=d['name'])
 
+                    deploy_namespace = d.get("namespace", self.namespace)
                     with open(file_name_sh, 'w') as file:
-                        content = self.create_kube_cmd.format(
-                            file=file_name, namespace=self.namespace)
+                        content = create_kube_cmd.format(
+                            file=file_name, namespace=deploy_namespace)
                         file.write(content)
 
                     os.chmod(file_name_sh, stat.S_IRWXU)
@@ -268,7 +266,7 @@ class DeployPumpWood():
             'service_cmds': sevice_cmds,
             'microservice_cmds': deploy_cmds}
 
-    def deploy_cluster(self):
+    def deploy_microservices(self):
         """Deploy cluster."""
         deploy_cmds = self.create_deploy_files()
         print('\n\n###Deploying Services:')

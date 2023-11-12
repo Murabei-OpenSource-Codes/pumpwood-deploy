@@ -3,7 +3,7 @@ kind: Deployment
 metadata:
   name: pumpwood-auth-worker-log
 spec:
-  replicas: {replicas}
+  replicas: 1
   selector:
     matchLabels:
       type: worker
@@ -35,29 +35,20 @@ spec:
                 values:
                 - system
       containers:
-      - image: {repository}pumpwood-auth-log-worker:{version}
+      - name: pumpwood-auth-log-worker
+        image: {repository}pumpwood-auth-log-worker:{version}
         imagePullPolicy: IfNotPresent
+
         volumeMounts:
           - name: gcp--storage-key
             readOnly: true
             mountPath: /etc/secrets
-          - name: postgres-data
-            persistentVolumeClaim:
-              claimName: {volume_claim_name}
+          - name: log-data
+            mountPath: /logs/
 
-          - name: gcp--storage-key
-            readOnly: true
-            mountPath: /etc/secrets
         env:
         - name: WORKER_LOG_PATH
           value: "/logs/"
-
-        # Microservice
-        - name: MICROSERVICE_PASSWORD
-          valueFrom:
-            secretKeyRef:
-              name: pumpwood-auth
-              key: microservice_password
 
         # RABBITMQ ETL
         - name: RABBITMQ_HOST
@@ -100,34 +91,3 @@ spec:
             secretKeyRef:
               name: aws--storage-key
               key: aws_secret_access_key
-
-        ############
-        # Metabase #
-        - name: METABASE_SITE_URL
-          valueFrom:
-            configMapKeyRef:
-              name: metabase
-              key: site_url
-        - name: METABASE_SECRET_KEY
-          valueFrom:
-            secretKeyRef:
-              name: metabase
-              key: embedding_secret_key
----
-apiVersion : "v1"
-kind: Service
-metadata:
-  name: pumpwood-auth-app
-  labels:
-    type: app
-    endpoint: pumpwood-auth-app
-    function: auth
-spec:
-  type: ClusterIP
-  ports:
-    - port: 5000
-      targetPort: 5000
-  selector:
-    type: app
-    endpoint: pumpwood-auth-app
-    function: auth

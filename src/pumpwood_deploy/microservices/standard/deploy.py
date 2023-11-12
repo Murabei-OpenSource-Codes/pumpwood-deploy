@@ -95,9 +95,12 @@ class StandardMicroservices:
         """
         self.kong_repository = kong_repository
         self._gcp_credential_file = None
-        self._azure_storage_connection_string = "not_configured"
-        self._aws_access_key_id = "not_configured"
-        self._aws_secret_access_key = "not_configured"
+        self._azure_storage_connection_string = base64.b64encode(
+            "not_configured".encode()).decode()
+        self._aws_access_key_id = base64.b64encode(
+            "not_configured".encode()).decode()
+        self._aws_secret_access_key = base64.b64encode(
+            "not_configured".encode()).decode()
         # Using Azure blob storage for flat files
         if storage_type == "azure_storage":
             is_valid = (
@@ -106,8 +109,9 @@ class StandardMicroservices:
                 raise Exception(
                     "Azure storage must have azure_storage_connection_string "
                     "args.")
-            self._azure_storage_connection_string = storage_deploy_args[
-                "storage_connection_string"]
+            self._azure_storage_connection_string = base64.b64encode(
+                storage_deploy_args[
+                    "storage_connection_string"].encode()).decode()
 
         # Using GCP Storage Buckets storage for flat files
         elif storage_type == "google_bucket":
@@ -116,7 +120,6 @@ class StandardMicroservices:
             if is_valid:
                 raise Exception(
                     "GCP storage must have credential_file args.")
-
             self._gcp_credential_file = storage_deploy_args["credential_file"]
 
         # Using AWS S3 for flat files
@@ -128,11 +131,10 @@ class StandardMicroservices:
                 raise Exception(
                     "AWS storage must have aws_access_key_id and "
                     "aws_secret_access_key args.")
-
-            self._aws_access_key_id = storage_deploy_args[
-                "access_key_id"]
-            self._aws_secret_access_key = storage_deploy_args[
-                "secret_access_key"]
+            self._aws_access_key_id = base64.b64encode(
+                storage_deploy_args["access_key_id"].encode()).decode()
+            self._aws_secret_access_key = base64.b64encode(
+                storage_deploy_args["secret_access_key"].encode()).decode()
 
         # if other... not implemented
         else:

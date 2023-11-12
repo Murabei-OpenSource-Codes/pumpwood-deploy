@@ -1,7 +1,18 @@
 """Interface with kubernets."""
+import os
 import subprocess
-from pumpwood_deploy.kubernets.resources.yml__resources import (
-    volume_gcp, volume_azure, volume_aws)
+import pkg_resources
+
+
+volume_gcp = pkg_resources.resource_stream(
+    'pumpwood_deploy',
+    'kubernets/resources/volume__gcp.yml').read().decode()
+volume_azure = pkg_resources.resource_stream(
+    'pumpwood_deploy',
+    'kubernets/resources/volume__azure.yml').read().decode()
+volume_aws = pkg_resources.resource_stream(
+    'pumpwood_deploy',
+    'kubernets/resources/volume__aws.yml').read().decode()
 
 
 class Kubernets:
@@ -71,13 +82,15 @@ class Kubernets:
             if c['command'] == 'create':
                 raise Exception('Not implemented')
             elif c['command'] == 'run':
-                sleep_time = c.get('sleep', 10)
+                sleep_time = c.get('sleep', 5)
                 if sleep_time is None:
-                    sleep_time = 10
-                print('###Running file: ' + c['file'])
-                print('#####Slepping for %s seconds after' % (sleep_time, ))
+                    sleep_time = 5
+
+                print('### Running file: ' + c['file'])
+                print('##### Slepping for %s seconds after' % (sleep_time, ))
                 with open(c['file'], 'r') as file:
                     file_cmd = file.read()
+
                 # Colocando o shebangs no inicio do arquivo
                 with open(c['file'], 'w') as file:
                     file.write(
@@ -114,9 +127,9 @@ class KubernetsGCP:
             cluster_name=cluster_name, zone=zone, project=project)
 
         print('## Loging to kubernets cluster')
-        process = subprocess.Popen(
-            cmd_formated.split(), stdout=subprocess.PIPE)
-        output, error = process.communicate()
+        status_code = os.system(cmd_formated)
+        if status_code != 0:
+            raise Exception("!! Error loging to k8s cluster, check logs !!")
 
     def create_volume_yml(self, disk_name: str, disk_size: str,
                           volume_claim_name: str) -> str:
@@ -161,6 +174,11 @@ class KubernetsAzure:
         print('## Setting az client subscription')
         cmd = "az account set --subscription {subscription}"
         cmd_formated = cmd.format(subscription=subscription)
+        status_code = os.system(cmd_formated)
+        if status_code != 0:
+            raise Exception(
+                "!! Error setting Azure subscription, check logs !!")
+
         process = subprocess.Popen(cmd_formated.split())
         output, error = process.communicate()
 
@@ -172,8 +190,11 @@ class KubernetsAzure:
         cmd_formated = cmd.format(
             resource_group=resource_group,
             aks_resource=aks_resource)
-        process = subprocess.Popen(cmd_formated.split())
-        output, error = process.communicate()
+
+        print('## Loging to kubernets cluster')
+        status_code = os.system(cmd_formated)
+        if status_code != 0:
+            raise Exception("!! Error loging to k8s cluster, check logs !!")
 
     def create_volume_yml(self, disk_name: str, disk_size: str,
                           volume_claim_name: str) -> str:
@@ -216,8 +237,9 @@ class KubernetsAWS:
             "update-kubeconfig --name {cluster_name}")
         cmd_formated = cmd.format(
             region=region, cluster_name=cluster_name)
-        process = subprocess.Popen(cmd_formated.split())
-        output, error = process.communicate()
+        status_code = os.system(cmd_formated)
+        if status_code != 0:
+            raise Exception("!! Error loging to k8s cluster, check logs !!")
 
     def create_volume_yml(self, disk_name: str, disk_size: str,
                           volume_claim_name: str) -> str:

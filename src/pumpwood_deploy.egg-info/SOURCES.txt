@@ -32,13 +32,14 @@ src/pumpwood_deploy/ingress/aws/resources/deploy__aws_alb_healthcheck.yml
 src/pumpwood_deploy/ingress/aws/resources/ingress__aws_alb.yml
 src/pumpwood_deploy/ingress/aws/resources/ingress__aws_alb_healthcheck_path.yml
 src/pumpwood_deploy/ingress/aws/resources/ingress__aws_alb_path.yml
-src/pumpwood_deploy/ingress/aws/resources/yml_resources.py
 src/pumpwood_deploy/ingress/aws/tests/__init__.py
 src/pumpwood_deploy/ingress/aws/tests/test__IngressALB.py
 src/pumpwood_deploy/kubernets/__init__.py
 src/pumpwood_deploy/kubernets/kubernets.py
 src/pumpwood_deploy/kubernets/resources/__init__.py
-src/pumpwood_deploy/kubernets/resources/yml__resources.py
+src/pumpwood_deploy/kubernets/resources/volume__aws.yml
+src/pumpwood_deploy/kubernets/resources/volume__azure.yml
+src/pumpwood_deploy/kubernets/resources/volume__gcp.yml
 src/pumpwood_deploy/metabase/__init__.py
 src/pumpwood_deploy/metabase/deploy.py
 src/pumpwood_deploy/metabase/resources/__init__.py
@@ -69,7 +70,9 @@ src/pumpwood_deploy/microservices/postgres/deploy.py
 src/pumpwood_deploy/microservices/postgres/postgres.py
 src/pumpwood_deploy/microservices/postgres/config_files/__init__.py
 src/pumpwood_deploy/microservices/postgres/resources/__init__.py
-src/pumpwood_deploy/microservices/postgres/resources/yml__resources.py
+src/pumpwood_deploy/microservices/postgres/resources/deploy__pgbouncer.yml
+src/pumpwood_deploy/microservices/postgres/resources/deploy__postgres.yml
+src/pumpwood_deploy/microservices/postgres/resources/secrets.yml
 src/pumpwood_deploy/microservices/pumpwood_auth/__init__.py
 src/pumpwood_deploy/microservices/pumpwood_auth/deploy.py
 src/pumpwood_deploy/microservices/pumpwood_auth/resources/__init__.py

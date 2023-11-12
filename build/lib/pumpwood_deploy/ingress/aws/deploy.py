@@ -71,16 +71,14 @@ class IngressALB:
         """
         template = Template(aws_nlb_healthcheck_ingress)
         aws_nlb_healthcheck_ingress_frm = template.render(
-            alb_name=self._alb_name,
-            group_name=self._group_name,
+            alb_name=self._alb_name, group_name=self._group_name,
             certificate_arn=self._certificate_arn)
 
         aws_alb_ingress_frm = None
         if self._host is None:
             template = Template(aws_alb_ingress_path)
             aws_alb_ingress_frm = template.render(
-                alb_name=self._alb_name,
-                group_name=self._group_name,
+                alb_name=self._alb_name, group_name=self._group_name,
                 health_check_url=self._health_check_url,
                 certificate_arn=self._certificate_arn,
                 path=self._path,
@@ -90,20 +88,20 @@ class IngressALB:
         else:
             template = Template(aws_alb_ingress_host)
             aws_alb_ingress_frm = template.render(
-                alb_name=self._alb_name,
-                group_name=self._group_name,
+                alb_name=self._alb_name, group_name=self._group_name,
                 health_check_url=self._health_check_url,
                 certificate_arn=self._certificate_arn,
-                host=self._host,
-                path=self._path,
+                host=self._host, path=self._path,
                 service_name=self._service_name,
                 service_port=self._service_port)
 
         return [
             {'type': 'deploy', 'name': 'aws_nlb_healthcheck__deploy',
-             'content': aws_nlb_healthcheck, 'sleep': 0},
+             'content': aws_nlb_healthcheck, 'sleep': 0,
+             'namespace': 'healthcheck'},
             {'type': 'deploy', 'name': 'aws_nlb_healthcheck_ingress__deploy',
-             'content': aws_nlb_healthcheck_ingress_frm, 'sleep': 0},
+             'content': aws_nlb_healthcheck_ingress_frm, 'sleep': 0,
+             'namespace': 'healthcheck'},
             {'type': 'deploy', 'name': 'aws_alb_ingress_frm__deploy',
              'content': aws_alb_ingress_frm, 'sleep': 0},
         ]

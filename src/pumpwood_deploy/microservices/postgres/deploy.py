@@ -1,9 +1,22 @@
 """Deploy Postgres."""
 import base64
+import pkg_resources
 from pumpwood_deploy.microservices.postgres.postgres import \
     create_ssl_key_ssl_crt
-from pumpwood_deploy.microservices.postgres.resources.yml__resources import (
-    deployment_postgres, secrets_postgres, pgbouncer_deploy)
+
+
+pgbouncer_deploy = pkg_resources.resource_stream(
+    'pumpwood_deploy',
+    'microservices/postgres/'
+    'resources/deploy__pgbouncer.yml').read().decode()
+deployment_postgres = pkg_resources.resource_stream(
+    'pumpwood_deploy',
+    'microservices/postgres/'
+    'resources/deploy__postgres.yml').read().decode()
+secrets_postgres = pkg_resources.resource_stream(
+    'pumpwood_deploy',
+    'microservices/postgres/'
+    'resources/secrets.yml').read().decode()
 
 
 class PostgresDatabase:

@@ -1,7 +1,7 @@
 """PumpWood DataLake Microservice Deploy."""
-import pkg_resources
 import os
 import base64
+import pkg_resources
 
 
 secrets = pkg_resources.resource_stream(
