@@ -60,9 +60,12 @@ spec:
         image: {repository}/test-db-pumpwood-datalake:{version}
         imagePullPolicy: IfNotPresent
         resources:
+          requests:
+            memory: "20Mi"
+            cpu:  "1m"
           limits:
-            memory: "1Gi"
-            cpu:  "1000m"
+            memory: "{limits_memory}"
+            cpu:  "{limits_cpu}"
         volumeMounts:
         - name: dshm
           mountPath: /dev/shm

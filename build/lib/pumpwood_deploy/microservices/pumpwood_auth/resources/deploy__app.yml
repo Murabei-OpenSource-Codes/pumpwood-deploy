@@ -46,9 +46,6 @@ spec:
             memory: "{limits_memory}"
             cpu:  "{limits_cpu}"
         imagePullPolicy: IfNotPresent
-        resources:
-          requests:
-            cpu: "1m"
         volumeMounts:
           - name: gcp--storage-key
             readOnly: true

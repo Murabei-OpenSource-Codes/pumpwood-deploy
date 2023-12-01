@@ -23,7 +23,7 @@ auth_log_worker = pkg_resources.resource_stream(
 test_postgres = pkg_resources.resource_stream(
     'pumpwood_deploy',
     'microservices/pumpwood_auth/'
-    'resources/deploy__test_postgres.yml').read().decode()
+    'resources/postgres__test.yml').read().decode()
 
 
 class PumpWoodAuthMicroservice:
@@ -55,7 +55,9 @@ class PumpWoodAuthMicroservice:
                  worker_log_disk_size: str = None,
                  repository: str = "gcr.io/repositorio-geral-170012",
                  test_db_version: str = None,
-                 test_db_repository: str = "gcr.io/repositorio-geral-170012"):
+                 test_db_repository: str = "gcr.io/repositorio-geral-170012",
+                 test_db_limits_memory: str = "1Gi",
+                 test_db_limits_cpu: str = "1000m"):
         """Deploy PumpWood Auth Microservice.
 
         Args:
@@ -78,6 +80,10 @@ class PumpWoodAuthMicroservice:
             test_db_version (str): Set a test database with version.
             test_db_repository (str): Define a repository for the test
               database.
+            test_db_limits_memory (str): Limits for test database
+                resources. Default 1Gi.
+            test_db_limits_cpu (str): Limits for test databas
+                resources. Default 1000m.
             debug (str): Set app in debug mode.
             db_username (str): Database connection username.
             db_host (str): Database connection host.
@@ -127,6 +133,8 @@ class PumpWoodAuthMicroservice:
         self.test_db_repository = (
             test_db_repository + "/"
             if test_db_repository is not None else "")
+        self.test_db_limits_memory = test_db_limits_memory
+        self.test_db_limits_cpu = test_db_limits_cpu
 
         # Log Worker
         self.worker_log_version = worker_log_version
@@ -188,9 +196,13 @@ class PumpWoodAuthMicroservice:
 
         deployment_postgres_text_f = None
         if self.test_db_version is not None:
+            self.test_db_limits_memory
+            self.test_db_limits_cpu
             deployment_postgres_text_f = test_postgres.format(
                 repository=self.test_db_repository,
-                version=self.test_db_version)
+                version=self.test_db_version,
+                limits_memory=self.test_db_limits_memory,
+                limits_cpu=self.test_db_limits_cpu)
 
         list_return = [{
             'type': 'secrets', 'name': 'pumpwood_auth__secrets',

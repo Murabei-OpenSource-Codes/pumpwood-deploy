@@ -38,6 +38,8 @@ class PumpWoodDatalakeMicroservice:
                  repository: str = "gcr.io/repositorio-geral-170012",
                  test_db_version: str = None,
                  test_db_repository: str = "gcr.io/repositorio-geral-170012",
+                 test_db_limits_memory: str = "1Gi",
+                 test_db_limits_cpu: str = "1000m",
                  app_debug: str = "FALSE",
                  app_replicas: int = 1,
                  app_timeout: int = 300,
@@ -97,6 +99,8 @@ class PumpWoodDatalakeMicroservice:
         # Database
         self.test_db_version = test_db_version
         self.test_db_repository = test_db_repository.rstrip("/")
+        self.test_db_limits_memory = test_db_limits_memory
+        self.test_db_limits_cpu = test_db_limits_cpu
 
     def create_deployment_file(self, **kwargs):
         """
@@ -113,7 +117,9 @@ class PumpWoodDatalakeMicroservice:
         if self.test_db_version is not None:
             deployment_postgres_text_f = test_postgres.format(
                 repository=self.test_db_repository,
-                version=self.test_db_version)
+                version=self.test_db_version,
+                limits_memory=self.test_db_limits_memory,
+                limits_cpu=self.test_db_limits_cpu)
 
         app_deployment_frmtd = \
             app_deployment.format(
