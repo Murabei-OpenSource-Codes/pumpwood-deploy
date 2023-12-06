@@ -48,6 +48,7 @@ class PumpWoodDatalakeMicroservice:
                  app_limits_cpu: str = "12000m",
                  app_requests_memory: str = "20Mi",
                  app_requests_cpu: str = "1m",
+                 worker_debug: str = "FALSE",
                  worker_replicas: int = 1,
                  worker_n_parallel: int = 4,
                  worker_chunk_size: int = 1000,
@@ -87,6 +88,7 @@ class PumpWoodDatalakeMicroservice:
         self.app_requests_cpu = app_requests_cpu
 
         # Worker
+        self.worker_debug = worker_debug
         self.worker_replicas = worker_replicas
         self.worker_n_parallel = worker_n_parallel
         self.worker_chunk_size = worker_chunk_size
@@ -154,7 +156,8 @@ class PumpWoodDatalakeMicroservice:
             requests_memory=self.worker_requests_memory,
             requests_cpu=self.worker_requests_cpu,
             limits_cpu=self.worker_limits_cpu,
-            limits_memory=self.worker_limits_memory)
+            limits_memory=self.worker_limits_memory,
+            debug=self.worker_debug)
 
         list_return = [{
             'type': 'secrets', 'name': 'pumpwood_datalake__secrets',

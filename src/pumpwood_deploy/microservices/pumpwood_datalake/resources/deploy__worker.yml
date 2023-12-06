@@ -47,6 +47,9 @@ spec:
             readOnly: true
             mountPath: /etc/secrets
         env:
+        - name: DEBUG
+          value: "{debug}"
+
         # HASH_SALT
         - name: HASH_SALT
           valueFrom:

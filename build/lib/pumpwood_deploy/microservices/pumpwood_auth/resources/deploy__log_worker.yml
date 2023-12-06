@@ -47,6 +47,9 @@ spec:
             mountPath: /logs/
 
         env:
+        - name: DEBUG
+          value: "{debug}"
+
         - name: WORKER_LOG_PATH
           value: "/logs/"
 

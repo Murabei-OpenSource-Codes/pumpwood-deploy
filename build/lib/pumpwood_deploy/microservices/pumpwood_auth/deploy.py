@@ -50,6 +50,7 @@ class PumpWoodAuthMicroservice:
                  app_limits_cpu: str = "12000m",
                  app_requests_memory: str = "20Mi",
                  app_requests_cpu: str = "1m",
+                 worker_debug: str = "FALSE",
                  worker_log_version: str = None,
                  worker_log_disk_name: str = None,
                  worker_log_disk_size: str = None,
@@ -137,6 +138,7 @@ class PumpWoodAuthMicroservice:
         self.test_db_limits_cpu = test_db_limits_cpu
 
         # Log Worker
+        self.worker_debug = worker_debug
         self.worker_log_version = worker_log_version
         self.worker_log_disk_name = worker_log_disk_name
         self.worker_log_disk_size = worker_log_disk_size
@@ -192,7 +194,8 @@ class PumpWoodAuthMicroservice:
                 repository=self.repository,
                 version=self.worker_log_version,
                 bucket_name=self.bucket_name,
-                volume_claim_name=volume_claim_name)
+                volume_claim_name=volume_claim_name,
+                debug=self.worker_debug)
 
         deployment_postgres_text_f = None
         if self.test_db_version is not None:
