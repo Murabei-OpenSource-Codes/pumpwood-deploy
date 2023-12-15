@@ -54,6 +54,7 @@ class PumpWoodAuthMicroservice:
                  worker_log_version: str = None,
                  worker_log_disk_name: str = None,
                  worker_log_disk_size: str = None,
+                 worker_trino_catalog: str = None,
                  repository: str = "gcr.io/repositorio-geral-170012",
                  test_db_version: str = None,
                  test_db_repository: str = "gcr.io/repositorio-geral-170012",
@@ -96,6 +97,8 @@ class PumpWoodAuthMicroservice:
                 deploy.
             worker_log_disk_size (str): Size of the disk allocated to worker
                 log container.
+            worker_trino_catalog (str): Trino catalog to query for logs on
+                storage.
         """
         self._secret_key = base64.b64encode(secret_key.encode()).decode()
         self._microservice_password = base64.b64encode(
@@ -138,6 +141,7 @@ class PumpWoodAuthMicroservice:
         self.test_db_limits_cpu = test_db_limits_cpu
 
         # Log Worker
+        self.worker_trino_catalog = worker_trino_catalog
         self.worker_debug = worker_debug
         self.worker_log_version = worker_log_version
         self.worker_log_disk_name = worker_log_disk_name
@@ -174,7 +178,7 @@ class PumpWoodAuthMicroservice:
             limits_memory=self.app_limits_memory,
             limits_cpu=self.app_limits_cpu,
 
-            # Loger
+            # Logger
             rabbitmq_log=rabbitmq_log)
 
         deployment_auth_admin_static_f = \
@@ -195,6 +199,7 @@ class PumpWoodAuthMicroservice:
                 version=self.worker_log_version,
                 bucket_name=self.bucket_name,
                 volume_claim_name=volume_claim_name,
+                trino_catalog=self.worker_trino_catalog,
                 debug=self.worker_debug)
 
         deployment_postgres_text_f = None
