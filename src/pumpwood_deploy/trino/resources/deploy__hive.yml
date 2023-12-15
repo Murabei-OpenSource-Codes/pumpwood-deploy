@@ -1,20 +1,20 @@
-apiVersion: apps/v1
+apiVersion : "apps/v1"
 kind: Deployment
 metadata:
-  name: pumpwood-auth-worker-log
+  name: hive-metastore-app
 spec:
   replicas: 1
   selector:
     matchLabels:
-      type: worker
-      endpoint: pumpwood-auth-worker-log
-      function: log
+      type: db
+      endpoint: hive
+      function: metastore
   template:
     metadata:
       labels:
-        type: worker
-        endpoint: pumpwood-auth-worker-log
-        function: log
+        type: db
+        endpoint: hive
+        function: metastore
     spec:
       imagePullSecrets:
         - name: dockercfg
@@ -22,9 +22,6 @@ spec:
       - name: gcp--storage-key
         secret:
           secretName: gcp--storage-key
-      - name: log-data
-        persistentVolumeClaim:
-          claimName: {volume_claim_name}
       affinity:
         nodeAffinity:
           requiredDuringSchedulingIgnoredDuringExecution:
@@ -35,35 +32,44 @@ spec:
                 values:
                 - system
       containers:
-      - name: pumpwood-auth-log-worker
-        image: {repository}pumpwood-auth-log-worker:{version}
+      - name: hive-metastore
+        image: docker.io/andrebaceti/hive-metastore-pumpwood:0.2.14
         imagePullPolicy: IfNotPresent
-
         volumeMounts:
           - name: gcp--storage-key
             readOnly: true
             mountPath: /etc/secrets
-          - name: log-data
-            mountPath: /logs/
-
+        resources:
+          requests:
+            memory: "{requests_memory}"
+            cpu:  "{requests_cpu}"
+          limits:
+            memory: "{limits_memory}"
+            cpu:  "{limits_cpu}"
+        ports:
+          - containerPort: 9083
+            name: 'metastore'
+          - containerPort: 10000
+            name: 'hiveserver2'
         env:
-        - name: DEBUG
-          value: "{debug}"
-
-        - name: WORKER_LOG_PATH
-          value: "/logs/"
-
-        - name: TRINO_CATALOG
-          value: {trino_catalog}
-
-        # RABBITMQ ETL
-        - name: RABBITMQ_HOST
-          value: "rabbitmq-main"
-        - name: RABBITMQ_PASSWORD
+        #####################
+        # Postgres database #
+        - name: DATABASE_USER
           valueFrom:
             secretKeyRef:
-              name: rabbitmq-main-secrets
-              key: password
+              name: hive
+              key: database_user
+        - name: DATABASE_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: hive
+              key: database_password
+        - name: DATABASE_HOST
+          value: "{database_host}"
+        - name: DATABASE_PORT
+          value: "{database_port}"
+        - name: DATABASE_DB
+          value: "{database_db}"
 
         ###########
         # STORAGE #
@@ -97,3 +103,25 @@ spec:
             secretKeyRef:
               name: aws--storage-key
               key: aws_secret_access_key
+---
+apiVersion : "v1"
+kind: Service
+metadata:
+  name: hive-metastore-app
+  labels:
+      type: db
+      endpoint: hive
+      function: metastore
+spec:
+  type: ClusterIP
+  ports:
+    - port: 9083
+      targetPort: 9083
+      name: 'metastore'
+    - port: 10000
+      targetPort: 10000
+      name: 'hiveserver2'
+  selector:
+      type: db
+      endpoint: hive
+      function: metastore

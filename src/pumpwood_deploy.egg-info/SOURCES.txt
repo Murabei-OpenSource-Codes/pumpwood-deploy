@@ -175,7 +175,9 @@ src/pumpwood_deploy/trino/__init__.py
 src/pumpwood_deploy/trino/deploy.py
 src/pumpwood_deploy/trino/resources/__init__.py
 src/pumpwood_deploy/trino/resources/deploy__coordenator.yml
+src/pumpwood_deploy/trino/resources/deploy__hive.yml
 src/pumpwood_deploy/trino/resources/deploy__worker.yml
+src/pumpwood_deploy/trino/resources/postgres__test.yml
 src/pumpwood_deploy/trino/resources/secrets.yml
 src/pumpwood_deploy/trino/tests/__init__.py
 src/pumpwood_deploy/trino/tests/test__TrinoMicroservice.py
