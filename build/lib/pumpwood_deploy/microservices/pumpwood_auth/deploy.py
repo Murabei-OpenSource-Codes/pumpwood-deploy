@@ -59,7 +59,12 @@ class PumpWoodAuthMicroservice:
                  test_db_version: str = None,
                  test_db_repository: str = "gcr.io/repositorio-geral-170012",
                  test_db_limits_memory: str = "1Gi",
-                 test_db_limits_cpu: str = "1000m"):
+                 test_db_limits_cpu: str = "1000m",
+                 mfa_application_name: str = "Pumpwood",
+                 mfa_token_expiration_interval: str = "60",
+                 mfa_twilio_sender_phone_number: str = None,
+                 mfa_twilio_account_sid: str = None,
+                 mfa_twilio_auth_token: str = None):
         """Deploy PumpWood Auth Microservice.
 
         Args:
@@ -99,6 +104,19 @@ class PumpWoodAuthMicroservice:
                 log container.
             worker_trino_catalog (str): Trino catalog to query for logs on
                 storage.
+            mfa_application_name (str): Name of the application at SMS MFA
+                message.
+            mfa_token_expiration_interval (str) = 300: MFA token expiration
+                interval in seconds. Default 300 seconds (5 minutes).
+            mfa_twilio_sender_phone_number (str) = None: Phone that Twillio
+                will use to send SMS. If None, MFA using Twillio SMS will be
+                disable.
+            mfa_twilio_account_sid (str) = None: Twillio account id used to
+                sendo SMS. If None, MFA using Twillio SMS will be
+                disable.
+            mfa_twilio_auth_token (str) = None: Twillio auth token id used to
+                sendo SMS. If None, MFA using Twillio SMS will be
+                disable.
         """
         self._secret_key = base64.b64encode(secret_key.encode()).decode()
         self._microservice_password = base64.b64encode(
@@ -147,6 +165,15 @@ class PumpWoodAuthMicroservice:
         self.worker_log_disk_name = worker_log_disk_name
         self.worker_log_disk_size = worker_log_disk_size
 
+        # MFA
+        self.mfa_application_name = mfa_application_name
+        self.mfa_token_expiration_interval = mfa_token_expiration_interval
+        self.mfa_twilio_sender_phone_number = mfa_twilio_sender_phone_number
+        self._mfa_twilio_account_sid = \
+            base64.b64encode(mfa_twilio_account_sid.encode()).decode()
+        self._mfa_twilio_auth_token = \
+            base64.b64encode(mfa_twilio_auth_token.encode()).decode()
+
     def create_deployment_file(self, kube_client=None, **kwargs):
         """Create_deployment_file."""
         rabbitmq_log = "FALSE" if self.worker_log_version is None else "TRUE"
@@ -155,7 +182,9 @@ class PumpWoodAuthMicroservice:
             microservice_password=self._microservice_password,
             email_host_user=self._email_host_user,
             email_host_password=self._email_host_password,
-            secret_key=self._secret_key)
+            secret_key=self._secret_key,
+            mfa_twilio_account_sid=self._mfa_twilio_account_sid,
+            mfa_twilio_auth_token=self._mfa_twilio_auth_token)
 
         deployment_auth_app_text_f = app_deployment.format(
             repository=self.repository,
@@ -179,7 +208,12 @@ class PumpWoodAuthMicroservice:
             limits_cpu=self.app_limits_cpu,
 
             # Logger
-            rabbitmq_log=rabbitmq_log)
+            rabbitmq_log=rabbitmq_log,
+
+            # MFA
+            mfa_application_name=self.mfa_application_name,
+            mfa_token_expiration_interval=self.mfa_token_expiration_interval,
+            mfa_twilio_sender_phone_number=self.mfa_twilio_sender_phone_number)
 
         deployment_auth_admin_static_f = \
             auth_admin_static.format(

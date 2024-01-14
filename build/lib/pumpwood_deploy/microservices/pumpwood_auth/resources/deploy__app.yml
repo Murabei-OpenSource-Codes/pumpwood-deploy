@@ -166,6 +166,25 @@ spec:
             secretKeyRef:
               name: metabase
               key: embedding_secret_key
+
+        #######
+        # MFA #
+        - name: PUMPWOOD__MFA__APPLICATION_NAME
+          value: {mfa_application_name}
+        - name: PUMPWOOD__MFA__TOKEN_EXPIRATION_INTERVAL
+          value: {mfa_token_expiration_interval}
+        - name: PUMPWOOD__MFA__TWILIO_SENDER_PHONE_NUMBER
+          value: {mfa_twilio_sender_phone_number}
+        - name: PUMPWOOD__MFA__TWILIO_ACCOUNT_SID
+          valueFrom:
+            secretKeyRef:
+              name: metabase
+              key: mfa_twilio_account_sid
+        - name: PUMPWOOD__MFA__TWILIO_AUTH_TOKEN
+          valueFrom:
+            secretKeyRef:
+              name: metabase
+              key: mfa_twilio_auth_token
 ---
 apiVersion : "v1"
 kind: Service
