@@ -22,6 +22,9 @@ spec:
       - name: trino--catalog-file-secret
         secret:
           secretName: trino--catalog-file-secret
+      - name: gcp--storage-key
+        secret:
+          secretName: gcp--storage-key
       affinity:
         nodeAffinity:
           requiredDuringSchedulingIgnoredDuringExecution:
@@ -46,6 +49,9 @@ spec:
           - name: trino--catalog-file-secret
             readOnly: true
             mountPath: /catalog
+          - name: gcp--storage-key
+            readOnly: true
+            mountPath: /etc/secrets
         ports:
         - containerPort: 8080
         env:
