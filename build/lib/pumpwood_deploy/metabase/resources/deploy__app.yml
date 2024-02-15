@@ -33,7 +33,7 @@ spec:
                 - system
       containers:
       - name: metabase
-        image: andrebaceti/metabase-pumpwood:v0.47.6
+        image: andrebaceti/metabase-pumpwood:v0.48.6
         imagePullPolicy: IfNotPresent
         resources:
           requests:
