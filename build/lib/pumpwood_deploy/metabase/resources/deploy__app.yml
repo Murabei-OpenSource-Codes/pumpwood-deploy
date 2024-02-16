@@ -82,9 +82,9 @@ spec:
         - name: MB_DB_HOST
           value: {db_host}
         - name: MB_AGGREGATED_QUERY_ROW_LIMIT
-          value: {aggregated_query_row_limit}
+          value: "{aggregated_query_row_limit}"
         - name: MB_UNAGGREGATED_QUERY_ROW_LIMIT
-          value: {unaggregated_query_row_limit}
+          value: "{unaggregated_query_row_limit}"
         - name: MB_DB_USER
           valueFrom:
             secretKeyRef:
