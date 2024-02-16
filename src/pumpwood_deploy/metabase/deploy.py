@@ -35,7 +35,9 @@ class MetabaseMicroservice:
                  app_requests_memory: str = "20Mi",
                  app_requests_cpu: str = "1m",
                  test_db_version: str = None,
-                 test_db_repository: str = "gcr.io/repositorio-geral-170012"):
+                 test_db_repository: str = "gcr.io/repositorio-geral-170012",
+                 aggregated_query_row_limit: int = 10000,
+                 unaggregated_query_row_limit: int = 10000):
         """
         __init__: Class constructor.
 
@@ -75,6 +77,8 @@ class MetabaseMicroservice:
         self.app_requests_memory = app_requests_memory
         self.app_requests_cpu = app_requests_cpu
         self.metabase_site_url = metabase_site_url
+        self.aggregated_query_row_limit = aggregated_query_row_limit
+        self.unaggregated_query_row_limit = unaggregated_query_row_limit
         self.embedding_secret_key = base64.b64encode(
             embedding_secret_key.encode()).decode()
         self.encryption_secret_key = base64.b64encode(
@@ -101,7 +105,9 @@ class MetabaseMicroservice:
             limits_memory=self.app_limits_memory,
             limits_cpu=self.app_limits_cpu,
             requests_memory=self.app_requests_memory,
-            requests_cpu=self.app_requests_cpu)
+            requests_cpu=self.app_requests_cpu,
+            aggregated_query_row_limit=self.aggregated_query_row_limit,
+            unaggregated_query_row_limit=self.unaggregated_query_row_limit)
         config_map__frmt = config_map.format(
             site_url=self.metabase_site_url)
 
