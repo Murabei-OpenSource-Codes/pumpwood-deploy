@@ -59,6 +59,11 @@ spec:
       - name: postgres
         image: {repository}test-db-pumpwood-auth:{version}
         imagePullPolicy: IfNotPresent
+        env:
+        - name: KONG_API
+          value: http://load-balancer:8001/
+        - name: SERVICE_URL
+          value: http://postgres-pumpwood-auth-no-bouncer:5000/
         resources:
           requests:
             memory: "20Mi"
@@ -101,8 +106,12 @@ metadata:
 spec:
   type: ClusterIP
   ports:
-    - port: 5432
+    - name: postgres-port
+      port: 5432
       targetPort: 5432
+    - name: regen-port
+      port: 5000
+      targetPort: 5000
   selector:
     type: db
     endpoint: pumpwood-auth-app
