@@ -56,6 +56,7 @@ class PumpWoodAuthMicroservice:
                  worker_log_disk_size: str = None,
                  worker_trino_catalog: str = None,
                  repository: str = "gcr.io/repositorio-geral-170012",
+                 static_repository: str = "gcr.io/repositorio-geral-170012",
                  test_db_version: str = None,
                  test_db_repository: str = "gcr.io/repositorio-geral-170012",
                  test_db_limits_memory: str = "1Gi",
@@ -83,6 +84,7 @@ class PumpWoodAuthMicroservice:
             disk_size (str): Disk size for auth database.
             disk_name (str): Disk name for auth database.
             repository (str): Repository to pull image from.
+            static_repository (str): Repository to pull static image from.
             replicas (int): Number of replicas in App deployment.
             test_db_version (str): Set a test database with version.
             test_db_repository (str): Define a repository for the test
@@ -137,6 +139,9 @@ class PumpWoodAuthMicroservice:
         self.repository = (
             repository + "/"
             if repository is not None else "")
+        self.static_repository = (
+            static_repository + "/"
+            if static_repository is not None else "")
         self.app_version = app_version
         self.app_debug = app_debug
         self.app_replicas = app_replicas
@@ -217,7 +222,7 @@ class PumpWoodAuthMicroservice:
 
         deployment_auth_admin_static_f = \
             auth_admin_static.format(
-                repository=self.repository,
+                repository=self.static_repository,
                 version=self.static_version)
 
         deployment_auth_admin_log_worker = None
