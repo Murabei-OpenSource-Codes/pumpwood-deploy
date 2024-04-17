@@ -33,7 +33,7 @@ spec:
                 - system
       containers:
       - name: metabase
-        image: andrebaceti/metabase-pumpwood:v0.48.6
+        image: andrebaceti/metabase-pumpwood:{version}
         imagePullPolicy: IfNotPresent
         resources:
           requests:
@@ -73,6 +73,10 @@ spec:
 
         ############
         # Database #
+        - name: JAVA_OPTS
+          value: "{java_opts}"
+        - name: MB_CHECK_FOR_UPDATES
+          value: "false"
         - name: MB_DB_TYPE
           value: "postgres"
         - name: MB_DB_DBNAME

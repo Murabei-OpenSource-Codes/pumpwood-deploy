@@ -29,11 +29,13 @@ class MetabaseMicroservice:
                  db_host: str = "postgres-metabase",
                  db_database: str = "metabase",
                  db_port: str = "5432",
+                 app_version: int = "v0.48.6",
                  app_replicas: int = 1,
                  app_limits_memory: str = "6Gi",
                  app_limits_cpu: str = "2000m",
                  app_requests_memory: str = "20Mi",
                  app_requests_cpu: str = "1m",
+                 app_java_opts="-Xmx5g",
                  test_db_version: str = None,
                  test_db_repository: str = "gcr.io/repositorio-geral-170012",
                  aggregated_query_row_limit: int = 10000,
@@ -71,11 +73,13 @@ class MetabaseMicroservice:
         self.base_path = os.path.dirname(__file__)
 
         # Metabase App
+        self.app_version = app_version
         self.app_replicas = app_replicas
         self.app_limits_memory = app_limits_memory
         self.app_limits_cpu = app_limits_cpu
         self.app_requests_memory = app_requests_memory
         self.app_requests_cpu = app_requests_cpu
+        self.app_java_opts = app_java_opts
         self.metabase_site_url = metabase_site_url
         self.aggregated_query_row_limit = aggregated_query_row_limit
         self.unaggregated_query_row_limit = unaggregated_query_row_limit
@@ -106,8 +110,10 @@ class MetabaseMicroservice:
             limits_cpu=self.app_limits_cpu,
             requests_memory=self.app_requests_memory,
             requests_cpu=self.app_requests_cpu,
+            java_opts=self.app_java_opts,
             aggregated_query_row_limit=self.aggregated_query_row_limit,
-            unaggregated_query_row_limit=self.unaggregated_query_row_limit)
+            unaggregated_query_row_limit=self.unaggregated_query_row_limit,
+            version=self.app_version)
         config_map__frmt = config_map.format(
             site_url=self.metabase_site_url)
 

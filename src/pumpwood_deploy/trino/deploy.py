@@ -47,7 +47,7 @@ class TrinoMicroservice:
                  hive_metastore_limits_memory: str = "60Gi",
                  hive_metastore_limits_cpu: str = "12000m",
                  test_db_hive_metastore_version: str = None,
-                 test_db_hive_metastore_repository: str = 'southamerica-east1-docker.pkg.dev/repositorio-geral-170012/pumpwood-images/',
+                 test_db_hive_metastore_repository: str = 'gcr.io/repositorio-geral-170012',
                  test_db_hive_metastore_limits_memory: str = "3Gi",
                  test_db_hive_metastore_limits_cpu: str = "4000m"):
         """
