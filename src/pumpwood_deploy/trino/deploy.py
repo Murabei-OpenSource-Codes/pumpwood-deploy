@@ -49,7 +49,8 @@ class TrinoMicroservice:
                  test_db_hive_metastore_version: str = None,
                  test_db_hive_metastore_repository: str = 'gcr.io/repositorio-geral-170012',
                  test_db_hive_metastore_limits_memory: str = "3Gi",
-                 test_db_hive_metastore_limits_cpu: str = "4000m"):
+                 test_db_hive_metastore_limits_cpu: str = "4000m",
+                 version: str = "430-1.5"):
         """
         __init__: Class constructor.
 
@@ -83,6 +84,7 @@ class TrinoMicroservice:
         self.hive_postgres_port = hive_postgres_port
 
         # Cluster requirements
+        self.version = version
         self.worker_limits_memory = worker_limits_memory
         self.worker_limits_cpu = worker_limits_cpu
         self.worker_requests_memory = worker_requests_memory
@@ -118,13 +120,15 @@ class TrinoMicroservice:
             requests_memory=self.coordenator_requests_memory,
             requests_cpu=self.coordenator_requests_cpu,
             limits_memory=self.coordenator_limits_memory,
-            limits_cpu=self.coordenator_limits_cpu)
+            limits_cpu=self.coordenator_limits_cpu,
+            version=self.version)
         frm_worker_deployment = worker_deployment.format(
             replicas=self.worker_replicas,
             requests_memory=self.worker_requests_memory,
             requests_cpu=self.worker_requests_cpu,
             limits_memory=self.worker_limits_memory,
-            limits_cpu=self.worker_limits_cpu)
+            limits_cpu=self.worker_limits_cpu,
+            version=self.version)
 
         # Hive metastore
         frm_hive_deployment = hive_deployment.format(

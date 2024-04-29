@@ -32,7 +32,8 @@ class DeployPumpWood():
                  k8_deploy_args: dict, storage_type: str,
                  storage_deploy_args: str, k8_namespace="pumpwood",
                  gateway_health_url: str = "health-check/pumpwood-auth-app/",
-                 kong_repository: str = "gcr.io/repositorio-geral-170012"):
+                 kong_repository: str = "gcr.io/repositorio-geral-170012",
+                 version="430-1.5"):
         """
         __init__.
 
@@ -87,13 +88,10 @@ class DeployPumpWood():
         self.microsservices_to_deploy = [
             standard_microservices]
         self.base_path = os.getcwd()
+        self.version = version
 
     def add_microservice(self, microservice):
-        """
-        add_microservice.
-
-        .
-        """
+        """add_microservice."""
         self.microsservices_to_deploy.append(microservice)
 
     def create_deploy_files(self):

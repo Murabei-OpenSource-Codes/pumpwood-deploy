@@ -36,7 +36,7 @@ spec:
                 - system
       containers:
       - name: trino-coordinator
-        image: andrebaceti/trino-coordinator:430-1.2
+        image: andrebaceti/trino-coordinator:{version}
         imagePullPolicy: IfNotPresent
         resources:
           requests:
