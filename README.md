@@ -5,7 +5,7 @@ This package was developed by Murabei Data Science and is under BSD-3-Clause
 license.
 
 <p align="center" width="60%">
-  <img src="doc/sitelogo-horizontal.png" /> <br>
+  <img src="static_doc/sitelogo-horizontal.png" /> <br>
 
   <a href="https://en.wikipedia.org/wiki/Cecropia">
     Pumpwood is a native brasilian tree
