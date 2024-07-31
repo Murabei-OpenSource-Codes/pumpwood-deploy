@@ -107,7 +107,7 @@ class StandardMicroservices:
                 "storage_connection_string" not in storage_deploy_args.keys())
             if is_valid:
                 raise Exception(
-                    "Azure storage must have azure_storage_connection_string "
+                    "Azure storage must have storage_connection_string " +
                     "args.")
             self._azure_storage_connection_string = base64.b64encode(
                 storage_deploy_args[

@@ -2,6 +2,7 @@
 import pkg_resources
 import os
 import base64
+from typing import Union, List, Any
 
 
 secrets = pkg_resources.resource_stream(
@@ -27,16 +28,52 @@ test_postgres = pkg_resources.resource_stream(
 
 
 class PumpWoodAuthMicroservice:
-    """PumpWoodAuthMicroservice."""
+    """
+    Deploy PumpWood Auth Microservice.
+
+    Pumpwood Auth Microservice is reponsible for make avaiable autorization
+    end-points for Pumpwood based Systems.
+
+    If also make avaiable routes for registering Kong services and routes
+    which can be used to add new microservice to Pumpwood stack.
+
+    It is possible to use a test database for deploying or a connection with
+    postgres database.
+
+    Deploy example with test database:
+    ```python
+    PumpWoodAuthMicroservice(
+    secret_key="8540",
+    email_host_user="teste1",
+    email_host_password="teste2",
+    bucket_name="qualidadecompradev",
+
+    # App
+    repository="qualidadedecompra.azurecr.io",
+    app_replicas=1,
+    app_version=os.getenv('PUMPWOOD_AUTH_APP'),
+    app_debug="TRUE",
+
+    # Static
+    static_repository="qualidadedecompra.azurecr.io",
+    static_version=os.getenv('PUMPWOOD_AUTH_STATIC'),
+
+    # Test Database
+    test_db_repository="qualidadedecompra.azurecr.io",
+    test_db_version=os.getenv('TEST_DB_PUMPWOOD_AUTH'),
+    test_db_limits_memory="2Gi",
+    test_db_limits_cpu="2000m"))
+    ```
+    """
 
     def __init__(self,
                  secret_key: str,
-                 microservice_password: str,
                  email_host_user: str,
                  email_host_password: str,
                  bucket_name: str,
                  app_version: str,
                  static_version: str,
+                 microservice_password: str = "microservice--auth",
                  db_username: str = "pumpwood",
                  db_password: str = "pumpwood",
                  db_database: str = "pumpwood",
@@ -63,62 +100,135 @@ class PumpWoodAuthMicroservice:
                  test_db_limits_cpu: str = "1000m",
                  mfa_application_name: str = "Pumpwood",
                  mfa_token_expiration_interval: str = "60",
-                 mfa_twilio_sender_phone_number: str = None,
-                 mfa_twilio_account_sid: str = None,
-                 mfa_twilio_auth_token: str = None):
+                 mfa_twilio_sender_phone_number: str = "",
+                 mfa_twilio_account_sid: str = "",
+                 mfa_twilio_auth_token: str = "",
+                 sso__redirect_url: str = "",
+                 sso__provider: str = "",
+                 sso__authorization_url: str = "",
+                 sso__token_url: str = "",
+                 sso__client_id: str = "",
+                 sso__secret: str = ""):
         """Deploy PumpWood Auth Microservice.
 
         Args:
-            secret_key (str): Hash salt.
-            db_password (str): Auth DB password.
-            email_host_user (str): Auth email conection username.
-            email_host_password (str): Auth email conection password.
-            app_version (str): Version of the auth microservice.
-            static_version (str): Version of the static image.
+            secret_key [str]:
+                Hash salt used to generate password hash saved on database.
+            microservice_password [str]:
+                Password associated with service user `microservice--auth`.
+            db_username [str]:
+                Database connection username.
+            db_password [str]:
+                Auth DB password.
+            db_host [str]:
+                Database connection host.
+            db_port [str]:
+                Database connection port.
+            db_database [str]:
+                Database connection database.
 
-        Kwargs:
-            app_limits_memory (str): str = "60Gi"
-            app_limits_cpu (str): str = "12000m"
-            app_requests_memory (str): str = "20Mi"
-            app_requests_cpu (str): str = "1m"
-            disk_size (str): Disk size for auth database.
-            disk_name (str): Disk name for auth database.
-            repository (str): Repository to pull image from.
-            static_repository (str): Repository to pull static image from.
-            replicas (int): Number of replicas in App deployment.
-            test_db_version (str): Set a test database with version.
-            test_db_repository (str): Define a repository for the test
-              database.
-            test_db_limits_memory (str): Limits for test database
-                resources. Default 1Gi.
-            test_db_limits_cpu (str): Limits for test databas
-                resources. Default 1000m.
-            debug (str): Set app in debug mode.
-            db_username (str): Database connection username.
-            db_host (str): Database connection host.
-            db_port (str): Database connection port.
-            db_database (str): Database connection database.
-            postgres_public_ip (str): Postgres database external IP.
-            worker_log_version (str): Version of the log worker to deploy.
-            worker_log_disk_name (str): Name of the disk to be used on worker
-                deploy.
-            worker_log_disk_size (str): Size of the disk allocated to worker
+            bucket_name [str]:
+                Name of the bucket, s3 or storage that will be associated with
+                pumpwood auth. The same bucket can be used by different
+                microservice, each one will save data.
+            email_host_user [str]:
+                Auth email conection username for Django send emails.
+            email_host_password [str]:
+                Auth email conection password for Django send emails.
+            repository [str]:
+                Repository to pull auth images from. It will be pulled
+                application (pumpwood-auth-app), logs worker
+                (pumpwood-auth-log-worker).
+
+            app_version [str]:
+                Version of the auth microservice application.
+            app_timeout [int]:
+                Timeout limit set in seconds for auth application.
+            app_workers [int]:
+                Number of workers spanned at gunicorn for Auth Application.
+            app_limits_memory [str]:
+                Auth application memory consumption limit.
+            app_limits_cpu [str]:
+                Auth application CPU consumption limit.
+            app_requests_memory (str):
+                Auth application memory request.
+            app_requests_cpu [str]:
+                Auth application CPU request.
+            app_replicas [int]:
+                Number of replicas for application deployment.
+
+            static_version [str]:
+                Version of the image with static file for service javascript,
+                logos, fonts and other statics data.
+            static_repository [str]:
+                Repository to pull static image (pumpwood-auth-static) from.
+
+            worker_log_version [str]:
+                Version of the loging worker. If log worker is not set,
+                it will not be deployed and log information will be printed on
+                auth stdout.
+            worker_debug [str]:
+                If log worker is set on debug mode. Accepts 'FALSE' and 'TRUE'
+                options.
+            worker_log_disk_name [str]:
+                Name of the disk that will be attached to log worker to save
+                unprocessed log data.
+            worker_log_disk_size [str]:
+                Size of the disk that will be attached to log worker.
+            worker_trino_catalog [str]:
+                Trino catalog that will be used to map log data information.
+
+            test_db_version [str]:
+                Set a test database with version. If not set test database
+                will not be deployed.
+            test_db_repository [str]:
+                Define a repository for the test database.
+            test_db_limits_memory [str]:
+                Limits for test database resources. Default 1Gi.
+            test_db_limits_cpu [str]:
+                Limits for test databas resources. Default 1000m.
+
+            worker_log_version [str]:
+                Version of the log worker to deploy. If not set worker will
+                not be deployed.
+            worker_log_disk_name [str]:
+                Name of the disk to be used on worker deploy.
+            worker_log_disk_size [str]:
+                Size of the disk allocated to worker
                 log container.
-            worker_trino_catalog (str): Trino catalog to query for logs on
+            worker_trino_catalog [str]:
+                Trino catalog to query for logs on
                 storage.
-            mfa_application_name (str): Name of the application at SMS MFA
-                message.
-            mfa_token_expiration_interval (str) = 300: MFA token expiration
-                interval in seconds. Default 300 seconds (5 minutes).
-            mfa_twilio_sender_phone_number (str) = None: Phone that Twillio
-                will use to send SMS. If None, MFA using Twillio SMS will be
-                disable.
-            mfa_twilio_account_sid (str) = None: Twillio account id used to
-                sendo SMS. If None, MFA using Twillio SMS will be
-                disable.
-            mfa_twilio_auth_token (str) = None: Twillio auth token id used to
-                sendo SMS. If None, MFA using Twillio SMS will be
-                disable.
+
+            mfa_application_name [str]:
+                Name of the application at SMS MFA message. If not set MFA
+                authentication using SMS will not be avaiable at Pumpwood.
+            mfa_token_expiration_interval [str]:
+                MFA token expiration interval in seconds. Default 300 seconds
+                (5 minutes).
+            mfa_twilio_sender_phone_number [str]:
+                Phone that Twillio will use to send SMS. If None,
+                MFA using Twillio SMS will be disable.
+            mfa_twilio_account_sid [str]:
+                Twillio account id used to send SMS. If None, MFA using
+                Twillio SMS will be disable.
+            mfa_twilio_auth_token [str]:
+                Twillio auth token id used to sendo SMS. If None, MFA using
+                Twillio SMS will be disable.
+
+            sso__redirect_url [str]:
+                URL that will be used for redirecting the oauth2 after login.
+            sso__provider [str]:
+                Provides associated with oauth2, so far only `microsoft-entra`
+                have been implemented.
+            sso__authorization_url [str]:
+                URL associated with autorization for oauth2.
+            sso__token_url [str]:
+                URL to fetch token data after authentication.
+            sso__client_id [str]:
+                Secret associated with SSO client_id.
+            sso__secret [str]:
+                Secret associated with SSO sso__secret.
         """
         self._secret_key = base64.b64encode(secret_key.encode()).decode()
         self._microservice_password = base64.b64encode(
@@ -129,6 +239,8 @@ class PumpWoodAuthMicroservice:
             email_host_password.encode()).decode()
         self.bucket_name = bucket_name
         self.base_path = os.path.dirname(__file__)
+
+        # Database
         self.db_username = db_username
         self._db_password = base64.b64encode(db_password.encode()).decode()
         self.db_host = db_host
@@ -179,8 +291,25 @@ class PumpWoodAuthMicroservice:
         self._mfa_twilio_auth_token = \
             base64.b64encode(mfa_twilio_auth_token.encode()).decode()
 
-    def create_deployment_file(self, kube_client=None, **kwargs):
-        """Create_deployment_file."""
+        # SSO
+        self.sso__redirect_url = sso__redirect_url
+        self.sso__provider = sso__provider
+        self.sso__authorization_url = sso__authorization_url
+        self.sso__token_url = sso__token_url
+        self._sso__client_id = \
+            base64.b64encode(sso__client_id.encode()).decode()
+        self._sso__secret = \
+            base64.b64encode(sso__secret.encode()).decode()
+
+    def create_deployment_file(self, kube_client=None, **kwargs) -> List[dict]:
+        """
+        Create_deployment_file.
+
+        Args:
+            kube_client [Kubernets]:
+                Instance of `kubernets.kubernets.Kubernets` object to help
+                attacing disks to pods and other Kubernets operations.
+        """
         rabbitmq_log = "FALSE" if self.worker_log_version is None else "TRUE"
         secrets_text_f = secrets.format(
             db_password=self._db_password,
@@ -189,7 +318,9 @@ class PumpWoodAuthMicroservice:
             email_host_password=self._email_host_password,
             secret_key=self._secret_key,
             mfa_twilio_account_sid=self._mfa_twilio_account_sid,
-            mfa_twilio_auth_token=self._mfa_twilio_auth_token)
+            mfa_twilio_auth_token=self._mfa_twilio_auth_token,
+            sso__client_id=self._sso__client_id,
+            sso__secret=self._sso__secret)
 
         deployment_auth_app_text_f = app_deployment.format(
             repository=self.repository,
@@ -217,14 +348,24 @@ class PumpWoodAuthMicroservice:
 
             # MFA
             mfa_application_name=self.mfa_application_name,
-            mfa_token_expiration_interval=self.mfa_token_expiration_interval,
-            mfa_twilio_sender_phone_number=self.mfa_twilio_sender_phone_number)
+            mfa_token_expiration_interval=(
+                self.mfa_token_expiration_interval),
+            mfa_twilio_sender_phone_number=(
+                self.mfa_twilio_sender_phone_number),
+
+            # SSO
+            sso__redirect_url=self.sso__redirect_url,
+            sso__provider=self.sso__provider,
+            sso__authorization_url=self.sso__authorization_url,
+            sso__token_url=self.sso__token_url)
 
         deployment_auth_admin_static_f = \
             auth_admin_static.format(
                 repository=self.static_repository,
                 version=self.static_version)
 
+        # If rabbitmq_log is set TRUE (deploying worker log pod), a disk
+        # claim will be created to attach the disk to the pod.
         deployment_auth_admin_log_worker = None
         deployment_auth_admin_log_volume = None
         if rabbitmq_log == "TRUE":

@@ -161,11 +161,14 @@ spec:
             configMapKeyRef:
               name: metabase
               key: site_url
+              optional: true
+
         - name: METABASE_SECRET_KEY
           valueFrom:
             secretKeyRef:
               name: metabase
               key: embedding_secret_key
+              optional: true
 
         #######
         # MFA #
@@ -180,11 +183,37 @@ spec:
             secretKeyRef:
               name: pumpwood-auth
               key: mfa_twilio_account_sid
+              optional: true
+
         - name: PUMPWOOD__MFA__TWILIO_AUTH_TOKEN
           valueFrom:
             secretKeyRef:
               name: pumpwood-auth
               key: mfa_twilio_auth_token
+              optional: true
+
+        #######
+        # SSO #
+        - name: PUMPWOOD__SSO__REDIRECT_URL
+          value: "{sso__redirect_url}"
+        - name: PUMPWOOD__SSO__PROVIDER
+          value: "{sso__provider}"
+        - name: PUMPWOOD__SSO__AUTHORIZATION_URL
+          value: "{sso__authorization_url}"
+        - name: PUMPWOOD__SSO__TOKEN_URL
+          value: "{sso__token_url}"
+        - name: PUMPWOOD__SSO__CLIENT_ID
+          valueFrom:
+            secretKeyRef:
+              name: pumpwood-auth
+              key: sso__client_id
+              optional: true
+        - name: PUMPWOOD__SSO__SECRET
+          valueFrom:
+            secretKeyRef:
+              name: pumpwood-auth
+              key: sso__secret
+              optional: true
 ---
 apiVersion : "v1"
 kind: Service

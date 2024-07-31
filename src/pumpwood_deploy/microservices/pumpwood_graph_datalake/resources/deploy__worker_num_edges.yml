@@ -1,0 +1,130 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: pumpwood-graph-datalake-worker-dataloader-edge
+spec:
+  replicas: {replicas}
+  selector:
+    matchLabels:
+      type: worker
+      endpoint: pumpwood-graph-datalake-app
+      function: dataloader-numerical
+  template:
+    metadata:
+      labels:
+          type: worker
+          endpoint: pumpwood-graph-datalake-app
+          function: dataloader-numerical
+    spec:
+      imagePullSecrets:
+        - name: dockercfg
+      volumes:
+      - name: gcp--storage-key
+        secret:
+          secretName: gcp--storage-key
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: function
+                operator: NotIn
+                values:
+                - system
+      containers:
+      - name: pumpwood-graph-datalake-worker-dataloader-edge
+        image: {repository}/pumpwood-graph-datalake-worker-dataloader-edge:{version}
+        imagePullPolicy: IfNotPresent
+        resources:
+          requests:
+            memory: "{requests_memory}"
+            cpu:  "{requests_cpu}"
+          limits:
+            memory: "{limits_memory}"
+            cpu:  "{limits_cpu}"
+        volumeMounts:
+          - name: gcp--storage-key
+            readOnly: true
+            mountPath: /etc/secrets
+        env:
+        - name: DEBUG
+          value: "{debug}"
+
+        # HASH_SALT
+        - name: HASH_SALT
+          valueFrom:
+            secretKeyRef:
+              name: hash-salt
+              key: hash_salt
+
+        # Database
+        - name: DB_USERNAME
+          value: {db_username}
+        - name: DB_HOST
+          value: {db_host}
+        - name: DB_PORT
+          value: "{db_port}"
+        - name: DB_DATABASE
+          value: {db_database}
+        - name: DB_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: pumpwood-graph-datalake
+              key: db_password
+
+        # RABBITMQ
+        - name: RABBITMQ_HOST
+          value: "rabbitmq-main"
+        - name: RABBITMQ_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: rabbitmq-main-secrets
+              key: password
+
+        #Microsservice
+        - name: MICROSERVICE_PASSWORD
+          valueFrom:
+              secretKeyRef:
+                name: pumpwood-graph-datalake
+                key: microservice_password
+
+        # Limit process
+        - name: N_PARALLEL
+          value: '{n_parallel}'
+        - name: CHUNK_SIZE
+          value: '{chunk_size}'
+        - name: QUERY_LIMIT
+          value: '{query_limit}'
+
+        ###########
+        # STORAGE #
+        - name: STORAGE_BUCKET_NAME
+          value: {bucket_name}
+        - name: STORAGE_TYPE
+          valueFrom:
+            configMapKeyRef:
+              name: storage
+              key: storage_type
+
+        # GCP
+        - name: GOOGLE_APPLICATION_CREDENTIALS
+          value: "/etc/secrets/key-storage.json"
+
+        # AZURE
+        - name: AZURE_STORAGE_CONNECTION_STRING
+          valueFrom:
+              secretKeyRef:
+                name: azure--storage-key
+                key: azure_storage_connection_string
+
+        # AWS
+        - name: AWS_ACCESS_KEY_ID
+          valueFrom:
+              secretKeyRef:
+                name: aws--storage-key
+                key: aws_access_key_id
+        - name: AWS_SECRET_ACCESS_KEY
+          valueFrom:
+              secretKeyRef:
+                name: aws--storage-key
+                key: aws_secret_access_key

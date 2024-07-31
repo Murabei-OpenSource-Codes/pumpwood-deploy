@@ -3,6 +3,7 @@ import os
 import stat
 import shutil
 import pkg_resources
+from typing import Union, List, Any
 from pumpwood_deploy.microservices.standard.deploy import (
     StandardMicroservices)
 from pumpwood_deploy.kubernets.kubernets import Kubernets
@@ -12,62 +13,99 @@ from jinja2 import Template
 create_kube_cmd = pkg_resources.resource_stream(
     'pumpwood_deploy',
     'kubernets/bash_templates/kubectl_apply.sh').read().decode()
+"""@private"""
 secret_file_template = Template(pkg_resources.resource_stream(
     'pumpwood_deploy',
     'kubernets/bash_templates/secret_file.sh').read().decode())
+"""@private"""
 configmap_template = Template(pkg_resources.resource_stream(
     'pumpwood_deploy',
     'kubernets/bash_templates/configmap.sh').read().decode())
+"""@private"""
 configmap_keyname_template = Template(pkg_resources.resource_stream(
     'pumpwood_deploy',
     'kubernets/bash_templates/configmap_keyname.sh').read().decode())
+"""@private"""
 
 
 class DeployPumpWood():
     """Class to perform PumpWood Deploy."""
 
+    kube_client: Kubernets
+    """Kubernets client reposible for creation of discs acording to provider
+       and other vendor specific operations."""
+    namespace: str
+    """Name space that will be used to deploy Pumpwood."""
+    microsservices_to_deploy: List
+    """List of microservice objects that will be used to deploy de
+       application."""
+    base_path: str
+    """Base path that will be used to create manifest file and bash scripts."""
+
     def __init__(self, model_user_password: str,
-                 rabbitmq_secret: str, hash_salt: str, kong_db_disk_name: str,
+                 rabbitmq_secret: str,
+                 hash_salt: str,
+                 kong_db_disk_name: str,
                  kong_db_disk_size: str, k8_provider: str,
                  k8_deploy_args: dict, storage_type: str,
                  storage_deploy_args: str, k8_namespace="pumpwood",
                  gateway_health_url: str = "health-check/pumpwood-auth-app/",
-                 kong_repository: str = "gcr.io/repositorio-geral-170012",
-                 version="430-1.5"):
+                 kong_repository: str = "gcr.io/repositorio-geral-170012"):
         """
         __init__.
 
         Args:
-          model_password (str): Password of models microservice.
-          beatbox_conf_path (str): Path to beatbox configuration file.
-          beatbox_version (str): Version of beatbox image.
-          hash_salt (str): Salt for hashs in deployment.
-          cluster_zone (str): Kubernets cluster zone.
-          cluster_project (str): Kubernets project name.
-          k8_provider (str): Kubernets provider, so far must be
-            in ['gcp', 'azure'].
-          k8_deploy_args (dict): Arguments to deploy k8s cluster it may
-            vary depending on the provider. Check classes KubernetsGCP,
-            KubernetsAzure.
-          storage_type (str): Storage provider must be in [
-            'azure_storage', 'google_bucket', 'aws_s3'], correpond to the
-            provider os the flat file storage system.
-          storage_deploy_args (str): Args used to access storage at the
-            pods. Each provider must have diferent arguments:
-                # Azure:
-                - azure_storage_connection_string: Set conenction string to
+            model_password [str]:
+                Password of models microservice.
+            rabbitmq_secret [str]:
+                Password associated with RabbitMQ user.
+            hash_salt [str]:
+                Salt for hashs in deployment.
+            cluster_zone [str]:
+                Kubernets cluster zone.
+            cluster_project [str]:
+                Kubernets project name.
+            k8_provider [str]:
+                Kubernets provider, so far must be in `['gcp', 'azure',
+                'aws']`.
+            k8_deploy_args [dict]:
+                Arguments to deploy k8s cluster it may
+                vary depending on the provider. Check classes
+                `KubernetsGCP`, `KubernetsAzure` and `KubernetsAWS`.
+            kong_db_disk_name [str]:
+                Name of the disk for Postgres associated with Kong service
+                mesh.
+            kong_db_disk_size [str]:
+                Size of the disk that will be attached to Kong Postgres.
+            storage_type [str]:
+                Storage provider must be in `['azure_storage', 'google_bucket',
+                'aws_s3']`, correpond to the provider os the flat file
+                storage system.
+            storage_deploy_args [str]:
+                Args used to access storage at the
+                pods. Each provider must have diferent arguments:<br>
+                **Azure:**
+                - storage_connection_string: Set conenction string to
                     a blob storage.
-                # GCP:
+
+                **GCP:** <br>
                 - credential_file: Set a path to a credetial file of a service
                     user with access to the bucket that will be used at the
                     deployment.
-                # AWS:
+
+                **AWS:** <br>
                 - aws_access_key_id: Access key of the service user with
                     access to the s3 used in deployment.
                 - aws_secret_access_key: Access secret of the service user with
                     access to the s3 used in deployment.
-        Kwargs:
-            k8_namespace [str]: Which namespace to deploy the system.
+            k8_namespace [str]:
+                Which namespace to deploy the system.
+            gateway_health_url [url]:
+                Health check url that will be used. Usually it is good to
+                set health check of auth microservice since it has a mandatory
+                deploy for Pumpwood.
+            kong_repository [str]:
+                Kong service mesh custom image repository.
         """
         self.deploy = []
         self.kube_client = Kubernets(
@@ -88,14 +126,24 @@ class DeployPumpWood():
         self.microsservices_to_deploy = [
             standard_microservices]
         self.base_path = os.getcwd()
-        self.version = version
 
     def add_microservice(self, microservice):
-        """add_microservice."""
+        """
+        Add microservice to deploy stack.
+
+        Args:
+            microservice [Microservice object]:
+                A microservice object to be added to deployment stack.
+        """
         self.microsservices_to_deploy.append(microservice)
 
     def create_deploy_files(self):
-        """create_deploy_files."""
+        """
+        Create all deployment manifests and scripts.
+
+        Interate over `microsservices_to_deploy` creating deploy files at
+        `./outputs/` folder.
+        """
         sevice_cmds = []
         deploy_cmds = []
 
@@ -161,7 +209,7 @@ class DeployPumpWood():
                 # Create a secret from a file
                 elif d['type'] == 'secrets_file':
                     # Legacy path set as string
-                    if type(d["path"]) == str:
+                    if type(d["path"]) is str:
                         d["path"] = [d["path"]]
 
                     deploy_namespace = d.get("namespace", self.namespace)
@@ -265,7 +313,7 @@ class DeployPumpWood():
             'microservice_cmds': deploy_cmds}
 
     def deploy_microservices(self):
-        """Deploy cluster."""
+        """Create deploy files and apply them to de cluster."""
         deploy_cmds = self.create_deploy_files()
         print('\n\n###Deploying Services:')
         self.kube_client.run_deploy_commmands(

@@ -1,6 +1,12 @@
-"""PumpWood DataLake Microservice Deploy."""
-import pkg_resources
+"""
+PumpWood DataLake Microservice Deploy.
+
+Datalake Microservice is the main service for data storage, it will
+define modeling units the main dimension for storing information on
+Pumpwood
+"""
 import os
+import pkg_resources
 import base64
 
 
@@ -23,13 +29,13 @@ test_postgres = pkg_resources.resource_stream(
 
 
 class PumpWoodDatalakeMicroservice:
-    """PumpWoodDatalakeMicroservice."""
+    """Deploy Class for Datalake Microservice."""
 
     def __init__(self,
-                 microservice_password: str,
                  bucket_name: str,
                  app_version: str,
                  worker_version: str,
+                 microservice_password: str = "microservice--datalake",
                  db_username: str = "pumpwood",
                  db_password: str = "pumpwood",
                  db_host: str = "postgres-pumpwood-datalake",
@@ -57,7 +63,76 @@ class PumpWoodDatalakeMicroservice:
                  worker_limits_cpu: str = "12000m",
                  worker_requests_memory: str = "20Mi",
                  worker_requests_cpu: str = "1m"):
-        """__init__: Class constructor."""
+        """
+        Class Constructor.
+
+        Args:
+            bucket_name [str]:
+                Name of the bucket that will be associated with pods.
+            microservice_password [str]:
+                Password associated with service user `microservice--datalake`.
+            db_username [str]:
+                Username for connection with Postgres.
+            db_password [str]:
+                Password for connection with Postgres.
+            db_host [str]:
+                Host for connection with Postgres.
+            db_port [str]:
+                Port for connection with Postgres.
+            db_database [str]:
+                Database for connection with Postgres.
+            repository [str]:
+                Repository that will be used to fetch `pumpwood-datalake-app`
+                and `pumpwood-datalake-dataloader-worker` images.
+            test_db_version [str]:
+                Version of the database for testing.
+            test_db_repository [str]:
+                Repository associated with testing database.
+            test_db_limits_memory [str]:
+                Memory limits associated with test database.
+            test_db_limits_cpu [str]:
+                CPU limits associated with test database.
+            app_version [str]:
+                Version of the application image.
+            app_debug [str]:
+                If application is set as DEBUG mode. Values 'TRUE'/'FALSE'.
+            app_replicas [int]:
+                Number of replicas for application pods.
+            app_timeout [int]:
+                Timeout in seconds for requests at application.
+            app_workers [int]:
+                Number of workers that will be spanned at guinicorn.
+            app_limits_memory [str]:
+                Memory limit associated with application pods.
+            app_limits_cpu [str]:
+                CPU limit associated with application pods.
+            app_requests_memory [str]:
+                Memory requested associated with application pods.
+            app_requests_cpu [str]:
+                CPU requested associated with application pods.
+            worker_version [str]:
+                Version for the worker pod.
+            worker_debug [str]:
+                If worker is set as DEBUG mode. Values 'TRUE'/'FALSE'.
+            worker_replicas [int]:
+                Number of pods that will be deployed for worker.
+            worker_n_parallel [int]:
+                Number of parallel requests that will be performed to
+                upload data to datalake.
+            worker_chunk_size [int]:
+                Number of rows that will be uploaded to database at each
+                parallel request.
+            worker_query_limit [int]:
+                Number of rows that will be treated at each upload cicle.
+            worker_limits_memory [str]:
+                Memory limit associated with dataloader worker pods.
+            worker_limits_cpu [str]:
+                CPU limit associated with dataloader worker pods.
+            worker_requests_memory [str]:
+                Memory requested associated with dataloader worker pods.
+            worker_requests_cpu [str]:
+                CPU requested associated with dataloader worker pods.
+        """
         self._db_password = base64.b64encode(db_password.encode()).decode()
         self._microservice_password = base64.b64encode(
             microservice_password.encode()).decode()

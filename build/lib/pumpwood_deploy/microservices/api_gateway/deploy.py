@@ -4,7 +4,6 @@ import ipaddress
 import pkg_resources
 from jinja2 import Template
 from typing import List
-from pumpwood_deploy.kubernets.kubernets import KubernetsAWS
 
 
 nginx_gateway_deployment = pkg_resources.resource_stream(
@@ -29,8 +28,17 @@ internal_service = pkg_resources.resource_stream(
     'resources/service__internal.yml').read().decode()
 
 
-class ApiGateway:
-    """NGINX Gateway and Kong loadbalancer."""
+class ApiGatewayCertbot:
+    """
+    Build deployment files for the NGINX Api Gateway with Certbot.
+
+    API gateway will set CORS and other security headers for all
+    application.
+
+    Api Gateway Certbot will also add a https termination
+    to application using Let's encript to generate a certificate
+    associated with DNS name.
+    """
 
     def __init__(self, gateway_public_ip: str, email_contact: str,
                  version: str,
@@ -39,21 +47,25 @@ class ApiGateway:
                  repository: str = "gcr.io/repositorio-geral-170012",
                  souce_ranges: List[str] = ["0.0.0.0/0"]):
         """
-        Build deployment files for the Kong ApiGateway.
+        __init__.
 
         Args:
-            gateway_public_ip(str): Set the IP for the ApiGateway, when using
+            gateway_public_ip [str]:
+                Set the IP for the ApiGateway, when using
                 AWS Elastic IP it must be passed it's id. It must have one
                 Elastic IP for each public subnet on VPC used on K8s, values
                 must be separated using coma, ex:
                     - "eipalloc-XXXXXX,eipalloc-YYYYY"
-            email_contact(str): E-mail contact for let's encript.
-            version (str): Version of the API gateway.
-
-        Kwargs:
-            server_name (str): DNS name for the server.
-            health_check_url (str): Url for the health checks.
-            souce_ranges (list[str]): List of the IPs to restrict source
+            email_contact [str]:
+                E-mail contact for let's encript.
+            version [str]:
+                Version of the API gateway.
+            server_name [str]:
+                DNS name for the server.
+            health_check_url [str]:
+                Url for the health checks.
+            souce_ranges [List[str]]:
+                List of the IPs to restrict source
                 conections to the ApiGateway. By default is 0.0.0.0/0, no
                 restriction.
         """
@@ -166,8 +178,16 @@ class ApiGateway:
 #         return to_return
 
 
-class CORSTerminaton:
-    """Create a NGINX termination to add default CORS headers."""
+class ApiGatewayCORSTerminaton:
+    """
+    Create a NGINX termination to add default CORS headers.
+
+    This API Gateway will only add CORS and security headers to application,
+    but it will not add HTTPs termination to aplication.
+
+    To add HTTPs, set a upstrem HTTPs termination using cloud vendor
+    loadbalancer.
+    """
 
     def __init__(self, version: str,
                  health_check_url: str = "health-check/pumpwood-auth-app/",
