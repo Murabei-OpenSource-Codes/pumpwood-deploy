@@ -1,4 +1,9 @@
-"""PumpWood Complex DataLake Microservice Deploy."""
+"""PumpWood Complex DataLake Microservice Deploy.
+
+Complex datalake stores unstrukturated data such as images, texts, audio and
+video. It also permits anotating the database, permiting training models
+using this data.
+"""
 import pkg_resources
 import os
 import base64
@@ -37,9 +42,9 @@ class PumpWoodComplexDatalakeMicroservice:
     """PumpWood Complex Datalake Microservice."""
 
     def __init__(self,
-                 microservice_password: str,
                  bucket_name: str,
                  app_version: str,
+                 microservice_password: str = "microservice--complex-datalake",
                  worker_datalake_dataloader_version: str,
                  worker_simple_dataloader_version: str,
                  worker_complex_dataloader_version: str,

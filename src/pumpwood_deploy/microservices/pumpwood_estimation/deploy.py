@@ -1,4 +1,9 @@
-"""PumpWood DataLake Microservice Deploy."""
+"""PumpWood Estimation Microservice Deploy.
+
+This microservice is associated with estimation of mathematical models,
+defining parameters associated with model and attributes that will be
+considered inputs and outputs of the models.
+"""
 import os
 import pkg_resources
 import base64
@@ -26,10 +31,10 @@ class PumpWoodEstimationMicroservice:
     """PumpWoodEstimationMicroservice."""
 
     def __init__(self,
-                 microservice_password: str,
                  bucket_name: str,
                  app_version: str,
                  worker_version: str,
+                 microservice_password: str = "microservice--estimation",
                  db_password: str = "pumpwood",
                  repository: str = "gcr.io/repositorio-geral-170012",
                  workers_timeout: int = 300,
@@ -57,38 +62,74 @@ class PumpWoodEstimationMicroservice:
                  worker_requests_memory: str = "20Mi",
                  worker_requests_cpu: str = "1m"):
         """
-        __init__: Class constructor.
+        Class Constructor.
 
         Args:
-          microservice_password (str): Microservice password.
-          bucket_name (str): Name of the bucket (Storage)
-          app_version (str): Verison of the estimation app imageself.
-          worker_version (str): Version of the raw data worker.
-
-        Kwargs:
-          db_username (str): Database connection username.
-          db_password (str): password at database.
-          db_host (str): Database connection host.
-          db_port (str): Database connection port.
-          db_database (str): Database connection database.
-          app_limits_memory (str) = "60Gi": Memory limits for app pods.
-          app_limits_cpu (str) = "12000m": CPU limits for app pods.
-          app_requests_memory (str) = "20Mi": Memory requests for app pods.
-          app_requests_cpu (str) = "1m": CPU requests for app pods.
-          worker_limits_memory: str = "60Gi":  Memory limits for worker pods.
-          worker_limits_cpu: str = "12000m": CPU limits for worker pods.
-          worker_requests_memory: str = "20Mi": Memory requests for worker
-            pods.
-          worker_requests_cpu: str = "1m":  CPU requests for worker pods.
-          repository (str): Repository to pull Image.
-          workers_timeout (int): Time in seconds to timeout of uwsgi worker.
-
-        Returns:
-          PumpWoodDatalakeMicroservice: New Object
-        Raises:
-          No especific raises.
-        Example:
-          No example yet.
+            bucket_name [str]:
+                Name of the bucket that will be associated with pods.
+            microservice_password [str]:
+                Password associated with service user `microservice--datalake`.
+            db_username [str]:
+                Username for connection with Postgres.
+            db_password [str]:
+                Password for connection with Postgres.
+            db_host [str]:
+                Host for connection with Postgres.
+            db_port [str]:
+                Port for connection with Postgres.
+            db_database [str]:
+                Database for connection with Postgres.
+            repository [str]:
+                Repository that will be used to fetch `pumpwood-datalake-app`
+                and `pumpwood-datalake-dataloader-worker` images.
+            test_db_version [str]:
+                Version of the database for testing.
+            test_db_repository [str]:
+                Repository associated with testing database.
+            test_db_limits_memory [str]:
+                Memory limits associated with test database.
+            test_db_limits_cpu [str]:
+                CPU limits associated with test database.
+            app_version [str]:
+                Version of the application image.
+            app_debug [str]:
+                If application is set as DEBUG mode. Values 'TRUE'/'FALSE'.
+            app_replicas [int]:
+                Number of replicas for application pods.
+            app_timeout [int]:
+                Timeout in seconds for requests at application.
+            app_workers [int]:
+                Number of workers that will be spanned at guinicorn.
+            app_limits_memory [str]:
+                Memory limit associated with application pods.
+            app_limits_cpu [str]:
+                CPU limit associated with application pods.
+            app_requests_memory [str]:
+                Memory requested associated with application pods.
+            app_requests_cpu [str]:
+                CPU requested associated with application pods.
+            worker_version [str]:
+                Version for the worker pod.
+            worker_debug [str]:
+                If worker is set as DEBUG mode. Values 'TRUE'/'FALSE'.
+            worker_replicas [int]:
+                Number of pods that will be deployed for worker.
+            worker_n_parallel [int]:
+                Number of parallel requests that will be performed to
+                upload data to datalake.
+            worker_chunk_size [int]:
+                Number of rows that will be uploaded to database at each
+                parallel request.
+            worker_query_limit [int]:
+                Number of rows that will be treated at each upload cicle.
+            worker_limits_memory [str]:
+                Memory limit associated with dataloader worker pods.
+            worker_limits_cpu [str]:
+                CPU limit associated with dataloader worker pods.
+            worker_requests_memory [str]:
+                Memory requested associated with dataloader worker pods.
+            worker_requests_cpu [str]:
+                CPU requested associated with dataloader worker pods.
         """
         self._db_password = base64.b64encode(db_password.encode()).decode()
         self._microservice_password = base64.b64encode(

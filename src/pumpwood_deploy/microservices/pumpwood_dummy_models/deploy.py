@@ -1,4 +1,10 @@
-"""PumpWood Dummy Models Microservice Deploy."""
+"""PumpWood Dummy Models Microservice Deploy.
+
+Dummy models are used to test frontend implementations providing model class
+end-points with most of the avaiable field types. They can be used to test
+default pumpwood end-points like list, retrieve, delete, list actions,
+execute actions.
+"""
 import pkg_resources
 import os
 import base64
@@ -22,9 +28,9 @@ class PumpWoodDummyModelsMicroservice:
     """PumpWoodDummyModelsMicroservice."""
 
     def __init__(self,
-                 microservice_password: str,
                  bucket_name: str,
                  app_version: str,
+                 microservice_password: str = "microservice--dummy-models",
                  db_password: str = "pumpwood",
                  db_username: str = "pumpwood",
                  db_host: str = "postgres-pumpwood-dummy-models",
@@ -42,40 +48,48 @@ class PumpWoodDummyModelsMicroservice:
                  test_db_version: str = None,
                  test_db_repository: str = "gcr.io/repositorio-geral-170012"):
         """
-        __init__: Class constructor.
+        Class Constructor.
 
         Args:
-            db_password (str): Password for database.
-            microservice_password(str): Microservice password.
-            postgres_public_ip (str): Postgres public IP.
-            firewall_ips (list): List the IPs allowed to connect to datalake.
-            bucket_name (str): Name of the bucket (Storage)
-            app_version (str): Verison of the App Image.
-
-        Kwargs:
-          db_username (str): Database connection username.
-          db_host (str): Database connection host.
-          db_port (str): Database connection port.
-          db_database (str): Database connection database.
-          app_debug (str): Set app in debug mode.
-          app_limits_memory (str) = "60Gi": Memory limits for app pods.
-          app_limits_cpu (str) = "12000m": CPU limits for app pods.
-          app_requests_memory (str) = "20Mi": Memory requests for app pods.
-          app_requests_cpu (str) = "1m": CPU requests for app pods.
-          app_timeout (str): Time to workout time for guicorn workers.
-          app_workers (int): N workers on pod deploy.
-          replicas (int) = 1: Number of replicas in app deployment.
-          repository (str) = "gcr.io/repositorio-geral-170012": Repository to
-            pull Image
-          test_db_version (str): Set a test database with version.
-          test_db_repository (str): Define a repository for the test
-            database.
-
-        Returns:
-          PumpWoodDummyModelsMicroservice: New Object
-
-        Raises:
-          No specific raises.
+            bucket_name [str]:
+                Name of the bucket that will be associated with pods.
+            microservice_password [str]:
+                Password associated with service user `microservice--datalake`.
+            db_username [str]:
+                Username for connection with Postgres.
+            db_password [str]:
+                Password for connection with Postgres.
+            db_host [str]:
+                Host for connection with Postgres.
+            db_port [str]:
+                Port for connection with Postgres.
+            db_database [str]:
+                Database for connection with Postgres.
+            repository [str]:
+                Repository that will be used to fetch `pumpwood-datalake-app`
+                and `pumpwood-datalake-dataloader-worker` images.
+            test_db_version [str]:
+                Version of the database for testing.
+            test_db_repository [str]:
+                Repository associated with testing database.
+            app_version [str]:
+                Version of the application image.
+            app_debug [str]:
+                If application is set as DEBUG mode. Values 'TRUE'/'FALSE'.
+            app_replicas [int]:
+                Number of replicas for application pods.
+            app_timeout [int]:
+                Timeout in seconds for requests at application.
+            app_workers [int]:
+                Number of workers that will be spanned at guinicorn.
+            app_limits_memory [str]:
+                Memory limit associated with application pods.
+            app_limits_cpu [str]:
+                CPU limit associated with application pods.
+            app_requests_memory [str]:
+                Memory requested associated with application pods.
+            app_requests_cpu [str]:
+                CPU requested associated with application pods.
         """
         self._db_password = base64.b64encode(db_password.encode()).decode()
         self._microservice_password = base64.b64encode(
