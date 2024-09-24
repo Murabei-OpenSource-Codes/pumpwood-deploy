@@ -1,0 +1,99 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: pumpwood-auth-worker-log
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      type: worker
+      endpoint: pumpwood-auth-worker-log
+      function: log
+  template:
+    metadata:
+      labels:
+        type: worker
+        endpoint: pumpwood-auth-worker-log
+        function: log
+    spec:
+      imagePullSecrets:
+        - name: dockercfg
+      volumes:
+      - name: gcp--storage-key
+        secret:
+          secretName: gcp--storage-key
+      - name: log-data
+        persistentVolumeClaim:
+          claimName: {volume_claim_name}
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: function
+                operator: NotIn
+                values:
+                - system
+      containers:
+      - name: pumpwood-auth-log-worker
+        image: {repository}pumpwood-auth-log-worker:{version}
+        imagePullPolicy: IfNotPresent
+
+        volumeMounts:
+          - name: gcp--storage-key
+            readOnly: true
+            mountPath: /etc/secrets
+          - name: log-data
+            mountPath: /logs/
+
+        env:
+        - name: DEBUG
+          value: "{debug}"
+
+        - name: WORKER_LOG_PATH
+          value: "/logs/"
+
+        - name: TRINO_CATALOG
+          value: {trino_catalog}
+
+        # RABBITMQ ETL
+        - name: RABBITMQ_HOST
+          value: "rabbitmq-main"
+        - name: RABBITMQ_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: rabbitmq-main-secrets
+              key: password
+
+        ###########
+        # STORAGE #
+        - name: STORAGE_BUCKET_NAME
+          value: {bucket_name}
+        - name: STORAGE_TYPE
+          valueFrom:
+            configMapKeyRef:
+              name: storage
+              key: storage_type
+
+        # GCP
+        - name: GOOGLE_APPLICATION_CREDENTIALS
+          value: "/etc/secrets/key-storage.json"
+
+        # AZURE
+        - name: AZURE_STORAGE_CONNECTION_STRING
+          valueFrom:
+            secretKeyRef:
+              name: azure--storage-key
+              key: azure_storage_connection_string
+
+        # AWS
+        - name: AWS_ACCESS_KEY_ID
+          valueFrom:
+            secretKeyRef:
+              name: aws--storage-key
+              key: aws_access_key_id
+        - name: AWS_SECRET_ACCESS_KEY
+          valueFrom:
+            secretKeyRef:
+              name: aws--storage-key
+              key: aws_secret_access_key

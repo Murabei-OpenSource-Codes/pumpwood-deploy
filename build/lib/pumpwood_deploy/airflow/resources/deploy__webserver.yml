@@ -1,0 +1,165 @@
+apiVersion : "apps/v1"
+kind: Deployment
+metadata:
+  name: simple-airflow--webserver
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      type: app
+      endpoint: airflow
+      function: webserver
+  template:
+    metadata:
+      labels:
+        type: app
+        endpoint: airflow
+        function: webserver
+    spec:
+      imagePullSecrets:
+        - name: dockercfg
+      volumes:
+      - name: gcp--storage-key
+        secret:
+          secretName: gcp--storage-key
+      - name: airflow--gitkey
+        secret:
+          secretName: airflow--gitkey
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: function
+                operator: NotIn
+                values:
+                - system
+      containers:
+      - name: simple-airflow--webserver
+        image: andrebaceti/simple-airflow:0.22
+        imagePullPolicy: IfNotPresent
+        resources:
+          requests:
+            cpu: "1m"
+        volumeMounts:
+          - name: gcp--storage-key
+            readOnly: true
+            mountPath: /etc/secrets
+          - name: airflow--gitkey
+            readOnly: true
+            mountPath: /ssh_keys/
+        ports:
+        - containerPort: 8080
+        env:
+        - name: HASH_SALT
+          valueFrom:
+            secretKeyRef:
+              name: hash-salt
+              key: hash_salt
+
+        # AIRFLOW
+        - name: AIRFLOW__WEBSERVER__SECRET_KEY
+          valueFrom:
+            secretKeyRef:
+              name: simple-airflow
+              key: secret_key
+        - name: AIRFLOW__CORE__FERNET_KEY
+          valueFrom:
+            secretKeyRef:
+              name: simple-airflow
+              key: fernet_key
+        - name: AIRFLOW__KUBERNETES__NAMESPACE
+          value: {k8s_pods_namespace}
+        - name: AIRFLOW__LOGGING__REMOTE_BASE_LOG_FOLDER
+          value: "{remote_base_log_folder}"
+        - name: AIRFLOW__LOGGING__REMOTE_LOGGING
+          value: "{remote_logging}"
+        - name: AIRFLOW__LOGGING__REMOTE_LOG_CONN_ID
+          value: "{remote_log_conn_id}"
+
+        # Git
+        - name: GIT_SERVER
+          value: "{git_server}"
+        - name: GIT_REPOSITORY
+          value: "{git_repository}"
+        - name: GIT_BRANCH
+          value: "{git_branch}"
+
+        # DATABASE
+        - name: DB_USERNAME
+          value: "{db_username}"
+        - name: DB_HOST
+          value: "{db_host}"
+        - name: DB_PORT
+          value: "{db_port}"
+        - name: DB_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: simple-airflow
+              key: db_password
+
+        # KONG
+        - name: KONG_API_URL
+          value: "http://load-balancer:8001"
+        - name: SERVICE_URL
+          value: "http://simple-airflow--webserver:5000/"
+
+        # RABBITMQ QUEUE
+        - name: RABBITMQ_HOST
+          value: "rabbitmq-main"
+        - name: RABBITMQ_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: rabbitmq-main-secrets
+              key: password
+
+        ###########
+        # STORAGE #
+        - name: STORAGE_BUCKET_NAME
+          value: {bucket_name}
+        - name: STORAGE_TYPE
+          valueFrom:
+            configMapKeyRef:
+              name: storage
+              key: storage_type
+
+        # GCP
+        - name: GOOGLE_APPLICATION_CREDENTIALS
+          value: "/etc/secrets/key-storage.json"
+
+        # AZURE
+        - name: AZURE_STORAGE_CONNECTION_STRING
+          valueFrom:
+              secretKeyRef:
+                name: azure--storage-key
+                key: azure_storage_connection_string
+
+        # AWS
+        - name: AWS_ACCESS_KEY_ID
+          valueFrom:
+              secretKeyRef:
+                name: aws--storage-key
+                key: aws_access_key_id
+        - name: AWS_SECRET_ACCESS_KEY
+          valueFrom:
+              secretKeyRef:
+                name: aws--storage-key
+                key: aws_secret_access_key
+---
+apiVersion : "v1"
+kind: Service
+metadata:
+  name: simple-airflow--webserver
+  labels:
+    type: app
+    endpoint: airflow
+    function: webserver
+spec:
+  type: ClusterIP
+  ports:
+    - port: 5000
+      targetPort: 8080
+  selector:
+    type: app
+    endpoint: airflow
+    function: webserver

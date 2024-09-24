@@ -1,0 +1,97 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {name}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      type: db
+      endpoint: {name}
+      function: postgres
+  template:
+    metadata:
+      labels:
+        type: db
+        endpoint: {name}
+        function: postgres
+    spec:
+      volumes:
+      - name: postgres-data
+        persistentVolumeClaim:
+          claimName: {volume_claim_name}
+      - name: secrets
+        secret:
+          secretName: {name}
+      - name: dshm
+        emptyDir:
+          medium: Memory
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: function
+                operator: NotIn
+                values:
+                - system
+      containers:
+      # Postgres Container
+      - name: postgres
+        image: postgis/postgis:15-3.3-alpine
+        args: [
+            "-c", "max_connections=1000",
+            "-c", "work_mem=50MB",
+            "-c", "shared_buffers=1GB",
+            "-c", "max_locks_per_transaction=500",
+            "-c", "max_wal_size=10GB",
+            "-c", "min_wal_size=80MB"]
+        imagePullPolicy: IfNotPresent
+        resources:
+          requests:
+            memory: "{requests_memory}"
+            cpu:  "{requests_cpu}"
+          limits:
+            memory: "{limits_memory}"
+            cpu:  "{limits_cpu}"
+        env:
+        - name: POSTGRES_USER
+          valueFrom:
+            secretKeyRef:
+              name: {name}
+              key: db_username
+        - name: POSTGRES_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: {name}
+              key: db_password
+        - name: PGDATA
+          value: /var/lib/postgresql/data/pgdata
+        volumeMounts:
+        - name: postgres-data
+          mountPath: /var/lib/postgresql/data/
+        - name: secrets
+          mountPath: /etc/secrets
+          readOnly: true
+        - name: dshm
+          mountPath: /dev/shm
+        ports:
+        - containerPort: 5432
+---
+apiVersion : "v1"
+kind: Service
+metadata:
+  name: {name}
+  labels:
+    type: db
+    endpoint: {name}
+    function: postgres
+spec:
+  type: ClusterIP
+  ports:
+    - port: 5432
+      targetPort: 5432
+  selector:
+    type: db
+    endpoint: {name}
+    function: postgres
