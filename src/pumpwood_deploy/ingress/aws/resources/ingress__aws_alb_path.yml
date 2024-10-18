@@ -3,7 +3,6 @@ kind: Ingress
 metadata:
   name: alb-ingress
   annotations:
-    kubernetes.io/ingress.class: alb
     alb.ingress.kubernetes.io/load-balancer-name: '{{ alb_name }}'
     alb.ingress.kubernetes.io/group.name: '{{ group_name }}'
     alb.ingress.kubernetes.io/ip-address-type: ipv4
@@ -14,6 +13,7 @@ metadata:
     alb.ingress.kubernetes.io/healthcheck-path: {{ health_check_url }}
     alb.ingress.kubernetes.io/certificate-arn: {{ certificate_arn }}
 spec:
+  ingressClassName: alb
   rules:
   - http:
       paths:
