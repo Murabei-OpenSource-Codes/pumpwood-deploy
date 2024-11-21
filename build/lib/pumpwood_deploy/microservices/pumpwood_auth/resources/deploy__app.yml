@@ -123,7 +123,7 @@ spec:
 
         # Admin CSRF
         - name: DJANGO__CSRF_TRUSTED_ORIGINS
-          value: {csrf_trusted_origins}
+          value: '{csrf_trusted_origins}'
 
         ###########
         # STORAGE #
