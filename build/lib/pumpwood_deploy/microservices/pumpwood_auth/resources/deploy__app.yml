@@ -121,6 +121,10 @@ spec:
               name: pumpwood-auth
               key: email_host_password
 
+        # Admin CSRF
+        - name: DJANGO__CSRF_TRUSTED_ORIGINS
+          value: {csrf_trusted_origins}
+
         ###########
         # STORAGE #
         - name: STORAGE_BUCKET_NAME

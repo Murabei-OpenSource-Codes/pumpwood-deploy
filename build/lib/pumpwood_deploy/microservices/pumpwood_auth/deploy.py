@@ -79,6 +79,7 @@ class PumpWoodAuthMicroservice:
                  db_database: str = "pumpwood",
                  db_host: str = "postgres-pumpwood-auth",
                  db_port: str = "5432",
+                 app_csrf_trusted_origins: str = '[]',
                  app_debug: str = "FALSE",
                  app_replicas: int = 1,
                  app_timeout: int = 300,
@@ -112,6 +113,10 @@ class PumpWoodAuthMicroservice:
         """Deploy PumpWood Auth Microservice.
 
         Args:
+            app_csrf_trusted_origins (str):
+                List of CSRF trusted origins, if is passed as a JSON list
+                of allowed trusted origins. Most of the case, it is
+                just the domain associated with the deploy.
             secret_key [str]:
                 Hash salt used to generate password hash saved on database.
             microservice_password [str]:
@@ -263,6 +268,7 @@ class PumpWoodAuthMicroservice:
         self.app_limits_cpu = app_limits_cpu
         self.app_requests_memory = app_requests_memory
         self.app_requests_cpu = app_requests_cpu
+        self.app_csrf_trusted_origins = app_csrf_trusted_origins
 
         # Static
         self.static_version = static_version
@@ -330,6 +336,7 @@ class PumpWoodAuthMicroservice:
             debug=self.app_debug,
             n_workers=self.app_workers,
             workers_timeout=self.app_timeout,
+            csrf_trusted_origins=self.app_csrf_trusted_origins,
 
             # DB Config
             db_username=self.db_username,
