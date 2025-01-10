@@ -43,6 +43,8 @@ spec:
           value: "{target_service}"
         - name: TARGET_HEALTH
           value: "{target_health}"
+        - name: ROOT_REDIRECT_URL
+          value: "{root_redirect_url}"
         ports:
         # Consumers Ports
         - containerPort: 80

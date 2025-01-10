@@ -42,6 +42,7 @@ class ApiGatewayCertbot:
 
     def __init__(self, gateway_public_ip: str, email_contact: str,
                  version: str,
+                 root_redirect_url: str = "admin/pumpwood-auth-app/gui/",
                  health_check_url: str = "health-check/pumpwood-auth-app/",
                  server_name: str = "not_set",
                  repository: str = "gcr.io/repositorio-geral-170012",
@@ -55,7 +56,9 @@ class ApiGatewayCertbot:
                 AWS Elastic IP it must be passed it's id. It must have one
                 Elastic IP for each public subnet on VPC used on K8s, values
                 must be separated using coma, ex:
-                    - "eipalloc-XXXXXX,eipalloc-YYYYY"
+                    - "eipalloc-XXXXXX,eipalloc-YYYYY
+            root_redirect_url (str):
+                Path to redirect call at root.
             email_contact [str]:
                 E-mail contact for let's encript.
             version [str]:
@@ -77,6 +80,7 @@ class ApiGatewayCertbot:
         self.health_check_url = health_check_url
         self.souce_ranges = souce_ranges
         self.base_path = os.path.dirname(__file__)
+        self.root_redirect_url = root_redirect_url
 
     def create_deployment_file(self, **kwargs):
         """
@@ -90,7 +94,8 @@ class ApiGatewayCertbot:
             server_name=self.server_name,
             email_contact=self.email_contact,
             nginx_ssl_version=self.version,
-            health_check_url=self.health_check_url)
+            health_check_url=self.health_check_url,
+            root_redirect_url=self.root_redirect_url)
 
         service__formated = None
         if ipaddress.ip_address(self.gateway_public_ip).is_private:
@@ -190,6 +195,7 @@ class ApiGatewayCORSTerminaton:
     """
 
     def __init__(self, version: str,
+                 root_redirect_url: str = "admin/pumpwood-auth-app/gui/",
                  health_check_url: str = "health-check/pumpwood-auth-app/",
                  repository: str = "gcr.io/repositorio-geral-170012",
                  server_name: str = "localhost",
@@ -204,6 +210,7 @@ class ApiGatewayCORSTerminaton:
         Kwargs:
             health_check_url (str): Url for the health checks.
         """
+        self.root_redirect_url = root_redirect_url
         self.repository = repository
         self.version = version
         self.health_check_url = health_check_url
@@ -211,6 +218,7 @@ class ApiGatewayCORSTerminaton:
         self.target_service = target_service
         self.target_health = target_health
         self.base_path = os.path.dirname(__file__)
+        self.root_redirect_url = root_redirect_url
 
     def create_deployment_file(self, **kwargs):
         """
@@ -225,7 +233,8 @@ class ApiGatewayCORSTerminaton:
                 health_check_url=self.health_check_url,
                 server_name=self.server_name,
                 target_service=self.target_service,
-                target_health=self.target_health)
+                target_health=self.target_health,
+                root_redirect_url=self.root_redirect_url)
 
         to_return = [
             {'type': 'deploy', 'name': 'nginx_gateway_no_ssl__deploy',
