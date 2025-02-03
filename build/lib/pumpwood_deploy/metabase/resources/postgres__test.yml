@@ -1,0 +1,73 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: postgres-metabase
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      type: db
+      endpoint: metabase-app
+      function: dashboard
+  template:
+    metadata:
+      labels:
+        type: db
+        endpoint: metabase-app
+        function: dashboard
+    spec:
+      imagePullSecrets:
+        - name: dockercfg
+      volumes:
+      - name: dshm
+        emptyDir:
+          medium: Memory
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: function
+                operator: NotIn
+                values:
+                - system
+      containers:
+      - name: postgres-metabase
+        image: {repository}/test-db-metabase:{version}
+        imagePullPolicy: IfNotPresent
+        env:
+        - name: KONG_API
+          value: http://load-balancer:8001/
+        - name: SERVICE_URL
+          value: http://postgres-metabase:5000/
+        resources:
+          limits:
+            memory: "1Gi"
+            cpu:  "1000m"
+        volumeMounts:
+        - name: dshm
+          mountPath: /dev/shm
+        ports:
+        - containerPort: 5432
+---
+apiVersion : "v1"
+kind: Service
+metadata:
+  name: postgres-metabase
+  labels:
+    type: db
+    endpoint: metabase-app
+    function: dashboard
+spec:
+  type: ClusterIP
+  ports:
+    - name: postgres-port
+      port: 5432
+      targetPort: 5432
+    - name: regen-port
+      port: 5000
+      targetPort: 5000
+  selector:
+    type: db
+    endpoint: metabase-app
+    function: dashboard

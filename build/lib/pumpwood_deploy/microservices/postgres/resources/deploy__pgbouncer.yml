@@ -1,0 +1,78 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {name}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      type: db
+      endpoint: {name}
+      function: pgbouncer
+  template:
+    metadata:
+      labels:
+        type: db
+        endpoint: {name}
+        function: pgbouncer
+    spec:
+      volumes:
+      - name: dshm
+        emptyDir:
+          medium: Memory
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: function
+                operator: NotIn
+                values:
+                - system
+      containers:
+      # PGBouncer Container
+      - name: pgbouncer
+        image: andrebaceti/pgbouncer-auto-bootstrap:1.21.0-1.0
+        env:
+        - name: POSTGRESQL_USERNAME
+          valueFrom:
+            secretKeyRef:
+              name: {postgres_secret}
+              key: db_username
+        - name: POSTGRESQL_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: {postgres_secret}
+              key: db_password
+        - name: POSTGRESQL_HOST
+          value: '{host}'
+        - name: POSTGRESQL_PORT
+          value: '{port}'
+        - name: PGBOUNCER_DATABASE
+          value: '{database}'
+        - name: PGBOUNCER_SET_DATABASE_USER
+          value: 'yes'
+        - name: PGBOUNCER_SET_DATABASE_PASSWORD
+          value: 'yes'
+        - name: PGBOUNCER_POOL_MODE
+          value: transaction
+        ports:
+        - containerPort: 6432
+---
+apiVersion : "v1"
+kind: Service
+metadata:
+  name: {name}
+  labels:
+    type: db
+    endpoint: {name}
+    function: pgbouncer
+spec:
+  type: ClusterIP
+  ports:
+    - port: 5432
+      targetPort: 6432
+  selector:
+    type: db
+    endpoint: {name}
+    function: pgbouncer
