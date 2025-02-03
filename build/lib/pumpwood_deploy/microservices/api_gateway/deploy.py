@@ -29,8 +29,7 @@ internal_service = pkg_resources.resource_stream(
 
 
 class ApiGatewayCertbot:
-    """
-    Build deployment files for the NGINX Api Gateway with Certbot.
+    """Build deployment files for the NGINX Api Gateway with Certbot.
 
     API gateway will set CORS and other security headers for all
     application.
@@ -47,11 +46,10 @@ class ApiGatewayCertbot:
                  server_name: str = "not_set",
                  repository: str = "gcr.io/repositorio-geral-170012",
                  souce_ranges: List[str] = ["0.0.0.0/0"]):
-        """
-        __init__.
+        """__init__.
 
         Args:
-            gateway_public_ip [str]:
+            gateway_public_ip (str):
                 Set the IP for the ApiGateway, when using
                 AWS Elastic IP it must be passed it's id. It must have one
                 Elastic IP for each public subnet on VPC used on K8s, values
@@ -59,15 +57,17 @@ class ApiGatewayCertbot:
                     - "eipalloc-XXXXXX,eipalloc-YYYYY
             root_redirect_url (str):
                 Path to redirect call at root.
-            email_contact [str]:
+            email_contact (str):
                 E-mail contact for let's encript.
-            version [str]:
+            version (str):
                 Version of the API gateway.
-            server_name [str]:
+            server_name (str):
                 DNS name for the server.
-            health_check_url [str]:
+            repository (str):
+                Repository that will be used to retrieve Docker image.
+            health_check_url (str):
                 Url for the health checks.
-            souce_ranges [List[str]]:
+            souce_ranges (List[str]):
                 List of the IPs to restrict source
                 conections to the ApiGateway. By default is 0.0.0.0/0, no
                 restriction.
@@ -82,12 +82,14 @@ class ApiGatewayCertbot:
         self.base_path = os.path.dirname(__file__)
         self.root_redirect_url = root_redirect_url
 
-    def create_deployment_file(self, **kwargs):
-        """
-        Create_deployment_file.
+    def create_deployment_file(self, kube_client, **kwargs):
+        """Create_deployment_file.
 
         Args:
-          kube_client: Client to communicate with Kubernets cluster.
+          kube_client:
+            Client to communicate with Kubernets cluster.
+          **kwargs:
+            Copatibility with other versions.
         """
         nginx_gateway_deployment__formated = nginx_gateway_deployment.format(
             repository=self.repository,
@@ -184,8 +186,7 @@ class ApiGatewayCertbot:
 
 
 class ApiGatewayCORSTerminaton:
-    """
-    Create a NGINX termination to add default CORS headers.
+    """Create a NGINX termination to add default CORS headers.
 
     This API Gateway will only add CORS and security headers to application,
     but it will not add HTTPs termination to aplication.
@@ -201,14 +202,28 @@ class ApiGatewayCORSTerminaton:
                  server_name: str = "localhost",
                  target_service: str = "load-balancer:8000",
                  target_health: str = "load-balancer:8001"):
-        """
-        Build deployment files for the Kong ApiGateway.
+        """Build deployment files for the Kong ApiGateway.
 
         Args:
-            version (str): Version of the API gateway.
-
-        Kwargs:
-            health_check_url (str): Url for the health checks.
+            version (str):
+                Version of the API gateway.
+            root_redirect_url (str):
+                To which URL root call "/" should be redirected.
+                Default "admin/pumpwood-auth-app/gui/".
+            health_check_url (str):
+                Health check path for pod. Default for
+                "health-check/pumpwood-auth-app/".
+            repository (str):
+                Reposity that will be used to retrieve docker image
+                "gcr.io/repositorio-geral-170012".
+            server_name (str):
+                Name of the server at NGINX. Defaults "localhost"
+            target_service (str):
+                Target service on the reverse proxy. Defaults for
+                "load-balancer:8000".
+            target_health (str):
+                Target server heath check path. Defaults for
+                "load-balancer:8001".
         """
         self.root_redirect_url = root_redirect_url
         self.repository = repository
@@ -221,10 +236,11 @@ class ApiGatewayCORSTerminaton:
         self.root_redirect_url = root_redirect_url
 
     def create_deployment_file(self, **kwargs):
-        """
-        Create_deployment_file.
+        """Create_deployment_file.
 
-        No args.
+        Args:,
+            **kwargs:
+                Backward compatibility.
         """
         nginx_gateway_deployment__formated = \
             nginx_gateway_no_ssl_deployment.format(

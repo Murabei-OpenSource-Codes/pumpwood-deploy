@@ -28,8 +28,7 @@ test_postgres = pkg_resources.resource_stream(
 
 
 class PumpWoodAuthMicroservice:
-    """
-    Deploy PumpWood Auth Microservice.
+    """Deploy PumpWood Auth Microservice.
 
     Pumpwood Auth Microservice is reponsible for make avaiable autorization
     end-points for Pumpwood based Systems.
@@ -73,9 +72,9 @@ class PumpWoodAuthMicroservice:
                  bucket_name: str,
                  app_version: str,
                  static_version: str,
-                 microservice_password: str = "microservice--auth",
+                 microservice_password: str = "microservice--auth", # NOQA
                  db_username: str = "pumpwood",
-                 db_password: str = "pumpwood",
+                 db_password: str = "pumpwood", # NOQA
                  db_database: str = "pumpwood",
                  db_host: str = "postgres-pumpwood-auth",
                  db_port: str = "5432",
@@ -100,7 +99,7 @@ class PumpWoodAuthMicroservice:
                  test_db_limits_memory: str = "1Gi",
                  test_db_limits_cpu: str = "1000m",
                  mfa_application_name: str = "Pumpwood",
-                 mfa_token_expiration_interval: str = "60",
+                 mfa_token_expiration_interval: str = "60",  # NOQA
                  mfa_twilio_sender_phone_number: str = "",
                  mfa_twilio_account_sid: str = "",
                  mfa_twilio_auth_token: str = "",
@@ -117,122 +116,124 @@ class PumpWoodAuthMicroservice:
                 List of CSRF trusted origins, if is passed as a JSON list
                 of allowed trusted origins. Most of the case, it is
                 just the domain associated with the deploy.
-            secret_key [str]:
+            secret_key (str):
                 Hash salt used to generate password hash saved on database.
-            microservice_password [str]:
+            microservice_password (str):
                 Password associated with service user `microservice--auth`.
-            db_username [str]:
+            db_username (str):
                 Database connection username.
-            db_password [str]:
+            db_password (str):
                 Auth DB password.
-            db_host [str]:
+            db_host (str):
                 Database connection host.
-            db_port [str]:
+            db_port (str):
                 Database connection port.
-            db_database [str]:
+            db_database (str):
                 Database connection database.
 
-            bucket_name [str]:
+            bucket_name (str):
                 Name of the bucket, s3 or storage that will be associated with
                 pumpwood auth. The same bucket can be used by different
                 microservice, each one will save data.
-            email_host_user [str]:
+            email_host_user (str):
                 Auth email conection username for Django send emails.
-            email_host_password [str]:
+            email_host_password (str):
                 Auth email conection password for Django send emails.
-            repository [str]:
+            repository (str):
                 Repository to pull auth images from. It will be pulled
                 application (pumpwood-auth-app), logs worker
                 (pumpwood-auth-log-worker).
 
-            app_version [str]:
+            app_debug (str):
+                Flag if application will be setted as debug mode.
+            app_version (str):
                 Version of the auth microservice application.
-            app_timeout [int]:
+            app_timeout (int):
                 Timeout limit set in seconds for auth application.
-            app_workers [int]:
+            app_workers (int):
                 Number of workers spanned at gunicorn for Auth Application.
-            app_limits_memory [str]:
+            app_limits_memory (str):
                 Auth application memory consumption limit.
-            app_limits_cpu [str]:
+            app_limits_cpu (str):
                 Auth application CPU consumption limit.
             app_requests_memory (str):
                 Auth application memory request.
-            app_requests_cpu [str]:
+            app_requests_cpu (str):
                 Auth application CPU request.
-            app_replicas [int]:
+            app_replicas (int):
                 Number of replicas for application deployment.
 
-            static_version [str]:
+            static_version (str):
                 Version of the image with static file for service javascript,
                 logos, fonts and other statics data.
-            static_repository [str]:
+            static_repository (str):
                 Repository to pull static image (pumpwood-auth-static) from.
 
-            worker_log_version [str]:
+            worker_log_version (str):
                 Version of the loging worker. If log worker is not set,
                 it will not be deployed and log information will be printed on
                 auth stdout.
-            worker_debug [str]:
+            worker_debug (str):
                 If log worker is set on debug mode. Accepts 'FALSE' and 'TRUE'
                 options.
-            worker_log_disk_name [str]:
+            worker_log_disk_name (str):
                 Name of the disk that will be attached to log worker to save
                 unprocessed log data.
-            worker_log_disk_size [str]:
+            worker_log_disk_size (str):
                 Size of the disk that will be attached to log worker.
-            worker_trino_catalog [str]:
+            worker_trino_catalog (str):
                 Trino catalog that will be used to map log data information.
 
-            test_db_version [str]:
+            test_db_version (str):
                 Set a test database with version. If not set test database
                 will not be deployed.
-            test_db_repository [str]:
+            test_db_repository (str):
                 Define a repository for the test database.
-            test_db_limits_memory [str]:
+            test_db_limits_memory (str):
                 Limits for test database resources. Default 1Gi.
-            test_db_limits_cpu [str]:
+            test_db_limits_cpu (str):
                 Limits for test databas resources. Default 1000m.
 
-            worker_log_version [str]:
+            worker_log_version (str):
                 Version of the log worker to deploy. If not set worker will
                 not be deployed.
-            worker_log_disk_name [str]:
+            worker_log_disk_name (str):
                 Name of the disk to be used on worker deploy.
-            worker_log_disk_size [str]:
+            worker_log_disk_size (str):
                 Size of the disk allocated to worker
                 log container.
-            worker_trino_catalog [str]:
+            worker_trino_catalog (str):
                 Trino catalog to query for logs on
                 storage.
 
-            mfa_application_name [str]:
+            mfa_application_name (str):
                 Name of the application at SMS MFA message. If not set MFA
                 authentication using SMS will not be avaiable at Pumpwood.
-            mfa_token_expiration_interval [str]:
+            mfa_token_expiration_interval (str):
                 MFA token expiration interval in seconds. Default 300 seconds
                 (5 minutes).
-            mfa_twilio_sender_phone_number [str]:
+            mfa_twilio_sender_phone_number (str):
                 Phone that Twillio will use to send SMS. If None,
                 MFA using Twillio SMS will be disable.
-            mfa_twilio_account_sid [str]:
+            mfa_twilio_account_sid (str):
                 Twillio account id used to send SMS. If None, MFA using
                 Twillio SMS will be disable.
-            mfa_twilio_auth_token [str]:
+            mfa_twilio_auth_token (str):
                 Twillio auth token id used to sendo SMS. If None, MFA using
                 Twillio SMS will be disable.
 
-            sso__redirect_url [str]:
+            sso__redirect_url (str):
                 URL that will be used for redirecting the oauth2 after login.
-            sso__provider [str]:
+            sso__provider (str):
                 Provides associated with oauth2, so far only `microsoft-entra`
                 have been implemented.
-            sso__authorization_url [str]:
+            sso__authorization_url (str):
                 URL associated with autorization for oauth2.
-            sso__token_url [str]:
+            sso__token_url (str):
                 URL to fetch token data after authentication.
-            sso__client_id [str]:
+            sso__client_id (str):
                 Secret associated with SSO client_id.
-            sso__secret [str]:
+            sso__secret (str):
                 Secret associated with SSO sso__secret.
         """
         self._secret_key = base64.b64encode(secret_key.encode()).decode()

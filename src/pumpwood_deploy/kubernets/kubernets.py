@@ -1,8 +1,8 @@
 """Interface with kubernets."""
 import os
-import subprocess
+import subprocess  # NOQA
 import pkg_resources
-from typing import Union, List, Any
+from typing import List
 
 
 volume_gcp = pkg_resources.resource_stream(
@@ -35,19 +35,19 @@ class Kubernets:
 
     def __init__(self, k8_provider: str, k8_deploy_args: dict,
                  k8_namespace: str = "default"):
-        """
-        __init__.
+        """__init__.
 
         Args:
-            cluster_name [str]:
-                Kubernets cluster name.
-            k8_provider [str]:
+            k8_provider (str):
                 Provider name.
-            k8_deploy_args [dict]:
+            k8_deploy_args (dict):
                 Arguments to deploy k8s cluster.
+            k8_namespace (str):
+                Name of the namespaces that will be used at deploy.
+
         Raises:
             NotImplementedError:
-
+                Error for not implemented deploy options.
         """
         self.k8_namespace = k8_namespace
         self.k8_deploy_args = k8_deploy_args
@@ -68,9 +68,10 @@ class Kubernets:
         print('## Creating k8_namespace')
         cmd = "kubectl create namespace {k8_namespace}"
         cmd_formated = cmd.format(k8_namespace=k8_namespace)
-        process = subprocess.Popen(
+        # Commands associated with deploy are generated at the deploy package
+        process = subprocess.Popen( # NOQA
             cmd_formated.split(), stdout=subprocess.PIPE)
-        output, error = process.communicate()
+        process.communicate()
 
         print('## Setting new k8_namespace [{k8_namespace}] as default'.format(
             k8_namespace=k8_namespace))
@@ -78,20 +79,24 @@ class Kubernets:
             "kubectl config set-context --current "
             "--namespace={k8_namespace}")
         cmd_formated = cmd.format(k8_namespace=k8_namespace)
-        process = subprocess.Popen(
+        # Commands associated with deploy are generated at the deploy package
+        process = subprocess.Popen( # NOQA
             cmd_formated.split(), stdout=subprocess.PIPE)
-        output, error = process.communicate()
+        process.communicate()
 
     def create_volume_yml(self, disk_name: str, disk_size: str,
                           volume_claim_name: str) -> str:
-        """
-        Create volume yml using provider and k8_deploy_args.
+        """Create volume yml using provider and k8_deploy_args.
 
         Args:
-            disk_name [str]: Disk name at the provider.
-            disk_size [str]: Size of the disk that will be mapped to K8s
+            disk_name (str):
+                Disk name at the provider.
+            disk_size (str):
+                Size of the disk that will be mapped to K8s
                 cluster.
-            volume_claim_name [str]: Name of the volume claim.
+            volume_claim_name (str):
+                Name of the volume claim.
+
         Returns:
             Return the yml content of the deploy file.
         """
@@ -100,16 +105,16 @@ class Kubernets:
             volume_claim_name=volume_claim_name)
 
     def run_deploy_commmands(self, cmds: List[dict]):
-        """
-        Deploy commands.
+        """Deploy commands.
 
         Create bash files to apply manifests to k8s cluster and run them. It is
         set a sleep time after each deployment, permiting finishing of cluster
         changes before move on.
 
         Args:
-            cmds [List[dict]]:
+            cmds (List[dict]):
                 List of commands to be applied at the k8s cluster.
+
         Raises:
             NotImplementedError:
                 'Command not implemented: %s'. Indicates that command
@@ -132,7 +137,9 @@ class Kubernets:
                     file.write(
                         "#!/bin/sh\n" + file_cmd + "\nsleep %s" % (
                             sleep_time, ))
-                subprocess.call(c['file'])
+                # Commands associated with deploy are generated at the deploy
+                # package
+                subprocess.call(c['file']) # NOQA
             else:
                 raise NotImplementedError('Command not implemented: %s' % (
                     c['command'],))
@@ -147,20 +154,22 @@ class KubernetsGCP:
 
     def __init__(self, cluster_name: str, zone: str, project: str,
                  **kwargs):
-        """
-        Create a KubernetsGCP object.
+        """Create a KubernetsGCP object.
 
         Constructor will create object and connect to k8s cluster using
         kubectl.
 
         Args:
-            cluster_name [str]:
+            cluster_name (str):
                 Kubernets cluster name that will be connected and will
                 receive the K8s manifest application.
-            zone [str]:
+            zone (str):
                 Zone location of the cluster.
-            project [str]:
+            project (str):
                 Google project name.
+            **kwargs (dict):
+                Other parameters for compatibility with other versions.
+
         Raises:
             Exception:
                 '!! Error loging to k8s cluster, check logs !!'. Indicates
@@ -178,23 +187,23 @@ class KubernetsGCP:
             cluster_name=cluster_name, zone=zone, project=project)
 
         print('## Loging to kubernets cluster')
-        status_code = os.system(cmd_formated)
+        status_code = os.system(cmd_formated) # NOQA
         if status_code != 0:
             raise Exception("!! Error loging to k8s cluster, check logs !!")
 
     def create_volume_yml(self, disk_name: str, disk_size: str,
                           volume_claim_name: str) -> str:
-        """
-        Create volume yml using provider and k8_deploy_args.
+        """Create volume yml using provider and k8_deploy_args.
 
         Args:
-            disk_name [str]:
+            disk_name (str):
                 Disk name at the provider.
-            disk_size [str]:
+            disk_size (str):
                 Size of the disk that will be mapped to K8s
                 cluster.
-            volume_claim_name [str]:
+            volume_claim_name (str):
                 Name of the volume claim.
+
         Returns:
             Return the yml manifest content of the deploy file to created
             perissistent volumes on GCP.
@@ -223,25 +232,27 @@ class KubernetsAzure:
     def __init__(self, subscription: str, resource_group: str,
                  k8s_resource_group: str, aks_resource: str,
                  **kwargs):
-        """
-        Create a KubernetsAzure object.
+        """Create a KubernetsAzure object.
 
         Constructor will create object and connect to k8s cluster using
         kubectl.
 
         Args:
-            subscription [str]:
+            subscription (str):
                 Azure subscription ID, something like
                 XXXXXXXX-XXXX-XXXX-XXXX-53b44c8776b0.
-            resource_group [str]:
+            resource_group (str):
                 Resorce group name used to deploy in k8s cluster. It is not
                 the resource group created by k8s do deploy cluster
                 components.
-            k8s_resource_group [str]:
+            k8s_resource_group (str):
                 Resorce group created by k8s cluster to deploy cluster
                 components.
-            aks_resource [str]:
+            aks_resource (str):
                 Name of the K8s resource.
+            **kwargs (dict):
+                Other parameters for compatibility with other versions.
+
         Raises:
             Exception:
                 '!! Error loging to k8s cluster, check logs !!'. Indicates that
@@ -255,13 +266,13 @@ class KubernetsAzure:
         print('## Setting az client subscription')
         cmd = "az account set --subscription {subscription}"
         cmd_formated = cmd.format(subscription=subscription)
-        status_code = os.system(cmd_formated)
+        status_code = os.system(cmd_formated) # NOQA
         if status_code != 0:
             raise Exception(
                 "!! Error setting Azure subscription, check logs !!")
 
-        process = subprocess.Popen(cmd_formated.split())
-        output, error = process.communicate()
+        process = subprocess.Popen(cmd_formated.split()) # NOQA
+        process.communicate()
 
         print('## Loging to kubernets cluster')
         cmd = (
@@ -271,23 +282,23 @@ class KubernetsAzure:
         cmd_formated = cmd.format(
             resource_group=resource_group,
             aks_resource=aks_resource)
-        status_code = os.system(cmd_formated)
+        status_code = os.system(cmd_formated)  # NOQA
         if status_code != 0:
             raise Exception("!! Error loging to k8s cluster, check logs !!")
 
     def create_volume_yml(self, disk_name: str, disk_size: str,
                           volume_claim_name: str) -> str:
-        """
-        Create volume yml using provider and k8_deploy_args.
+        """Create volume yml using provider and k8_deploy_args.
 
         Args:
-            disk_name [str]:
+            disk_name (str):
                 Disk name at the provider.
-            disk_size [str]:
+            disk_size (str):
                 Size of the disk that will be mapped to K8s
                 cluster.
-            volume_claim_name [str]:
+            volume_claim_name (str):
                 Name of the volume claim.
+
         Returns:
             Return the yml content of the deploy file
         """
@@ -311,17 +322,18 @@ class KubernetsAWS:
     """K8s cluster name."""
 
     def __init__(self, region: str, cluster_name: str, **kwargs):
-        """
-        Create a KubernetsAWS object.
+        """Create a KubernetsAWS object.
 
         Constructor will create object and connect to k8s cluster using
         kubectl.
 
         Args:
-            region [str]:
+            region (str):
                 EKS AWS Region.
-            cluster_name [str]:
+            cluster_name (str):
                 EKS cluster name.
+            **kwargs (dict):
+                Other parameters for compatibility with other versions.
         """
         self.region = region
         self.cluster_name = cluster_name
@@ -332,23 +344,23 @@ class KubernetsAWS:
             "update-kubeconfig --name {cluster_name}")
         cmd_formated = cmd.format(
             region=region, cluster_name=cluster_name)
-        status_code = os.system(cmd_formated)
+        status_code = os.system(cmd_formated)  # NOQA
         if status_code != 0:
             raise Exception("!! Error loging to k8s cluster, check logs !!")
 
     def create_volume_yml(self, disk_name: str, disk_size: str,
                           volume_claim_name: str) -> str:
-        """
-        Create volume yml using provider and k8_deploy_args.
+        """Create volume yml using provider and k8_deploy_args.
 
         Args:
-            disk_name [str]:
+            disk_name (str):
                 Disk name at the provider.
-            disk_size [str]:
+            disk_size (str):
                 Size of the disk that will be mapped to K8s
                 cluster.
-            volume_claim_name [str]:
+            volume_claim_name (str):
                 Name of the volume claim.
+
         Returns:
             Return the yml content of the deploy file
         """

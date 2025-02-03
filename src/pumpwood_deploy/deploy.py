@@ -3,7 +3,7 @@ import os
 import stat
 import shutil
 import pkg_resources
-from typing import Union, List, Any
+from typing import List
 from pumpwood_deploy.microservices.standard.deploy import (
     StandardMicroservices)
 from pumpwood_deploy.kubernets.kubernets import Kubernets
@@ -51,37 +51,36 @@ class DeployPumpWood():
                  storage_deploy_args: str, k8_namespace="pumpwood",
                  gateway_health_url: str = "health-check/pumpwood-auth-app/",
                  kong_repository: str = "gcr.io/repositorio-geral-170012"):
-        """
-        __init__.
+        """__init__.
 
         Args:
-            model_password [str]:
+            model_user_password (str):
                 Password of models microservice.
-            rabbitmq_secret [str]:
+            rabbitmq_secret (str):
                 Password associated with RabbitMQ user.
-            hash_salt [str]:
+            hash_salt (str):
                 Salt for hashs in deployment.
-            cluster_zone [str]:
+            cluster_zone (str):
                 Kubernets cluster zone.
-            cluster_project [str]:
+            cluster_project (str):
                 Kubernets project name.
-            k8_provider [str]:
+            k8_provider (str):
                 Kubernets provider, so far must be in `['gcp', 'azure',
                 'aws']`.
-            k8_deploy_args [dict]:
+            k8_deploy_args (dict):
                 Arguments to deploy k8s cluster it may
                 vary depending on the provider. Check classes
                 `KubernetsGCP`, `KubernetsAzure` and `KubernetsAWS`.
-            kong_db_disk_name [str]:
+            kong_db_disk_name (str):
                 Name of the disk for Postgres associated with Kong service
                 mesh.
-            kong_db_disk_size [str]:
+            kong_db_disk_size (str):
                 Size of the disk that will be attached to Kong Postgres.
-            storage_type [str]:
+            storage_type (str):
                 Storage provider must be in `['azure_storage', 'google_bucket',
                 'aws_s3']`, correpond to the provider os the flat file
                 storage system.
-            storage_deploy_args [str]:
+            storage_deploy_args (str):
                 Args used to access storage at the
                 pods. Each provider must have diferent arguments:<br>
                 **Azure:**
@@ -98,13 +97,13 @@ class DeployPumpWood():
                     access to the s3 used in deployment.
                 - aws_secret_access_key: Access secret of the service user with
                     access to the s3 used in deployment.
-            k8_namespace [str]:
+            k8_namespace (str):
                 Which namespace to deploy the system.
-            gateway_health_url [url]:
+            gateway_health_url (str):
                 Health check url that will be used. Usually it is good to
                 set health check of auth microservice since it has a mandatory
                 deploy for Pumpwood.
-            kong_repository [str]:
+            kong_repository (str):
                 Kong service mesh custom image repository.
         """
         self.deploy = []
@@ -128,18 +127,16 @@ class DeployPumpWood():
         self.base_path = os.getcwd()
 
     def add_microservice(self, microservice):
-        """
-        Add microservice to deploy stack.
+        """Add microservice to deploy stack.
 
         Args:
-            microservice [Microservice object]:
+            microservice (Microservice object):
                 A microservice object to be added to deployment stack.
         """
         self.microsservices_to_deploy.append(microservice)
 
     def create_deploy_files(self):
-        """
-        Create all deployment manifests and scripts.
+        """Create all deployment manifests and scripts.
 
         Interate over `microsservices_to_deploy` creating deploy files at
         `./outputs/` folder.

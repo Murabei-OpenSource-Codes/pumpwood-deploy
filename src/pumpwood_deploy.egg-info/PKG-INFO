@@ -1,6 +1,6 @@
-Metadata-Version: 2.1
+Metadata-Version: 2.2
 Name: pumpwood-deploy
-Version: 1.27
+Version: 1.28.1
 Summary: Package to assist deploy Pumpwood Systems on Kubenets
 Home-page: https://github.com/Murabei-OpenSource-Codes/pumpwood-deploy
 Author: Murabei Data Science
@@ -11,6 +11,18 @@ Classifier: Operating System :: OS Independent
 Requires-Python: >=3.6
 Description-Content-Type: text/markdown
 License-File: LICENSE
+Requires-Dist: jinja2
+Requires-Dist: simplejson>=3.19.3
+Dynamic: author
+Dynamic: author-email
+Dynamic: classifier
+Dynamic: description
+Dynamic: description-content-type
+Dynamic: home-page
+Dynamic: license
+Dynamic: requires-dist
+Dynamic: requires-python
+Dynamic: summary
 
 # PumpWood Deploy
 This package helps deploy of Pumpwood like components in Kubernets clusters.

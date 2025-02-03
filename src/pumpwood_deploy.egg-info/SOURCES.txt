@@ -1,12 +1,14 @@
 LICENSE
 MANIFEST.in
 README.md
+pyproject.toml
 setup.py
 src/pumpwood_deploy/__init__.py
 src/pumpwood_deploy/deploy.py
 src/pumpwood_deploy.egg-info/PKG-INFO
 src/pumpwood_deploy.egg-info/SOURCES.txt
 src/pumpwood_deploy.egg-info/dependency_links.txt
+src/pumpwood_deploy.egg-info/requires.txt
 src/pumpwood_deploy.egg-info/top_level.txt
 src/pumpwood_deploy/airflow/__init__.py
 src/pumpwood_deploy/airflow/deploy.py
