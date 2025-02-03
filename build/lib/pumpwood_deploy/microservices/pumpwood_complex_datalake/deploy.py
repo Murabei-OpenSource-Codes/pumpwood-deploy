@@ -44,15 +44,15 @@ class PumpWoodComplexDatalakeMicroservice:
     def __init__(self,
                  bucket_name: str,
                  app_version: str,
-                 microservice_password: str = "microservice--complex-datalake",
                  worker_datalake_dataloader_version: str,
                  worker_simple_dataloader_version: str,
                  worker_complex_dataloader_version: str,
+                 microservice_password: str = "microservice--complex-datalake",  # NOQA
                  db_username: str = "pumpwood",
                  db_host: str = "postgres-pumpwood-complex-datalake",
                  db_port: str = "5432",
                  db_database: str = "pumpwood",
-                 db_password: str = "pumpwood",
+                 db_password: str = "pumpwood",  # NOQA
 
                  repository: str = "gcr.io/repositorio-geral-170012",
                  app_debug: str = "FALSE",
@@ -93,59 +93,118 @@ class PumpWoodComplexDatalakeMicroservice:
                  complex_dataloader_limits_cpu: str = "12000m",
                  complex_dataloader_requests_memory: str = "20Mi",
                  complex_dataloader_requests_cpu: str = "1m"):
-        """
-        __init__: Class constructor.
+        """__init__: Class constructor.
 
         Args:
-            db_password (str): Password for database.
-            microservice_password(str): Microservice password.
-            postgres_public_ip (str): Postgres public IP.
-            firewall_ips (list): List the IPs allowed to connect to datalake.
-            bucket_name (str): Name of the bucket (Storage)
-            app_version (str): Version of the App Image.
-            worker_datalake_dataloader_version (str): Version of the complex
+            db_password (str):
+                Password for database.
+            microservice_password(str):
+                Microservice password.
+            postgres_public_ip (str):
+                Postgres public IP.
+            firewall_ips (list):
+                List the IPs allowed to connect to datalake.
+            bucket_name (str):
+                Name of the bucket (Storage)
+            app_version (str):
+                Version of the App Image.
+            worker_datalake_dataloader_version (str):
+                Version of the complex
                 datalake dataloader.
-            worker_simple_dataloader_version (str): Version of the complex
+            worker_simple_dataloader_version (str):
+                Version of the complex
                 simple annotation dataloader.
-            worker_complex_dataloader_version (str): Version of the complex
+            worker_complex_dataloader_version (str):
+                Version of the complex
                 complex annotation dataloader.
-
-        Kwargs:
-          disk_size (str): Disk size (ex.: 50Gi, 100Gi)
-          disk_name (str): Name of the disk that will be used in postgres
-          repository (str) = "gcr.io/repositorio-geral-170012": Repository to
+          disk_size (str):
+            Disk size (ex.:
+            50Gi, 100Gi)
+          disk_name (str):
+            Name of the disk that will be used in postgres
+          repository (str):
+            Repository to
             pull Image
-          test_db_version (str): Set a test database with version.
-          test_db_repository (str): Define a repository for the test
+          test_db_version (str):
+            Set a test database with version.
+          test_db_repository (str):
+            Define a repository for the test
             database.
-          db_username (str): Database connection username.
-          db_host (str): Database connection host.
-          db_port (str): Database connection port.
-          db_database (str): Database connection database.
-          app_replicas (int) = 1: Number of replicas in app deployment.
-          app_timeout (int): Timeout in seconds for the guinicorn workers.
-          app_workers (int): Number of workers to spaw at guinicorn.
-          app_limits_memory (str) = "60Gi": Memory limits for app pods.
-          app_limits_cpu (str) = "12000m": CPU limits for app pods.
-          app_requests_memory (str) = "20Mi": Memory requests for app pods.
-          app_requests_cpu (str) = "1m": CPU requests for app pods.
+          db_username (str):
+            Database connection username.
+          db_host (str):
+            Database connection host.
+          db_port (str):
+            Database connection port.
+          db_database (str):
+            Database connection database.
 
-          *_replicas (int) = 1: Number of replicas associated with
+          app_debug (str):
+            Set if app will be on debug mode. Value in 'TRUE' or 'FALSE'.
+          app_replicas (int):
+            Number of replicas associated with
             dataloader.
-          *_n_chunks (str) = 5: n chunks working o data loader.
-          *_chunk_size (str) = 5000: Size of the datalake chunks.
-          *_limits_memory (str) = "60Gi": Memory requests for worker
+          app_n_chunks (str):
+            n chunks working o data loader.
+          app_chunk_size (str):
+            Size of the datalake chunks.
+          app_limits_memory (str):
+            Memory requests for worker
             pods.
-          *_limits_cpu (str) = "12000m": CPU requests for worker pods.
-          *_requests_memory (str) = "20Mi": Memory requests for worker
+          app_limits_cpu (str):
+            CPU requests for worker pods.
+          app_requests_memory (str):
+            Memory requests for worker
             pods.
-          *_requests_cpu (str) = "1m": CPU requests for worker pod.
-          postgres_limits_memory (str) = "60Gi":  Memory limits for postgres
+          app_requests_cpu (str):
+            CPU requests for worker pod.
+
+          simple_replicas (int):
+            Number of replicas associated with
+            dataloader.
+          simple_n_chunks (str):
+            n chunks working o data loader.
+          simple_chunk_size (str):
+            Size of the datalake chunks.
+          simple_limits_memory (str):
+            Memory requests for worker
+            pods.
+          simple_limits_cpu (str):
+            CPU requests for worker pods.
+          simple_requests_memory (str):
+            Memory requests for worker
+            pods.
+          simple_requests_cpu (str):
+            CPU requests for worker pod.
+
+          complex_replicas (int):
+            Number of replicas associated with
+            dataloader.
+          complex_n_chunks (str):
+            n chunks working o data loader.
+          complex_chunk_size (str):
+            Size of the datalake chunks.
+          complex_limits_memory (str):
+            Memory requests for worker
+            pods.
+          complex_limits_cpu (str):
+            CPU requests for worker pods.
+          complex_requests_memory (str):
+            Memory requests for worker
+            pods.
+          complex_requests_cpu (str):
+            CPU requests for worker pod.
+
+          postgres_limits_memory (str):
+            Memory limits for postgres
             pod.
-          postgres_limits_cpu (str) = "12000m":  CPU limits for postgres pod.
-          postgres_requests_memory (str) = "20Mi":  Memory request for postgres
+          postgres_limits_cpu (str):
+            CPU limits for postgres pod.
+          postgres_requests_memory (str):
+            Memory request for postgres
             pod.
-          postgres_requests_cpu (str) = "1m":  CPU request for postgres pod.
+          postgres_requests_cpu (str):
+            CPU request for postgres pod.
 
         Returns:
           PumpWoodDatalakeMicroservice: New Object

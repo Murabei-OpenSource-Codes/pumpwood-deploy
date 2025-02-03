@@ -2,7 +2,7 @@ source VERSION
 sed -e 's#{VERSION}#'"${VERSION}"'#g' setup_template.py > setup.py
 
 rm -R build/
-python3 setup.py build sdist bdist_wheel
+python setup.py build sdist bdist_wheel
 
 pdoc --docformat="google" src/pumpwood_deploy -o ./docs
 
