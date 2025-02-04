@@ -21,27 +21,26 @@ class PumpwoodFrontEndMicroservice:
     def __init__(self,
                  version: str,
                  gateway_public_ip: str,
-                 microservice_password: str = "microservice--frontend",
+                 microservice_password: str = "microservice--frontend", # NOQA
                  debug: str = 'FALSE',
                  repository: str = "gcr.io/repositorio-geral-170012"):
-        """
-        Class constructor.
+        """Class constructor.
 
         Args:
-            version [str]:
+            version (str):
                 Version of the front-end microservice.
-            gateway_public_ip [str]:
+            gateway_public_ip (str):
                 Address for the API gateway. It should be the IP or
                 the DNS name for the application, it will be used to correct
                 redirect request to end-point.
-            microservice_password [str]:
+            microservice_password (str):
                 Microservice service user password that will be used to log
                 at Pumpwood and register routes and services. Service
                 user default name is `microservice--frontend`.
-            debug [str]:
+            debug (str):
                 Set if frontend is in debug mode or not. User 'TRUE'/'FALSE'
                 strings to set this option.
-            repository [str]:
+            repository (str):
                 Repository from which the docker image
                 `pumpwood-frontend-react` will be fetched.
         """
