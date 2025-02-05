@@ -67,6 +67,11 @@ src/pumpwood_deploy/microservices/frontend/deploy.py
 src/pumpwood_deploy/microservices/frontend/resources/__init__.py
 src/pumpwood_deploy/microservices/frontend/resources/deploy__frontend.yml
 src/pumpwood_deploy/microservices/frontend/resources/secrets.yml
+src/pumpwood_deploy/microservices/neo4j/__init__.py
+src/pumpwood_deploy/microservices/neo4j/deploy.py
+src/pumpwood_deploy/microservices/neo4j/resources/__init__.py
+src/pumpwood_deploy/microservices/neo4j/resources/deploy.yml
+src/pumpwood_deploy/microservices/neo4j/resources/secrets.yml
 src/pumpwood_deploy/microservices/postgres/__init__.py
 src/pumpwood_deploy/microservices/postgres/deploy.py
 src/pumpwood_deploy/microservices/postgres/postgres.py
