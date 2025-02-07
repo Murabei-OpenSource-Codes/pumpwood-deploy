@@ -30,7 +30,7 @@ class PumpWoodSchedulerMicroservice:
                  bucket_name: str,
                  app_version: str,
                  worker_version: str,
-                 db_password: str = "pumpwood",
+                 db_password: str = "pumpwood", # NOQA
                  repository: str = "gcr.io/repositorio-geral-170012",
                  test_db_version: str = None,
                  test_db_repository: str = "gcr.io/repositorio-geral-170012",
@@ -89,11 +89,13 @@ class PumpWoodSchedulerMicroservice:
         self.test_db_repository = test_db_repository
 
     def create_deployment_file(self, **kwargs):
-        """
-        Create deployment file.
+        """Create deployment file.
 
         Args:
-          kube_client: Client to communicate with Kubernets cluster.
+            kube_client:
+                Client to communicate with Kubernets cluster.
+            **kwargs:
+                Compatibility with other versions.
         """
         secrets_text_formated = secrets.format(
             db_password=self._db_password,

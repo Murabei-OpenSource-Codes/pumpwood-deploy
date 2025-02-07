@@ -176,6 +176,25 @@ spec:
               key: embedding_secret_key
               optional: true
 
+        #########
+        # NEO4J #
+        - name: NEO4J_URL
+          value: "bolt+ssc://neo4j:7687"
+
+        - name: NEO4J_USERNAME
+          valueFrom:
+            configMapKeyRef:
+              name: neo4j
+              key: db_username
+              optional: true
+
+        - name: NEO4J_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: neo4j
+              key: db_password
+              optional: true
+
         #######
         # MFA #
         - name: PUMPWOOD__MFA__APPLICATION_NAME

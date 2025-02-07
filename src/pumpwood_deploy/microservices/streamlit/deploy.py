@@ -1,8 +1,7 @@
 """Class to deploy Frontend Microservices."""
-import os
 import pkg_resources
 import base64
-from typing import Union, List, Any
+from typing import List
 
 
 deployment_yml = pkg_resources.resource_stream(
@@ -20,23 +19,21 @@ class PumpwoodStreamlitMicroservices:
 
     def __init__(self,
                  dashboard_images: List[dict],
-                 microservice_password: str = "microservice--streamlit",
-                 repository: str = "gcr.io/repositorio-geral-170012",
-                 ):
-        """
-        Class constructor.
+                 microservice_password: str = "microservice--streamlit", # NOQA
+                 repository: str = "gcr.io/repositorio-geral-170012"):
+        """Class constructor.
 
         Args:
-            version [str]:
+            version (str):
                 Version of the front-end microservice.
-            microservice_password [str]:
+            microservice_password (str):
                 Microservice service user password that will be used to log
                 at Pumpwood and register routes and services. Service
                 user default name is `microservice--frontend`.
-            repository [str]:
+            repository (str):
                 Repository from which the docker image
                 `pumpwood-frontend-react` will be fetched.
-            dashboard_images [List[dict]]:
+            dashboard_images (List[dict]):
                 List of dictonary with keys.
                 - **image:** Image associated with dashboards to be deployed.
                 - **version:** Version of the dashboard,
@@ -62,6 +59,6 @@ class PumpwoodStreamlitMicroservices:
             name = "pumpwood_streamlit__{name}".format(
                 name=dash['deployment_name'])
             list_return.append(
-                {'type': 'secrets', 'name': name,
+                {'type': 'deploy', 'name': name,
                  'content': deployment_yml_fmt, 'sleep': 0})
         return list_return

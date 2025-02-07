@@ -20,7 +20,6 @@ class Neo4jDatabase:
                  db_password: str,
                  disk_size: str,
                  disk_name: str,
-                 db_username: str = 'neo4j',
                  version: str = "4.4.23",
                  limits_memory: str = "60Gi",
                  limits_cpu: str = "12000m",
@@ -49,10 +48,15 @@ class Neo4jDatabase:
                 Neo4J cotainer CPU request.
         """
         # Database username and password are passed as a single string
+        # Admin user on Neo4J must be neo4j.
         neo4j_admin_credentials = '{username}/{password}'.format(
-            username=db_username, password=db_password)
+            username='neo4j', password=db_password)
         self.db_auth = base64.b64encode(
             neo4j_admin_credentials.encode()).decode()
+        self.db_username = base64.b64encode(
+            'neo4j'.encode()).decode()
+        self.db_password = base64.b64encode(
+            db_password.encode()).decode()
 
         self.disk_size = disk_size
         self.disk_name = disk_name
@@ -80,7 +84,9 @@ class Neo4jDatabase:
             requests_cpu=self.requests_cpu,
             limits_memory=self.limits_memory,
             limits_cpu=self.limits_cpu)
-        secrets_text_f = secrets.format(db_auth=self.db_auth)
+        secrets_text_f = secrets.format(
+            db_auth=self.db_auth, db_username=self.db_username,
+            db_password=self.db_password)
 
         list_return = [
             {'type': 'secrets', 'name': 'neo4j__secrets',
