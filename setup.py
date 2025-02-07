@@ -13,7 +13,7 @@ os.chdir(os.path.normpath(os.path.join(os.path.abspath(__file__), os.pardir)))
 
 setuptools.setup(
     name='pumpwood-deploy',
-    version='1.30.0',
+    version='1.31.0',
     include_package_data=True,
     license='BSD-3-Clause License',
     description='Package to assist deploy Pumpwood Systems on Kubenets',
