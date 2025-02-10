@@ -309,13 +309,14 @@ class PumpWoodAuthMicroservice:
             base64.b64encode(sso__secret.encode()).decode()
 
     def create_deployment_file(self, kube_client=None, **kwargs) -> List[dict]:
-        """
-        Create_deployment_file.
+        """Create_deployment_file.
 
         Args:
-            kube_client [Kubernets]:
+            kube_client (Kubernets):
                 Instance of `kubernets.kubernets.Kubernets` object to help
                 attacing disks to pods and other Kubernets operations.
+            **kwargs:
+                Compatilibity with other versions.
         """
         rabbitmq_log = "FALSE" if self.worker_log_version is None else "TRUE"
         secrets_text_f = secrets.format(
@@ -392,8 +393,6 @@ class PumpWoodAuthMicroservice:
 
         deployment_postgres_text_f = None
         if self.test_db_version is not None:
-            self.test_db_limits_memory
-            self.test_db_limits_cpu
             deployment_postgres_text_f = test_postgres.format(
                 repository=self.test_db_repository,
                 version=self.test_db_version,
