@@ -1,0 +1,70 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: apigateway-kong
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      type: apigateway-kong
+  template:
+    metadata:
+      labels:
+        type: apigateway-kong
+    spec:
+      imagePullSecrets:
+        - name: dockercfg
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: function
+                operator: NotIn
+                values:
+                - system
+      containers:
+      - name: apigateway-kong
+        image: andrebaceti/autoboostrap-kong:1.0
+        resources:
+          requests:
+            cpu: "1m"
+        readinessProbe:
+           exec:
+             command:
+               - kong
+               - health
+        ports:
+        # Consumers Ports
+        - containerPort: 8000
+        - containerPort: 8443
+        # Admin Ports
+        - containerPort: 8001
+        - containerPort: 8444
+---
+apiVersion : "v1"
+kind: Service
+metadata:
+  name: load-balancer
+  labels:
+    type: load-balancer
+    destination: internal
+spec:
+  type: ClusterIP
+  selector:
+    type: apigateway-kong
+  ports:
+  # Consumers Ports
+  - name: consumers-http
+    port: 8000
+    targetPort: 8000
+  - name: consumers-https
+    port: 8443
+    targetPort: 8443
+  # Admin Ports
+  - name: admin-http
+    port: 8001
+    targetPort: 8001
+  - name: admin-https
+    port: 8444
+    targetPort: 8444
