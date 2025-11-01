@@ -32,30 +32,24 @@ spec:
       containers:
       # PGBouncer Container
       - name: pgbouncer
-        image: andrebaceti/pgbouncer-auto-bootstrap:1.21.0-1.0
+        image: andrebaceti/pgbouncer-auto-bootstrap:{version}
         env:
-        - name: POSTGRESQL_USERNAME
+        - name: POSTGRES_USER
           valueFrom:
             secretKeyRef:
               name: {postgres_secret}
               key: db_username
-        - name: POSTGRESQL_PASSWORD
+        - name: POSTGRES_PASSWORD
           valueFrom:
             secretKeyRef:
               name: {postgres_secret}
               key: db_password
-        - name: POSTGRESQL_HOST
+        - name: POSTGRES_HOST
           value: '{host}'
-        - name: POSTGRESQL_PORT
+        - name: POSTGRES_PORT
           value: '{port}'
-        - name: PGBOUNCER_DATABASE
+        - name: POSTGRES_DB
           value: '{database}'
-        - name: PGBOUNCER_SET_DATABASE_USER
-          value: 'yes'
-        - name: PGBOUNCER_SET_DATABASE_PASSWORD
-          value: 'yes'
-        - name: PGBOUNCER_POOL_MODE
-          value: transaction
         ports:
         - containerPort: 6432
 ---

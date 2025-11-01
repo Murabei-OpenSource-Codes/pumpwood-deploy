@@ -1,6 +1,6 @@
 """Postgres deploy fuctions."""
 import os
-import subprocess
+import subprocess # NOQA
 
 
 def create_ssl_key_ssl_crt():
@@ -18,7 +18,8 @@ def create_ssl_key_ssl_crt():
     bash_cmd_1 = bash_cmd_text.format(
         keyout=key_path, out=cert_path)
 
-    process = subprocess.Popen(bash_cmd_1.split(), stdout=subprocess.PIPE)
+    process = subprocess.Popen( # NOQA
+        bash_cmd_1.split(), stdout=subprocess.PIPE)
     output, error = process.communicate()
 
     with open(key_path, 'r') as file:
