@@ -7,9 +7,6 @@ using this data.
 import pkg_resources
 import os
 import base64
-from pumpwood_deploy.microservices.postgres.postgres import \
-    create_ssl_key_ssl_crt
-from jinja2 import Template
 
 
 secrets = pkg_resources.resource_stream(
@@ -117,94 +114,93 @@ class PumpWoodComplexDatalakeMicroservice:
             worker_complex_dataloader_version (str):
                 Version of the complex
                 complex annotation dataloader.
-          disk_size (str):
-            Disk size (ex.:
-            50Gi, 100Gi)
-          disk_name (str):
-            Name of the disk that will be used in postgres
-          repository (str):
-            Repository to
-            pull Image
-          test_db_version (str):
-            Set a test database with version.
-          test_db_repository (str):
-            Define a repository for the test
-            database.
-          db_username (str):
-            Database connection username.
-          db_host (str):
-            Database connection host.
-          db_port (str):
-            Database connection port.
-          db_database (str):
-            Database connection database.
+            disk_size (str):
+                Disk size (ex.:
+                50Gi, 100Gi)
+            disk_name (str):
+                Name of the disk that will be used in postgres
+            repository (str):
+                Repository to
+                pull Image
+            test_db_version (str):
+                Set a test database with version.
+            test_db_repository (str):
+                Define a repository for the test
+                database.
+            db_username (str):
+                Database connection username.
+            db_host (str):
+                Database connection host.
+            db_port (str):
+                Database connection port.
+            db_database (str):
+                Database connection database.
+            app_debug (str):
+                Set if app will be on debug mode. Value in 'TRUE' or 'FALSE'.
+            app_replicas (int):
+                Number of replicas associated with
+                dataloader.
+            app_n_chunks (str):
+                n chunks working o data loader.
+            app_chunk_size (str):
+                Size of the datalake chunks.
+            app_limits_memory (str):
+                Memory requests for worker
+                pods.
+            app_limits_cpu (str):
+                CPU requests for worker pods.
+            app_requests_memory (str):
+                Memory requests for worker
+                pods.
+            app_requests_cpu (str):
+                CPU requests for worker pod.
 
-          app_debug (str):
-            Set if app will be on debug mode. Value in 'TRUE' or 'FALSE'.
-          app_replicas (int):
-            Number of replicas associated with
-            dataloader.
-          app_n_chunks (str):
-            n chunks working o data loader.
-          app_chunk_size (str):
-            Size of the datalake chunks.
-          app_limits_memory (str):
-            Memory requests for worker
-            pods.
-          app_limits_cpu (str):
-            CPU requests for worker pods.
-          app_requests_memory (str):
-            Memory requests for worker
-            pods.
-          app_requests_cpu (str):
-            CPU requests for worker pod.
+            simple_replicas (int):
+                Number of replicas associated with
+                dataloader.
+            simple_n_chunks (str):
+                n chunks working o data loader.
+            simple_chunk_size (str):
+                Size of the datalake chunks.
+            simple_limits_memory (str):
+                Memory requests for worker
+                pods.
+            simple_limits_cpu (str):
+                CPU requests for worker pods.
+            simple_requests_memory (str):
+                Memory requests for worker
+                pods.
+            simple_requests_cpu (str):
+                CPU requests for worker pod.
 
-          simple_replicas (int):
-            Number of replicas associated with
-            dataloader.
-          simple_n_chunks (str):
-            n chunks working o data loader.
-          simple_chunk_size (str):
-            Size of the datalake chunks.
-          simple_limits_memory (str):
-            Memory requests for worker
-            pods.
-          simple_limits_cpu (str):
-            CPU requests for worker pods.
-          simple_requests_memory (str):
-            Memory requests for worker
-            pods.
-          simple_requests_cpu (str):
-            CPU requests for worker pod.
+            complex_replicas (int):
+                Number of replicas associated with
+                dataloader.
+            complex_n_chunks (str):
+                n chunks working o data loader.
+            complex_chunk_size (str):
+                Size of the datalake chunks.
+            complex_limits_memory (str):
+                Memory requests for worker
+                pods.
+            complex_limits_cpu (str):
+                CPU requests for worker pods.
+            complex_requests_memory (str):
+                Memory requests for worker
+                pods.
+            complex_requests_cpu (str):
+                CPU requests for worker pod.
 
-          complex_replicas (int):
-            Number of replicas associated with
-            dataloader.
-          complex_n_chunks (str):
-            n chunks working o data loader.
-          complex_chunk_size (str):
-            Size of the datalake chunks.
-          complex_limits_memory (str):
-            Memory requests for worker
-            pods.
-          complex_limits_cpu (str):
-            CPU requests for worker pods.
-          complex_requests_memory (str):
-            Memory requests for worker
-            pods.
-          complex_requests_cpu (str):
-            CPU requests for worker pod.
-
-          postgres_limits_memory (str):
-            Memory limits for postgres
-            pod.
-          postgres_limits_cpu (str):
-            CPU limits for postgres pod.
-          postgres_requests_memory (str):
-            Memory request for postgres
-            pod.
-          postgres_requests_cpu (str):
-            CPU request for postgres pod.
+            postgres_limits_memory (str):
+                Memory limits for postgres
+                pod.
+            postgres_limits_cpu (str):
+                CPU limits for postgres pod.
+            postgres_requests_memory (str):
+                Memory request for postgres
+                pod.
+            postgres_requests_cpu (str):
+                CPU request for postgres pod.
 
         Returns:
           PumpWoodDatalakeMicroservice: New Object
@@ -307,11 +303,11 @@ class PumpWoodComplexDatalakeMicroservice:
         self.test_db_repository = test_db_repository.rstrip("/")
 
     def create_deployment_file(self, **kwargs):
-        """
-        Create deployment file.
+        """Create deployment file.
 
         Args:
-            No args.
+            **kwargs:
+                Other arguments.
         """
         secrets_text_formated = secrets.format(
             db_password=self._db_password,
@@ -421,14 +417,19 @@ class PumpWoodComplexDatalakeMicroservice:
             'name': 'pumpwood_complex__datalake_dataloader_worker',
             'content': worker_datalake_deployment_frmted,
             'sleep': 0})
-        list_return.append({
-            'type': 'deploy',
-            'name': 'pumpwood_complex__simple_annotation_dataloader_worker',
-            'content': worker_simple_annotation_deployment_frmted,
-            'sleep': 0})
-        list_return.append({
-            'type': 'deploy',
-            'name': 'pumpwood_complex__complex_annotation_dataloader_worker',
-            'content': worker_complex_annotation_deployment_frmted,
-            'sleep': 0})
+
+        print_msg = (
+            "Skipping deploy of annotation workers, "
+            "need implementation review")
+        print(print_msg)
+        # list_return.append({
+        #     'type': 'deploy',
+        #     'name': 'pumpwood_complex__simple_annotation_dataloader_worker',
+        #     'content': worker_simple_annotation_deployment_frmted,
+        #     'sleep': 0})
+        # list_return.append({
+        #     'type': 'deploy',
+        #     'name': 'pumpwood_complex__complex_annotation_dataloader_worker',
+        #     'content': worker_complex_annotation_deployment_frmted,
+        #     'sleep': 0})
         return list_return

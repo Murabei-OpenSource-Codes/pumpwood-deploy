@@ -32,7 +32,8 @@ spec:
                 values:
                 - system
       containers:
-      - image: {repository}/pumpwood-complex-datalake-app:{version}
+      - name: pumpwood-complex-datalake-app
+        image: {repository}/pumpwood-complex-datalake-app:{version}
         imagePullPolicy: IfNotPresent
         resources:
           requests:

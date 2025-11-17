@@ -2,7 +2,7 @@
 import pkg_resources
 import os
 import base64
-from typing import Union, List, Any
+from typing import List
 
 
 secrets = pkg_resources.resource_stream(
