@@ -21,14 +21,6 @@ worker_datalake_deployment = pkg_resources.resource_stream(
     'pumpwood_deploy',
     'microservices/pumpwood_complex_datalake/'
     'resources/worker__datalake.yml').read().decode()
-worker_simple_annotation_deployment = pkg_resources.resource_stream(
-    'pumpwood_deploy',
-    'microservices/pumpwood_complex_datalake/'
-    'resources/worker__simple_anotation.yml').read().decode()
-worker_complex_annotation_deployment = pkg_resources.resource_stream(
-    'pumpwood_deploy',
-    'microservices/pumpwood_complex_datalake/'
-    'resources/worker__complex_anotation.yml').read().decode()
 test_postgres = pkg_resources.resource_stream(
     'pumpwood_deploy',
     'microservices/pumpwood_complex_datalake/'
@@ -42,8 +34,6 @@ class PumpWoodComplexDatalakeMicroservice:
                  bucket_name: str,
                  app_version: str,
                  worker_datalake_dataloader_version: str,
-                 worker_simple_dataloader_version: str,
-                 worker_complex_dataloader_version: str,
                  microservice_password: str = "microservice--complex-datalake",  # NOQA
                  db_username: str = "pumpwood",
                  db_host: str = "postgres-pumpwood-complex-datalake",
@@ -71,25 +61,7 @@ class PumpWoodComplexDatalakeMicroservice:
                  datalake_dataloader_limits_memory: str = "60Gi",
                  datalake_dataloader_limits_cpu: str = "12000m",
                  datalake_dataloader_requests_memory: str = "20Mi",
-                 datalake_dataloader_requests_cpu: str = "1m",
-
-                 simple_dataloader_replicas: int = 1,
-                 simple_dataloader_n_parallel: int = 4,
-                 simple_dataloader_chunk_size: int = 1000,
-                 simple_dataloader_query_limit: int = 1000000,
-                 simple_dataloader_limits_memory: str = "60Gi",
-                 simple_dataloader_limits_cpu: str = "12000m",
-                 simple_dataloader_requests_memory: str = "20Mi",
-                 simple_dataloader_requests_cpu: str = "1m",
-
-                 complex_dataloader_replicas: int = 1,
-                 complex_dataloader_n_parallel: int = 4,
-                 complex_dataloader_chunk_size: int = 1000,
-                 complex_dataloader_query_limit: int = 1000000,
-                 complex_dataloader_limits_memory: str = "60Gi",
-                 complex_dataloader_limits_cpu: str = "12000m",
-                 complex_dataloader_requests_memory: str = "20Mi",
-                 complex_dataloader_requests_cpu: str = "1m"):
+                 datalake_dataloader_requests_cpu: str = "1m"):
         """__init__: Class constructor.
 
         Args:
@@ -108,12 +80,6 @@ class PumpWoodComplexDatalakeMicroservice:
             worker_datalake_dataloader_version (str):
                 Version of the complex
                 datalake dataloader.
-            worker_simple_dataloader_version (str):
-                Version of the complex
-                simple annotation dataloader.
-            worker_complex_dataloader_version (str):
-                Version of the complex
-                complex annotation dataloader.
             disk_size (str):
                 Disk size (ex.:
                 50Gi, 100Gi)
@@ -154,53 +120,27 @@ class PumpWoodComplexDatalakeMicroservice:
                 pods.
             app_requests_cpu (str):
                 CPU requests for worker pod.
-
-            simple_replicas (int):
+            datalake_dataloader_replicas (int):
                 Number of replicas associated with
                 dataloader.
+            datalake_dataloader_n_parallel (int):
+                Numeber of parallel request that will be done by dataloader.
             simple_n_chunks (str):
                 n chunks working o data loader.
-            simple_chunk_size (str):
+            datalake_dataloader_chunk_size (str):
                 Size of the datalake chunks.
-            simple_limits_memory (str):
+            datalake_dataloader_query_limit (int):
+                Number of rows that will be treated at each treatment chuck.
+            datalake_dataloader_limits_memory (str):
                 Memory requests for worker
                 pods.
-            simple_limits_cpu (str):
+            datalake_dataloader_limits_cpu (str):
                 CPU requests for worker pods.
-            simple_requests_memory (str):
+            datalake_dataloader_requests_memory (str):
                 Memory requests for worker
                 pods.
-            simple_requests_cpu (str):
+            datalake_dataloader_requests_cpu (str):
                 CPU requests for worker pod.
-
-            complex_replicas (int):
-                Number of replicas associated with
-                dataloader.
-            complex_n_chunks (str):
-                n chunks working o data loader.
-            complex_chunk_size (str):
-                Size of the datalake chunks.
-            complex_limits_memory (str):
-                Memory requests for worker
-                pods.
-            complex_limits_cpu (str):
-                CPU requests for worker pods.
-            complex_requests_memory (str):
-                Memory requests for worker
-                pods.
-            complex_requests_cpu (str):
-                CPU requests for worker pod.
-
-            postgres_limits_memory (str):
-                Memory limits for postgres
-                pod.
-            postgres_limits_cpu (str):
-                CPU limits for postgres pod.
-            postgres_requests_memory (str):
-                Memory request for postgres
-                pod.
-            postgres_requests_cpu (str):
-                CPU request for postgres pod.
 
         Returns:
           PumpWoodDatalakeMicroservice: New Object
@@ -230,10 +170,6 @@ class PumpWoodComplexDatalakeMicroservice:
         self.app_version = app_version
         self.worker_datalake_dataloader_version = \
             worker_datalake_dataloader_version
-        self.worker_simple_dataloader_version = \
-            worker_simple_dataloader_version
-        self.worker_complex_dataloader_version = \
-            worker_complex_dataloader_version
 
         # App
         self.app_replicas = app_replicas
@@ -261,42 +197,6 @@ class PumpWoodComplexDatalakeMicroservice:
             datalake_dataloader_requests_memory
         self.datalake_dataloader_requests_cpu = \
             datalake_dataloader_requests_cpu
-
-        # Worker Simple Annotation
-        self.simple_dataloader_replicas = \
-            simple_dataloader_replicas
-        self.simple_dataloader_n_parallel = \
-            simple_dataloader_n_parallel
-        self.simple_dataloader_chunk_size = \
-            simple_dataloader_chunk_size
-        self.simple_dataloader_query_limit = \
-            simple_dataloader_query_limit
-        self.simple_dataloader_limits_memory = \
-            simple_dataloader_limits_memory
-        self.simple_dataloader_limits_cpu = \
-            simple_dataloader_limits_cpu
-        self.simple_dataloader_requests_memory = \
-            simple_dataloader_requests_memory
-        self.simple_dataloader_requests_cpu = \
-            simple_dataloader_requests_cpu
-
-        # Worker Complex Annotation
-        self.complex_dataloader_replicas = \
-            complex_dataloader_replicas
-        self.complex_dataloader_n_parallel = \
-            complex_dataloader_n_parallel
-        self.complex_dataloader_chunk_size = \
-            complex_dataloader_chunk_size
-        self.complex_dataloader_query_limit = \
-            complex_dataloader_query_limit
-        self.complex_dataloader_limits_memory = \
-            complex_dataloader_limits_memory
-        self.complex_dataloader_limits_cpu = \
-            complex_dataloader_limits_cpu
-        self.complex_dataloader_requests_memory = \
-            complex_dataloader_requests_memory
-        self.complex_dataloader_requests_cpu = \
-            complex_dataloader_requests_cpu
 
         # Database
         self.test_db_version = test_db_version
@@ -355,42 +255,6 @@ class PumpWoodComplexDatalakeMicroservice:
                 limits_cpu=self.datalake_dataloader_limits_cpu,
                 limits_memory=self.datalake_dataloader_limits_memory)
 
-        worker_simple_annotation_deployment_frmted = \
-            worker_simple_annotation_deployment.format(
-                repository=self.repository,
-                version=self.worker_simple_dataloader_version,
-                bucket_name=self.bucket_name,
-                db_username=self.db_username,
-                db_host=self.db_host,
-                db_port=self.db_port,
-                db_database=self.db_database,
-                n_parallel=self.simple_dataloader_n_parallel,
-                chunk_size=self.simple_dataloader_chunk_size,
-                query_limit=self.simple_dataloader_query_limit,
-                replicas=self.simple_dataloader_replicas,
-                requests_memory=self.simple_dataloader_requests_memory,
-                requests_cpu=self.simple_dataloader_requests_cpu,
-                limits_cpu=self.simple_dataloader_limits_cpu,
-                limits_memory=self.simple_dataloader_limits_memory)
-
-        worker_complex_annotation_deployment_frmted = \
-            worker_complex_annotation_deployment.format(
-                repository=self.repository,
-                version=self.worker_complex_dataloader_version,
-                bucket_name=self.bucket_name,
-                db_username=self.db_username,
-                db_host=self.db_host,
-                db_port=self.db_port,
-                db_database=self.db_database,
-                n_parallel=self.complex_dataloader_n_parallel,
-                chunk_size=self.complex_dataloader_chunk_size,
-                query_limit=self.complex_dataloader_query_limit,
-                replicas=self.complex_dataloader_replicas,
-                requests_memory=self.complex_dataloader_requests_memory,
-                requests_cpu=self.complex_dataloader_requests_cpu,
-                limits_cpu=self.complex_dataloader_limits_cpu,
-                limits_memory=self.complex_dataloader_limits_memory)
-
         list_return = [{
             'type': 'secrets',
             'name': 'pumpwood_complex__datalake__secrets',
@@ -417,19 +281,4 @@ class PumpWoodComplexDatalakeMicroservice:
             'name': 'pumpwood_complex__datalake_dataloader_worker',
             'content': worker_datalake_deployment_frmted,
             'sleep': 0})
-
-        print_msg = (
-            "Skipping deploy of annotation workers, "
-            "need implementation review")
-        print(print_msg)
-        # list_return.append({
-        #     'type': 'deploy',
-        #     'name': 'pumpwood_complex__simple_annotation_dataloader_worker',
-        #     'content': worker_simple_annotation_deployment_frmted,
-        #     'sleep': 0})
-        # list_return.append({
-        #     'type': 'deploy',
-        #     'name': 'pumpwood_complex__complex_annotation_dataloader_worker',
-        #     'content': worker_complex_annotation_deployment_frmted,
-        #     'sleep': 0})
         return list_return
