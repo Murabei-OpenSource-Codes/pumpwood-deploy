@@ -1,0 +1,123 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: pumpwood-estimation-rawdata-workers
+spec:
+  replicas: {replicas}
+  selector:
+    matchLabels:
+      type: worker
+      endpoint: pumpwood-estimation-app
+      function: raw-data-builder
+  template:
+    metadata:
+      labels:
+        type: worker
+        endpoint: pumpwood-estimation-app
+        function: raw-data-builder
+    spec:
+      imagePullSecrets:
+        - name: dockercfg
+      volumes:
+      - name: gcp--storage-key
+        secret:
+          secretName: gcp--storage-key
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: function
+                operator: NotIn
+                values:
+                - system
+      containers:
+      - name: pumpwood-estimation-rawdata-workers
+        image: {repository}/pumpwood-estimation-rawdata-worker:{version}
+        imagePullPolicy: IfNotPresent
+        resources:
+          requests:
+            memory: "{requests_memory}"
+            cpu:  "{requests_cpu}"
+          limits:
+            memory: "{limits_memory}"
+            cpu:  "{limits_cpu}"
+        volumeMounts:
+          - name: gcp--storage-key
+            readOnly: true
+            mountPath: /etc/secrets
+        env:
+        # HASH_SALT
+        - name: HASH_SALT
+          valueFrom:
+            secretKeyRef:
+              name: hash-salt
+              key: hash_salt
+
+        # Database
+        - name: DATALAKE_DB_USERNAME
+          value: {datalake_db_username}
+        - name: DATALAKE_DB_HOST
+          value: {datalake_db_host}
+        - name: DATALAKE_DB_PORT
+          value: "{datalake_db_port}"
+        - name: DATALAKE_DB_DATABASE
+          value: {datalake_db_database}
+        - name: DATALAKE_DB_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: pumpwood-datalake
+              key: db_password
+
+        # RABBITMQ QUEUE
+        - name: RABBITMQ_HOST
+          value: "rabbitmq-main"
+        - name: RABBITMQ_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: rabbitmq-main-secrets
+              key: password
+
+        #Microsservice
+        - name: MICROSERVICE_NAME
+          value: 'pumpwood-estimation-rawdata'
+        - name: MICROSERVICE_PASSWORD
+          valueFrom:
+              secretKeyRef:
+                name: pumpwood-estimation
+                key: microservice_password
+
+        ###########
+        # STORAGE #
+        - name: STORAGE_BUCKET_NAME
+          value: {bucket_name}
+        - name: STORAGE_TYPE
+          valueFrom:
+            configMapKeyRef:
+              name: storage
+              key: storage_type
+
+        # GCP
+        - name: GOOGLE_APPLICATION_CREDENTIALS
+          value: "/etc/secrets/key-storage.json"
+
+        # AZURE
+        - name: AZURE_STORAGE_CONNECTION_STRING
+          valueFrom:
+              secretKeyRef:
+                name: azure--storage-key
+                key: azure_storage_connection_string
+
+        # AWS
+        - name: AWS_ACCESS_KEY_ID
+          valueFrom:
+              secretKeyRef:
+                name: aws--storage-key
+                key: aws_access_key_id
+                optional: true
+        - name: AWS_SECRET_ACCESS_KEY
+          valueFrom:
+              secretKeyRef:
+                name: aws--storage-key
+                key: aws_secret_access_key
+                optional: true

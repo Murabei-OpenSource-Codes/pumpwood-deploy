@@ -1,0 +1,20 @@
+"""Login tests."""
+import unittest
+from pumpwood_deploy.trino.deploy import TrinoMicroservice
+from pumpwood_deploy.test_aux.kubenets import validate_k8s_yml
+
+
+class TestTrinoMicroservice(unittest.TestCase):
+    """Test user login."""
+
+    def test__create_files(self):
+        deploy_obj = TrinoMicroservice(
+            shared_secret="xxxx",
+            catalog_dir_zip_path="xxxx")
+        results = deploy_obj.create_deployment_file()
+        self.assertEqual(len(results), 4)
+        for x in results:
+            if x["type"] != "secrets_file":
+                validate_k8s_yml(
+                    x["content"],
+                    microservice_name="trino")
