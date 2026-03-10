@@ -39,8 +39,10 @@ spec:
         image: {repository}/pumpwood-frontend-react:{version}
         imagePullPolicy: IfNotPresent
         env:
-        - name: NEXT_PUBLIC_APP_API_HOST
+        - name: NEXT_PUBLIC_APP_API_URL
           value: '{gateway_public_ip}'
+        - name: API_URL
+          value: http://load-balancer:8000/rest
         - name: DEBUG
           value: '{debug}'
 
