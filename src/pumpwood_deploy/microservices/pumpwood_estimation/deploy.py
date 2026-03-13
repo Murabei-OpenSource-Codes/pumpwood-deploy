@@ -34,20 +34,15 @@ class PumpWoodEstimationMicroservice:
                  bucket_name: str,
                  app_version: str,
                  worker_version: str,
-                 microservice_password: str = "microservice--estimation",
-                 db_password: str = "pumpwood",
+                 microservice_password: str = "microservice--estimation",  # NQOA
+                 db_password: str = "pumpwood",  # NQOA
                  repository: str = "gcr.io/repositorio-geral-170012",
-                 workers_timeout: int = 300,
                  test_db_version: str = None,
                  test_db_repository: str = "gcr.io/repositorio-geral-170012",
                  db_username: str = "pumpwood",
                  db_host: str = "postgres-pumpwood-estimation",
                  db_port: str = "5432",
                  db_database: str = "pumpwood",
-                 datalake_db_username: str = "pumpwood",
-                 datalake_db_host: str = "postgres-pumpwood-datalake",
-                 datalake_db_port: str = "5432",
-                 datalake_db_database: str = "pumpwood",
                  app_debug: str = "FALSE",
                  app_replicas: int = 1,
                  app_timeout: int = 300,
@@ -61,74 +56,73 @@ class PumpWoodEstimationMicroservice:
                  worker_limits_cpu: str = "12000m",
                  worker_requests_memory: str = "20Mi",
                  worker_requests_cpu: str = "1m"):
-        """
-        Class Constructor.
+        """Class Constructor.
 
         Args:
-            bucket_name [str]:
+            bucket_name (str):
                 Name of the bucket that will be associated with pods.
-            microservice_password [str]:
+            microservice_password (str):
                 Password associated with service user `microservice--datalake`.
-            db_username [str]:
+            db_username (str):
                 Username for connection with Postgres.
-            db_password [str]:
+            db_password (str):
                 Password for connection with Postgres.
-            db_host [str]:
+            db_host (str):
                 Host for connection with Postgres.
-            db_port [str]:
+            db_port (str):
                 Port for connection with Postgres.
-            db_database [str]:
+            db_database (str):
                 Database for connection with Postgres.
-            repository [str]:
+            repository (str):
                 Repository that will be used to fetch `pumpwood-datalake-app`
                 and `pumpwood-datalake-dataloader-worker` images.
-            test_db_version [str]:
+            test_db_version (str):
                 Version of the database for testing.
-            test_db_repository [str]:
+            test_db_repository (str):
                 Repository associated with testing database.
-            test_db_limits_memory [str]:
+            test_db_limits_memory (str):
                 Memory limits associated with test database.
-            test_db_limits_cpu [str]:
+            test_db_limits_cpu (str):
                 CPU limits associated with test database.
-            app_version [str]:
+            app_version (str):
                 Version of the application image.
-            app_debug [str]:
+            app_debug (str):
                 If application is set as DEBUG mode. Values 'TRUE'/'FALSE'.
-            app_replicas [int]:
+            app_replicas (int):
                 Number of replicas for application pods.
-            app_timeout [int]:
+            app_timeout (int):
                 Timeout in seconds for requests at application.
-            app_workers [int]:
+            app_workers (int):
                 Number of workers that will be spanned at guinicorn.
-            app_limits_memory [str]:
+            app_limits_memory (str):
                 Memory limit associated with application pods.
-            app_limits_cpu [str]:
+            app_limits_cpu (str):
                 CPU limit associated with application pods.
-            app_requests_memory [str]:
+            app_requests_memory (str):
                 Memory requested associated with application pods.
-            app_requests_cpu [str]:
+            app_requests_cpu (str):
                 CPU requested associated with application pods.
-            worker_version [str]:
+            worker_version (str):
                 Version for the worker pod.
-            worker_debug [str]:
+            worker_debug (str):
                 If worker is set as DEBUG mode. Values 'TRUE'/'FALSE'.
-            worker_replicas [int]:
+            worker_replicas (int):
                 Number of pods that will be deployed for worker.
-            worker_n_parallel [int]:
+            worker_n_parallel (int):
                 Number of parallel requests that will be performed to
                 upload data to datalake.
-            worker_chunk_size [int]:
+            worker_chunk_size (int):
                 Number of rows that will be uploaded to database at each
                 parallel request.
-            worker_query_limit [int]:
+            worker_query_limit (int):
                 Number of rows that will be treated at each upload cicle.
-            worker_limits_memory [str]:
+            worker_limits_memory (str):
                 Memory limit associated with dataloader worker pods.
-            worker_limits_cpu [str]:
+            worker_limits_cpu (str):
                 CPU limit associated with dataloader worker pods.
-            worker_requests_memory [str]:
+            worker_requests_memory (str):
                 Memory requested associated with dataloader worker pods.
-            worker_requests_cpu [str]:
+            worker_requests_cpu (str):
                 CPU requested associated with dataloader worker pods.
         """
         self._db_password = base64.b64encode(db_password.encode()).decode()
@@ -142,10 +136,6 @@ class PumpWoodEstimationMicroservice:
         self.db_host = db_host
         self.db_port = db_port
         self.db_database = db_database
-        self.datalake_db_username = datalake_db_username
-        self.datalake_db_host = datalake_db_host
-        self.datalake_db_port = datalake_db_port
-        self.datalake_db_database = datalake_db_database
 
         # App
         self.app_debug = app_debug
@@ -172,11 +162,11 @@ class PumpWoodEstimationMicroservice:
         self.test_db_repository = test_db_repository
 
     def create_deployment_file(self, **kwargs):
-        """
-        Create deployment file.
+        """Create deployment file.
 
         Args:
-            No args.
+            **kwargs (dict):
+                Other arguments, set for compatibility.
         """
         secrets_text_formated = secrets.format(
             db_password=self._db_password,
@@ -196,7 +186,6 @@ class PumpWoodEstimationMicroservice:
                 replicas=self.app_replicas,
                 debug=self.app_debug,
                 n_workers=self.app_workers,
-                workers_timeout=self.app_timeout,
                 db_username=self.db_username,
                 db_host=self.db_host,
                 db_port=self.db_port,
@@ -205,19 +194,15 @@ class PumpWoodEstimationMicroservice:
                 limits_cpu=self.app_limits_cpu,
                 requests_memory=self.app_requests_memory,
                 requests_cpu=self.app_requests_cpu)
-        worker_deployment_text_formated = worker_deployment.format(
-            repository=self.repository,
-            version=self.worker_version,
-            replicas=self.worker_replicas,
-            bucket_name=self.bucket_name,
-            datalake_db_username=self.datalake_db_username,
-            datalake_db_host=self.datalake_db_host,
-            datalake_db_port=self.datalake_db_port,
-            datalake_db_database=self.datalake_db_database,
-            limits_memory=self.worker_limits_memory,
-            limits_cpu=self.worker_limits_cpu,
-            requests_memory=self.worker_requests_memory,
-            requests_cpu=self.worker_requests_cpu)
+        # worker_deployment_text_formated = worker_deployment.format(
+        #     repository=self.repository,
+        #     version=self.worker_version,
+        #     replicas=self.worker_replicas,
+        #     bucket_name=self.bucket_name,
+        #     limits_memory=self.worker_limits_memory,
+        #     limits_cpu=self.worker_limits_cpu,
+        #     requests_memory=self.worker_requests_memory,
+        #     requests_cpu=self.worker_requests_cpu)
 
         list_return = [
             {'type': 'secrets', 'name': 'pumpwood_estimation__secrets',
@@ -229,7 +214,7 @@ class PumpWoodEstimationMicroservice:
         list_return.append(
             {'type': 'deploy', 'name': 'pumpwood_estimation__deploy',
              'content': app_deployment_formated, 'sleep': 0})
-        list_return.append(
-            {'type': 'deploy', 'name': 'pumpwood_estimation__rawdata',
-             'content': worker_deployment_text_formated, 'sleep': 0})
+        # list_return.append(
+        #     {'type': 'deploy', 'name': 'pumpwood_estimation__rawdata',
+        #      'content': worker_deployment_text_formated, 'sleep': 0})
         return list_return
