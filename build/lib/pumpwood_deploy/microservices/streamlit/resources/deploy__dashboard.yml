@@ -1,20 +1,20 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: pumpwood-streamlit-{name}
+  name: pumpwood-streamlit-{image}
 spec:
   replicas: 1
   selector:
     matchLabels:
       type: pumpwood-streamlit
       function: dashboard
-      name: {name}
+      name: {image}
   template:
     metadata:
       labels:
         type: pumpwood-streamlit
         function: dashboard
-        name: {name}
+        name: {image}
     spec:
       imagePullSecrets:
         - name: dockercfg
@@ -27,22 +27,15 @@ spec:
                 operator: NotIn
                 values:
                 - system
-      affinity:
-        nodeAffinity:
-          requiredDuringSchedulingIgnoredDuringExecution:
-            nodeSelectorTerms:
-            - matchExpressions:
-              - key: function
-                operator: NotIn
-                values:
-                - system
       containers:
-      - name: pumpwood-streamlit-{name}
+      - name: {image}
         image: {repository}/{image}:{version}
         imagePullPolicy: IfNotPresent
+        ports:
+          - containerPort: 5000
         env:
         - name: SERVICE_URL
-          value: 'http://pumpwood-streamlit-{name}:5000/'
+          value: 'http://pumpwood-streamlit-{image}:5000/'
 
         # Microservice
         - name: MICROSERVICE_PASSWORD
@@ -50,17 +43,15 @@ spec:
             secretKeyRef:
               name: pumpwood-streamlit
               key: microservice_password
-        ports:
-        - containerPort: 5000
 ---
 apiVersion : "v1"
 kind: Service
 metadata:
-  name: pumpwood-streamlit-{name}
+  name: pumpwood-streamlit-{image}
   labels:
     type: pumpwood-streamlit
     function: dashboard
-    name: {name}
+    name: {image}
 spec:
   type: ClusterIP
   ports:
@@ -69,4 +60,4 @@ spec:
   selector:
     type: pumpwood-streamlit
     function: dashboard
-    name: {name}
+    name: {image}
