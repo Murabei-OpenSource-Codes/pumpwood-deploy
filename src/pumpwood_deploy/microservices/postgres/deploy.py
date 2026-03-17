@@ -34,7 +34,7 @@ class PostgresDatabase:
                  postgres_requests_cpu: str = "1m",
                  postgres_public_ip: str = None,
                  firewall_ips: list = None,
-                 image: str = 'postgis/postgis:15-3.3-alpine'):
+                 image: str = 'postgis/postgis:17-master'):
         """Deploy a postgres server not associated with other microservices.
 
         Username is "pumpwood" and password is set as parameter.
@@ -133,7 +133,9 @@ class PGBouncerDatabase:
     def __init__(self, name: str, postgres_secret: str,
                  postgres_database: str, postgres_host: str,
                  postgres_port: str = "5432",
-                 version: str = '1.15.0-1-20251130'):
+                 version: str = '1.15.0-1-20251130',
+                 pgbouncer_tls_sslmode: str = 'disable',
+                 postgres_tls_sslmode: str = 'prefer'):
         """Deploy a stand alone PGBouncer container.
 
         This may be used when using cloud managed Postgres database.
@@ -152,6 +154,11 @@ class PGBouncerDatabase:
                 Port to connect to downstream postgres.
             version (str):
                 Version associated with PGBouncer image.
+            pgbouncer_tls_sslmode (str):
+                Policy associated with SSL for connecting to PGBouncer.
+            postgres_tls_sslmode (str):
+                Policy associated with SSL for connecting PGBouncer to
+                Postgres.
         Kwargs:
             No kwargs.
         """
@@ -161,6 +168,8 @@ class PGBouncerDatabase:
         self.postgres_host = postgres_host
         self.postgres_port = postgres_port
         self.version = version
+        self.pgbouncer_tls_sslmode = pgbouncer_tls_sslmode
+        self.postgres_tls_sslmode = postgres_tls_sslmode
 
     def create_deployment_file(self, kube_client):
         """Create_deployment_file.
@@ -172,7 +181,9 @@ class PGBouncerDatabase:
         deployment_postgres_text_f = pgbouncer_deploy.format(
             name=self.name, postgres_secret=self.postgres_secret,
             host=self.postgres_host, port=self.postgres_port,
-            database=self.postgres_database, version=self.version)
+            database=self.postgres_database, version=self.version,
+            pgbouncer_tls_sslmode=self.pgbouncer_tls_sslmode,
+            postgres_tls_sslmode=self.postgres_tls_sslmode)
 
         list_return = [
             {'type': 'deploy',
@@ -208,7 +219,8 @@ class ExternalPostgresDatabaseSecret:
         """
         secrets_text_f = secrets_postgres.format(
             name=self.name, db_username=self._db_username,
-            db_password=self._db_password)
+            db_password=self._db_password, ssl_key="",
+            ssl_crt="")
 
         list_return = [
             {'type': 'secrets',
