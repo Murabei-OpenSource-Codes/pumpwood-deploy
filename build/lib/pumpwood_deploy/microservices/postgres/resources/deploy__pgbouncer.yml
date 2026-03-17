@@ -50,6 +50,10 @@ spec:
           value: '{port}'
         - name: POSTGRES_DB
           value: '{database}'
+        - name: PGBOUNCER_TLS_SSLMODE
+          value: '{pgbouncer_tls_sslmode}'
+        - name: POSTGRES_TLS_SSLMODE
+          value: '{postgres_tls_sslmode}'
         ports:
         - containerPort: 6432
 ---
