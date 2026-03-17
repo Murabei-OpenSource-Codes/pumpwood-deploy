@@ -200,7 +200,8 @@ src/pumpwood_deploy/microservices/standard/tests/test__PumpWoodTransformationMic
 src/pumpwood_deploy/microservices/streamlit/__init__.py
 src/pumpwood_deploy/microservices/streamlit/deploy.py
 src/pumpwood_deploy/microservices/streamlit/resources/__init__.py
-src/pumpwood_deploy/microservices/streamlit/resources/deploy__frontend.yml
+src/pumpwood_deploy/microservices/streamlit/resources/deploy__dashboard.yml
+src/pumpwood_deploy/microservices/streamlit/resources/deploy__dashboard_storage.yml
 src/pumpwood_deploy/microservices/streamlit/resources/secrets.yml
 src/pumpwood_deploy/models/__init__.py
 src/pumpwood_deploy/models/deploy.py
