@@ -1,6 +1,6 @@
 [project]
 name = "pumpwood-deploy"
-version = "0.0.0"
+version = "{VERSION}"
 description = "Package to assist deploy Pumpwood on K8s"
 readme = "README.md"
 requires-python = ">=3.6"
@@ -15,7 +15,8 @@ classifiers = [
 ]
 dependencies = [
   'jinja2',
-  'simplejson>=3.19.3'
+  'simplejson>=3.19.3',
+  'loguru'
 ]
 
 [tool.poetry]

@@ -1,6 +1,0 @@
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: metabase
-data:
-  site_url: "{site_url}"

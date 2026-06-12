@@ -1,2 +1,0 @@
-jinja2
-simplejson>=3.19.3

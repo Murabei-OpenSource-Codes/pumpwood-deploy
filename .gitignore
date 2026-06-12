@@ -81,3 +81,4 @@ Thumbs.db
 *.dot
 .Rproj.user
 **.noseids
+.vscode

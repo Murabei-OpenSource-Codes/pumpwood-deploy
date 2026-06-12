@@ -4,3 +4,4 @@ metadata:
   name: storage
 data:
   storage_type: "{storage_type}"
+  bucket_name: "{storage_type}"

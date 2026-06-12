@@ -1,21 +1,21 @@
 """Interface with kubernets."""
 import os
 import subprocess  # NOQA
-import pkg_resources
+from importlib import resources
 from typing import List
 
 
-volume_gcp = pkg_resources.resource_stream(
-    'pumpwood_deploy',
-    'kubernets/resources/volume__gcp.yml').read().decode()
+volume_gcp = str(
+    resources.files('pumpwood_deploy')
+    .joinpath('kubernets/resources/volume__gcp.yml'))
 """@private"""
-volume_azure = pkg_resources.resource_stream(
-    'pumpwood_deploy',
-    'kubernets/resources/volume__azure.yml').read().decode()
+volume_azure = str(
+    resources.files('pumpwood_deploy')
+    .joinpath('kubernets/resources/volume__azure.yml'))
 """@private"""
-volume_aws = pkg_resources.resource_stream(
-    'pumpwood_deploy',
-    'kubernets/resources/volume__aws.yml').read().decode()
+volume_aws = str(
+    resources.files('pumpwood_deploy')
+    .joinpath('kubernets/resources/volume__aws.yml'))
 """@private"""
 
 

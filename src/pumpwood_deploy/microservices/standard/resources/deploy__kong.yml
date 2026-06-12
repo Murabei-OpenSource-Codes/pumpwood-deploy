@@ -25,7 +25,7 @@ spec:
                 - system
       containers:
       - name: apigateway-kong
-        image: andrebaceti/autoboostrap-kong:1.0
+        image: andrebaceti/autoboostrap-kong:{version}
         resources:
           requests:
             cpu: "1m"
@@ -34,10 +34,27 @@ spec:
              command:
                - kong
                - health
+
+        env:
+        - name: KONG_PG_HOST
+          value: {kong_db_host}
+        - name: KONG_PG_PORT
+          value: {kong_db_port}
+        - name: KONG_PG_USER
+          value: {kong_db_username}
+        - name: KONG_PG_DATABASE
+          value: {kong_db_database}
+        - name: KONG_PG_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: kong
+              key: kong_db_password
+
         ports:
         # Consumers Ports
         - containerPort: 8000
         - containerPort: 8443
+        
         # Admin Ports
         - containerPort: 8001
         - containerPort: 8444
