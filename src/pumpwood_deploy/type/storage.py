@@ -1,33 +1,34 @@
-"""Module to define K8s typing for parameter."""
+"""Object storage parameter types for Pumpwood deploy."""
 from dataclasses import dataclass
 from .general import PumpwoodDeployDataclassMixin
 
 
 @dataclass
 class PumpwoodDeployStorage(PumpwoodDeployDataclassMixin):
-    """Class to define K8s parameters for GCP storage."""
+    """Base class for object storage deployment parameters."""
 
 
 @dataclass
 class PumpwoodDeployStorageGCP(PumpwoodDeployStorage):
-    """Class to define K8s parameters for GCP storage."""
+    """Object storage parameters for Google Cloud Storage."""
     credential_file: str
-    """Path to local file with service user with storage access.
-    Must be named key-storage.json
+    """Path to the service account JSON file.
+
+    The file must be named ``key-storage.json`` for container mounts.
     """
 
 
 @dataclass
 class PumpwoodDeployStorageAzure(PumpwoodDeployStorage):
-    """Class to define K8s parameters for Azure storage."""
+    """Object storage parameters for Azure Blob Storage."""
     storage_connection_string: str
-    """Storage connection string for Azure Blob Storage."""
+    """Azure Blob Storage connection string."""
 
 
 @dataclass
 class PumpwoodDeployStorageAWS(PumpwoodDeployStorage):
-    """Class to define K8s parameters for AWS storage."""
+    """Object storage parameters for Amazon S3."""
     access_key_id: str
-    """Access key id for the service user with s3 access."""
+    """Access key ID for the S3 service user."""
     secret_access_key: str
-    """Secret access key for the service user with s3 access."""
+    """Secret access key for the S3 service user."""

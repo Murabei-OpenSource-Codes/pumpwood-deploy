@@ -1,43 +1,57 @@
-"""Set default dataclasses for pumpwood use."""
+"""Default dataclass helpers for Pumpwood deploy."""
 import dataclasses
 from abc import ABC
 from typing import ClassVar
 
 
 class PumpwoodDeploySentinel(ABC):
-    """Pumpwood Sentinel class for missing values."""
+    """Sentinel placeholder for missing dataclass values."""
 
     _RETURN_VALUE: str = ""
-    """Value that will be returned on dataclass to dict."""
+    """Default value returned by ``value``."""
 
     _HELP_TEXT: str = ""
-    """Value that will be returned on dataclass to dict."""
+    """Help text associated with the sentinel."""
 
     @classmethod
     def value(cls):
-        """Return defult value."""
+        """Return the sentinel default value.
+
+        Returns:
+            str:
+                Configured default value for the sentinel class.
+        """
         return cls._RETURN_VALUE
 
     @classmethod
     def help_text(cls):
-        """Return defult value."""
+        """Return the sentinel help text.
+
+        Returns:
+            str:
+                Configured help text for the sentinel class.
+        """
         return cls._HELP_TEXT
 
 
 class PumpwoodDeployDataclassMixin(ABC):
-    """Pumpwood Dataclasses with some pre-implemented methods.
+    """Pumpwood dataclass mixin with dict-like access helpers.
 
-    Is implemented so it can be used as an object, but data can also be
-    retrived as dictionary using obj['key'] notation.
+    Instances can be read like mappings through ``obj['key']`` while
+    preserving dataclass field semantics.
     """
 
     _RENAME_FIELDS: ClassVar[dict[str, str]] = {}
-    """Rename field on the dataclass and the response, this migth be
-       particullary usefull when dealling with fields like 'in', which is
-       not avaiable."""
+    """Field rename map applied when exporting to dictionaries."""
 
     def to_dict(self):
-        """Converts the dataclass instance into a dictionary recursively."""
+        """Convert the dataclass instance into a dictionary recursively.
+
+        Returns:
+            dict:
+                Serialized field values with sentinel and nested
+                dataclass handling applied.
+        """
         clean_data = {}
         # Iterate over the fields of the current dataclass
         for field in dataclasses.fields(self):
@@ -50,7 +64,17 @@ class PumpwoodDeployDataclassMixin(ABC):
         return clean_data
 
     def _process_value(self, value):
-        """Helper to handle recursion and sentinel replacement."""
+        """Normalize nested values for dictionary export.
+
+        Args:
+            value (object):
+                Field value to serialize.
+
+        Returns:
+            object:
+                Serialized value with sentinel and nested dataclass
+                handling applied.
+        """
         # Handle Sentinels
         if isinstance(value, PumpwoodDeploySentinel):
             return value.value()
@@ -73,14 +97,33 @@ class PumpwoodDeployDataclassMixin(ABC):
         return value
 
     def __iter__(self):
-        """This allows: for key, val in my_dataclass."""
+        """Iterate over exported key-value pairs.
+
+        Yields:
+            tuple:
+                Key and serialized value pairs from ``to_dict``.
+        """
         for key, value in self.to_dict().items():
             yield key, value
 
     def __getitem__(self, key):
-        """Allows obj["name"]."""
+        """Return a dataclass field by name.
+
+        Args:
+            key (str):
+                Dataclass field name.
+
+        Returns:
+            object:
+                Value stored on the requested field.
+        """
         return getattr(self, key)
 
     def keys(self):
-        """Allows dict(obj) and spreading **obj."""
+        """Return dataclass field names.
+
+        Returns:
+            list[str]:
+                Names of fields declared on the dataclass.
+        """
         return [f.name for f in dataclasses.fields(self)]

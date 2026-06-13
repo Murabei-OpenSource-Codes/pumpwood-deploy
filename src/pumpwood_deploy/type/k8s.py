@@ -1,41 +1,41 @@
-"""Module to define K8s typing for parameter."""
+"""Kubernetes provider parameter types for Pumpwood deploy."""
 from dataclasses import dataclass
 from .general import PumpwoodDeployDataclassMixin
 
 
 @dataclass
 class PumpwoodDeployK8sParameter(PumpwoodDeployDataclassMixin):
-    """General definition of k8s deploy parameters."""
+    """Base class for Kubernetes deployment parameters."""
 
 
 @dataclass
 class PumpwoodDeployK8sParameterGCP(PumpwoodDeployK8sParameter):
-    """Class to define K8s parameters for GCP provider."""
+    """Kubernetes deployment parameters for Google Cloud."""
     cluster_name: str
-    """Name of the K8s cluster."""
+    """Name of the GKE cluster."""
     zone: str
-    """Zone associated with the cluster."""
+    """GCP zone associated with the cluster."""
     project: str
-    """ID of the project at GCP."""
+    """Google Cloud project identifier."""
 
 
 @dataclass
 class PumpwoodDeployK8sParameterAzure(PumpwoodDeployK8sParameter):
-    """Class to define K8s parameters for GCP provider."""
+    """Kubernetes deployment parameters for Microsoft Azure."""
     subscription: str
-    """Subscription associated with Cluster Deploy."""
+    """Azure subscription identifier."""
     resource_group: str
-    """Resorce group at which the solution was deployed."""
+    """Resource group that owns the AKS deployment."""
     k8s_resource_group: str
-    """AKS resource group associated with the K8s deploy."""
+    """Resource group created by AKS for cluster components."""
     aks_resource: str
-    """."""
+    """AKS cluster resource name."""
 
 
 @dataclass
 class PumpwoodDeployK8sParameterAWS(PumpwoodDeployK8sParameter):
-    """Class to define K8s parameters for GCP provider."""
+    """Kubernetes deployment parameters for Amazon Web Services."""
     region: str
-    """AWS region associated with K8s deploy."""
+    """AWS region associated with the EKS cluster."""
     cluster_name: str
-    """Name of the cluster."""
+    """EKS cluster name."""
