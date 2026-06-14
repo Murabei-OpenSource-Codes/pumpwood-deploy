@@ -10,25 +10,49 @@ class PumpwoodDeployStorage(PumpwoodDeployDataclassMixin):
 
 @dataclass
 class PumpwoodDeployStorageGCP(PumpwoodDeployStorage):
-    """Object storage parameters for Google Cloud Storage."""
+    """GCP object storage parameters."""
     credential_file: str
-    """Path to the service account JSON file.
 
-    The file must be named ``key-storage.json`` for container mounts.
-    """
+    def __init__(self, credential_file: str):
+        """Initialize GCP storage credentials.
+
+        Args:
+            credential_file (str):
+                Path to the service account JSON file. The file must
+                be named ``key-storage.json`` for container mounts.
+        """
+        self.credential_file = credential_file
 
 
 @dataclass
 class PumpwoodDeployStorageAzure(PumpwoodDeployStorage):
-    """Object storage parameters for Azure Blob Storage."""
+    """Azure Blob Storage parameters."""
     storage_connection_string: str
-    """Azure Blob Storage connection string."""
+
+    def __init__(self, storage_connection_string: str):
+        """Initialize Azure storage credentials.
+
+        Args:
+            storage_connection_string (str):
+                Azure Blob Storage connection string.
+        """
+        self.storage_connection_string = storage_connection_string
 
 
 @dataclass
 class PumpwoodDeployStorageAWS(PumpwoodDeployStorage):
-    """Object storage parameters for Amazon S3."""
+    """AWS S3 storage parameters."""
     access_key_id: str
-    """Access key ID for the S3 service user."""
     secret_access_key: str
-    """Secret access key for the S3 service user."""
+
+    def __init__(self, access_key_id: str, secret_access_key: str):
+        """Initialize AWS S3 storage credentials.
+
+        Args:
+            access_key_id (str):
+                Access key ID for the S3 service user.
+            secret_access_key (str):
+                Secret access key for the S3 service user.
+        """
+        self.access_key_id = access_key_id
+        self.secret_access_key = secret_access_key

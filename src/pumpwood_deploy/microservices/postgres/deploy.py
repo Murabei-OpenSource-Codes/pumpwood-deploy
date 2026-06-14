@@ -1,32 +1,30 @@
-"""Deploy Postgres."""
+"""Deploy Postgres and PgBouncer microservices on Kubernetes."""
 import base64
 from importlib import resources
 from pumpwood_deploy.microservices.postgres.postgres import \
     create_ssl_key_ssl_crt
+from pumpwood_deploy.type import (
+    PumpwoodDeploy, PumpwoodDeployDeployment, PumpwoodDeploySecret,
+    PumpwoodDeployVolume)
+from pumpwood_deploy.abc import BasePumpwoodDeployMicroservice
 
 
-secrets_postgres = str(
-    resources.files('pumpwood_deploy')
-    .joinpath(
-        'microservices/postgres/'
-        'resources/deploy__postgres.yml'))
+secrets_postgres = resources.files('pumpwood_deploy')\
+    .joinpath('microservices/postgres/resources/secrets.yml')\
+    .read_text(encoding='utf-8')
 """@private"""
-deployment_postgres = str(
-    resources.files('pumpwood_deploy')
-    .joinpath(
-        'microservices/postgres/'
-        'resources/secrets.yml'))
+deployment_postgres = resources.files('pumpwood_deploy')\
+    .joinpath('microservices/postgres/resources/deploy__postgres.yml')\
+    .read_text(encoding='utf-8')
 """@private"""
-pgbouncer_deploy = str(
-    resources.files('pumpwood_deploy')
-    .joinpath(
-        'microservices/postgres/'
-        'resources/deploy__pgbouncer.yml'))
+pgbouncer_deploy = resources.files('pumpwood_deploy')\
+    .joinpath('microservices/postgres/resources/deploy__pgbouncer.yml')\
+    .read_text(encoding='utf-8')
 """@private"""
 
 
-class PostgresDatabase:
-    """Class to help deployment of Postgres database on cluster."""
+class PostgresDatabase(BasePumpwoodDeployMicroservice):
+    """Deploy a standalone Postgres database on the cluster."""
 
     def __init__(self,
                  db_username: str,
@@ -41,37 +39,42 @@ class PostgresDatabase:
                  postgres_public_ip: str = None,
                  firewall_ips: list = None,
                  image: str = 'postgis/postgis:17-master'):
-        """Deploy a postgres server not associated with other microservices.
-
-        Username is "pumpwood" and password is set as parameter.
+        """Configure a Postgres deployment with optional persistent disk.
 
         Args:
             db_username (str):
-                Database username.
+                Database username stored in the generated secret.
             db_password (str):
-                Database password.
-            disk_size (str):
-                Size of the disk to be claimed.
-            disk_name (str):
-                Disk name.
+                Database password stored in the generated secret.
             name (str):
-                Service name to route calls to database.
+                Service name used to route calls to the database.
+            disk_size (str | None):
+                Size of the persistent disk to claim. Defaults to None.
+            disk_name (str | None):
+                Provider disk identifier attached to the cluster.
+                Defaults to None.
             postgres_limits_memory (str):
-                Postgres container memory limit.
+                Memory limit for the Postgres container. Defaults to
+                ``60Gi``.
             postgres_limits_cpu (str):
-                Postgres cotainer CPU limit.
+                CPU limit for the Postgres container. Defaults to
+                ``12000m``.
             postgres_requests_memory (str):
-                Request of memory by container.
+                Memory request for the Postgres container. Defaults to
+                ``20Mi``.
             postgres_requests_cpu (str):
-                Request of CPU by container.
-            postgres_public_ip (str):
-                Postgres public IP (in case of exposing the database)
-                to outside of the cluster, not recomended.
-            firewall_ips (list):
-                List of the IPs that will be used to restric incoming calls
-                to database.
+                CPU request for the Postgres container. Defaults to
+                ``1m``.
+            postgres_public_ip (str | None):
+                Optional public IP when exposing Postgres outside the
+                cluster; not recommended for production use. Defaults to
+                None.
+            firewall_ips (list | None):
+                Allowed source IPs when exposing Postgres publicly.
+                Defaults to None.
             image (str):
-                Image used on deploy.
+                Container image used for the Postgres deployment.
+                Defaults to ``postgis/postgis:17-master``.
         """
         postgres_certificates = create_ssl_key_ssl_crt()
         self._db_username = base64.b64encode(db_username.encode()).decode()
@@ -95,22 +98,21 @@ class PostgresDatabase:
         self.postgres_requests_cpu = postgres_requests_cpu
         self.image = image
 
-    def create_deployment_file(self, kube_client):
-        """Create_deployment_file.
+    def create_deployment_file(self) -> list[PumpwoodDeploy]:
+        """Build secrets, volume, and deployment manifests for Postgres.
 
-        Args:
-          kube_client:
-            Client to communicate with Kubernets cluster.
+        Returns:
+            list[PumpwoodDeploy]:
+                Ordered secret, volume, and deployment objects for the
+                database instance.
         """
         secrets_text_f = secrets_postgres.format(
             name=self.name, db_username=self._db_username,
             db_password=self._db_password, ssl_key=self._ssl_key,
             ssl_crt=self._ssl_crt)
 
+        # Create volume
         volume_claim_name = "{name}-data".format(name=self.name)
-        volume_postgres_text_f = kube_client.create_volume_yml(
-            disk_name=self.disk_name, disk_size=self.disk_size,
-            volume_claim_name=volume_claim_name)
         deployment_postgres_text_f = deployment_postgres.format(
             volume_claim_name=volume_claim_name,
             name=self.name,
@@ -121,20 +123,21 @@ class PostgresDatabase:
             image=self.image)
 
         list_return = [
-            {'type': 'secrets',
-             'name': 'postgres_sole__{name}__secrets'.format(name=self.name),
-             'content': secrets_text_f, 'sleep': 5},
-            {'type': 'volume',
-             'name': 'postgres_sole__{name}__volume'.format(name=self.name),
-             'content': volume_postgres_text_f, 'sleep': 10},
-            {'type': 'deploy',
-             'name': 'postgres_sole__{name}__postgres'.format(name=self.name),
-             'content': deployment_postgres_text_f, 'sleep': 20}]
+            PumpwoodDeploySecret(
+                name='postgres_sole__{name}__secrets'.format(name=self.name),
+                content=secrets_text_f),
+            PumpwoodDeployVolume(
+                name='postgres_sole__{name}__volume'.format(name=self.name),
+                disk_name=self.disk_name, disk_size=self.disk_size,
+                volume_claim_name=volume_claim_name),
+            PumpwoodDeployDeployment(
+                name='postgres_sole__{name}__postgres'.format(name=self.name),
+                content=deployment_postgres_text_f)]
         return list_return
 
 
-class PGBouncerDatabase:
-    """PumpWoodAuthMicroservice."""
+class PGBouncerDatabase(BasePumpwoodDeployMicroservice):
+    """Deploy a standalone PgBouncer connection pooler."""
 
     def __init__(self, name: str, postgres_secret: str,
                  postgres_database: str, postgres_host: str,
@@ -142,31 +145,32 @@ class PGBouncerDatabase:
                  version: str = '1.15.0-1-20251130',
                  pgbouncer_tls_sslmode: str = 'disable',
                  postgres_tls_sslmode: str = 'prefer'):
-        """Deploy a stand alone PGBouncer container.
+        """Configure a PgBouncer deployment for a downstream database.
 
-        This may be used when using cloud managed Postgres database.
+        This deployment is useful when connecting to cloud-managed
+        Postgres instances or shared cluster databases.
 
         Args:
             name (str):
-                Name of the deploy, it will be used same name for the
-                service and secrets.
+                Deployment, service, and secret name prefix.
             postgres_database (str):
-                Database at Postgres server that will be bounced.
+                Downstream Postgres database name to pool.
             postgres_secret (str):
-                Name of the postgres secret.
+                Name of the secret containing database credentials.
             postgres_host (str):
-                Host to connect to downstream postgres.
+                Hostname of the downstream Postgres server.
             postgres_port (str):
-                Port to connect to downstream postgres.
+                Port of the downstream Postgres server. Defaults to
+                ``5432``.
             version (str):
-                Version associated with PGBouncer image.
+                PgBouncer container image tag. Defaults to
+                ``1.15.0-1-20251130``.
             pgbouncer_tls_sslmode (str):
-                Policy associated with SSL for connecting to PGBouncer.
+                TLS policy for client connections to PgBouncer. Defaults
+                to ``disable``.
             postgres_tls_sslmode (str):
-                Policy associated with SSL for connecting PGBouncer to
-                Postgres.
-        Kwargs:
-            No kwargs.
+                TLS policy for PgBouncer connections to Postgres. Defaults
+                to ``prefer``.
         """
         self.name = name
         self.postgres_secret = postgres_secret
@@ -177,12 +181,12 @@ class PGBouncerDatabase:
         self.pgbouncer_tls_sslmode = pgbouncer_tls_sslmode
         self.postgres_tls_sslmode = postgres_tls_sslmode
 
-    def create_deployment_file(self, kube_client):
-        """Create_deployment_file.
+    def create_deployment_file(self) -> list[PumpwoodDeploy]:
+        """Build the PgBouncer deployment manifest.
 
-        Args:
-          kube_client:
-            Client to communicate with Kubernets cluster.
+        Returns:
+            list[PumpwoodDeploy]:
+                Deployment object for the configured PgBouncer instance.
         """
         deployment_postgres_text_f = pgbouncer_deploy.format(
             name=self.name, postgres_secret=self.postgres_secret,
@@ -192,36 +196,37 @@ class PGBouncerDatabase:
             postgres_tls_sslmode=self.postgres_tls_sslmode)
 
         list_return = [
-            {'type': 'deploy',
-             'name': 'pgbouncer__{name}'.format(name=self.name),
-             'content': deployment_postgres_text_f, 'sleep': 10}]
+            PumpwoodDeployDeployment(
+                name='pgbouncer__{name}'.format(name=self.name),
+                content=deployment_postgres_text_f,
+                sleep=10)]
         return list_return
 
 
-class ExternalPostgresDatabaseSecret:
-    """Class to help deployment of Postgres database on cluster."""
+class ExternalPostgresDatabaseSecret(BasePumpwoodDeployMicroservice):
+    """Create credentials for external Postgres used with PgBouncer."""
 
     def __init__(self, name: str, db_username: str, db_password: str):
-        """Create secret to use PgBouncer with external databases.
+        """Configure a secret for an external Postgres database.
 
         Args:
             name (str):
-                Service name to route calls to database.
+                Service name used to identify the secret resource.
             db_username (str):
-                Database username.
+                Database username stored in the generated secret.
             db_password (str):
-                Database password.
+                Database password stored in the generated secret.
         """
         self.name = name
         self._db_username = base64.b64encode(db_username.encode()).decode()
         self._db_password = base64.b64encode(db_password.encode()).decode()
 
-    def create_deployment_file(self, kube_client):
-        """Create_deployment_file.
+    def create_deployment_file(self) -> list[PumpwoodDeploy]:
+        """Build the external Postgres credentials secret.
 
-        Args:
-          kube_client:
-            Client to communicate with Kubernets cluster.
+        Returns:
+            list[PumpwoodDeploy]:
+                Secret object containing external database credentials.
         """
         secrets_text_f = secrets_postgres.format(
             name=self.name, db_username=self._db_username,
@@ -229,8 +234,9 @@ class ExternalPostgresDatabaseSecret:
             ssl_crt="")
 
         list_return = [
-            {'type': 'secrets',
-             'name': 'postgres_external__{name}__secrets'
-                .format(name=self.name),
-             'content': secrets_text_f, 'sleep': 5},]
+            PumpwoodDeploySecret(
+                name='postgres_external__{name}__secrets'
+                    .format(name=self.name),
+                content=secrets_text_f,
+                sleep=5)]
         return list_return

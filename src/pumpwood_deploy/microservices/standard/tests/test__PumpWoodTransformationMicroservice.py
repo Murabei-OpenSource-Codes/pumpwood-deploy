@@ -1,4 +1,4 @@
-"""Login tests."""
+"""Tests for standard microservice deployment manifests."""
 import unittest
 from pumpwood_deploy.microservices.standard.deploy import (
     StandardMicroservices)
@@ -6,9 +6,10 @@ from pumpwood_deploy.test_aux.kubenets import validate_k8s_yml
 
 
 class TestStandardMicroservices(unittest.TestCase):
-    """Test user login."""
+    """Validate generated standard microservice Kubernetes manifests."""
 
     def test__create_files(self):
+        """Ensure generated manifests are valid Kubernetes YAML."""
         deploy_obj = StandardMicroservices(
             hash_salt="xxx",
             rabbit_password="xxx",

@@ -6,124 +6,118 @@ from pumpwood_deploy.type import (
     PumpwoodDeployStorage, PumpwoodDeployStorageGCP,
     PumpwoodDeployStorageAzure, PumpwoodDeployStorageAWS,
     PumpwoodDeploySecret, PumpwoodDeploySecretFile, PumpwoodDeployDeployment,
-    PumpwoodDeployConfigMap)
+    PumpwoodDeployConfigMap, PumpwoodDeploy)
+from pumpwood_deploy.abc import BasePumpwoodDeployMicroservice
 
 
 # Kong deployment
-kong_deployment = str(
-    resources.files('pumpwood_deploy')
-    .joinpath(
-        'microservices/standard/'
-        'resources/deploy__kong.yml'))
-secret__kong = str(
-    resources.files('pumpwood_deploy')
-    .joinpath(
-        'microservices/standard/'
-        'resources/secret__kong.yml'))
+kong_deployment = resources.files('pumpwood_deploy')\
+    .joinpath('microservices/standard/resources/kong__deploy.yml')\
+    .read_text(encoding='utf-8')
+secret__kong = resources.files('pumpwood_deploy')\
+    .joinpath('microservices/standard/resources/kong__secrets.yml')\
+    .read_text(encoding='utf-8')
 
 # RabbitMQ Deploy
-rabbitmq_deployment = str(
-    resources.files('pumpwood_deploy')
-    .joinpath(
-        'microservices/standard/'
-        'resources/secrets__rabbitmq.yml'))
-rabbitmq_secrets = str(
-    resources.files('pumpwood_deploy')
-    .joinpath(
-        'microservices/standard/'
-        'resources/secrets__rabbitmq.yml'))
+rabbitmq_deployment = resources.files('pumpwood_deploy')\
+    .joinpath('microservices/standard/resources/rabbitmq__deploy.yml')\
+    .read_text(encoding='utf-8')
+rabbitmq_secrets = resources.files('pumpwood_deploy')\
+    .joinpath('microservices/standard/resources/rabbitmq__secrets.yml')\
+    .read_text(encoding='utf-8')
 
 # General secrets
-model_secrets = str(
-    resources.files('pumpwood_deploy')
+model_secrets = resources.files('pumpwood_deploy')\
     .joinpath(
         'microservices/standard/'
-        'resources/secrets__model_microservices.yml'))
-hash_salt = str(
-    resources.files('pumpwood_deploy')
+        'resources/model_microservices__secrets.yml')\
+    .read_text(encoding='utf-8')
+secret__general = resources.files('pumpwood_deploy')\
     .joinpath(
         'microservices/standard/'
-        'resources/secret__salt.yml'))
+        'resources/general__secrets.yml')\
+    .read_text(encoding='utf-8')
 
 # Storage config and secrets
-storage_config_map = str(
-    resources.files('pumpwood_deploy')
+storage_config_map = resources.files('pumpwood_deploy')\
     .joinpath(
         'microservices/standard/'
-        'resources/config_map__storage.yml'))
-azure__storage_key_secrets = str(
-    resources.files('pumpwood_deploy')
+        'resources/storage__config_map.yml')\
+    .read_text(encoding='utf-8')
+azure__storage_key_secrets = resources.files('pumpwood_deploy')\
     .joinpath(
         'microservices/standard/'
-        'resources/secrets__azure_storage.yml'))
-gcp__storage_key_secrets = str(
-    resources.files('pumpwood_deploy')
+        'resources/storage__azure_secrets.yml')\
+    .read_text(encoding='utf-8')
+gcp__storage_key_secrets = resources.files('pumpwood_deploy')\
     .joinpath(
         'microservices/standard/'
-        'resources/secrets__gpc_storage_empty.yml'))
-aws__storage_key_secrets = str(
-    resources.files('pumpwood_deploy')
-    .joinpath(
-        'microservices/standard/'
-        'resources/secrets__aws_storage.yml'))
+        'resources/storage__gcp_empty_secrets.yml')\
+    .read_text(encoding='utf-8')
+aws__storage_key_secrets = resources.files('pumpwood_deploy')\
+    .joinpath('microservices/standard/resources/storage__aws_secrets.yml')\
+    .read_text(encoding='utf-8')
 
 
-class StandardMicroservices:
-    """Standard microservices deployment manager.
-
-    Prepares and builds Kubernetes deployment specifications, secrets,
-    and configurations for Kong, RabbitMQ, and Cloud Storage.
-    """
+class StandardMicroservices(BasePumpwoodDeployMicroservice):
+    """Deploy Kong, RabbitMQ, and shared storage resources."""
 
     def __init__(self,
-                 rabbit_password: str,
+                 rabbitmq_password: str,
+                 rabbitmq_version: str,
                  model_user_password: str,
                  storage_type: str,
                  storage_deploy_args: PumpwoodDeployStorage | None,
                  storage_bucket_name: str,
                  hash_salt: str,
-                 crypto_pumpwood_key: str,
+                 crypto_fernet_key: str,
                  kong_version: str,
                  kong_db_username: str,
                  kong_db_password: str,
                  kong_db_database: str,
                  kong_db_host: str,
                  kong_db_port: str,
-                 kong_repository: str = "gcr.io/repositorio-geral-170012"):
+                 rabbitmq_repository: str = 'docker.io/library',
+                 kong_repository: str = 'docker.io/library/andrebaceti'):
         """Initialize StandardMicroservices deployment configuration.
 
         Args:
-            rabbit_password (str):
+            rabbitmq_password (str):
                 Password for RabbitMQ.
+            rabbitmq_version (str):
+                Container image tag for RabbitMQ.
             model_user_password (str):
                 Password for the model microservice user.
             storage_type (str):
-                Storage provider, one of: 'azure_storage', 'google_bucket',
-                or 'aws_s3'.
+                Storage provider; one of ``azure_storage``,
+                ``google_bucket``, or ``aws_s3``.
             storage_deploy_args (PumpwoodDeployStorage | None):
-                Storage arguments object, or None if configured via K8s
-                provider role-based access.
+                Storage arguments object, or ``None`` when credentials
+                are supplied by the Kubernetes provider role.
             storage_bucket_name (str):
-                Name of the bucket/container used for storage.
+                Bucket or container name used for flat file storage.
             hash_salt (str):
                 Salt used for microservice security hash generation.
-            crypto_pumpwood_key (str):
+            crypto_fernet_key (str):
                 Encryption key for Pumpwood crypto fields.
             kong_version (str):
-                Version label/tag for Kong deployment.
+                Container image tag for Kong.
             kong_db_username (str):
-                Username to authenticate to Kong Postgres DB.
+                Username for the Kong Postgres database.
             kong_db_password (str):
-                Password to authenticate to Kong Postgres DB.
+                Password for the Kong Postgres database.
             kong_db_database (str):
-                Name of the Kong Postgres database.
+                Database name used by Kong.
             kong_db_host (str):
-                Host address of the Kong Postgres database.
+                Hostname of the Kong Postgres database.
             kong_db_port (str):
                 Port of the Kong Postgres database.
+            rabbitmq_repository (str):
+                Docker repository for the RabbitMQ image. Defaults to
+                ``docker.io/library``.
             kong_repository (str):
-                Docker repository for custom Kong image. Defaults to
-                "gcr.io/repositorio-geral-170012".
+                Docker repository for the custom Kong image. Defaults to
+                ``docker.io/library/andrebaceti``.
         """
         self.kong_repository = kong_repository
         self._gcp_credential_file = None
@@ -136,18 +130,23 @@ class StandardMicroservices:
         # General secrets
         self._hash_salt = base64.b64encode(
             hash_salt.encode()).decode()
-        self._crypto_pumpwood_key = base64.b64encode(
-            crypto_pumpwood_key.encode()).decode()
-        self._rabbit_password = base64.b64encode(
-            rabbit_password.encode()).decode()
+        self._crypto_fernet_key = base64.b64encode(
+            crypto_fernet_key.encode()).decode()
         self._model_user_password = base64.b64encode(
             model_user_password.encode()).decode()
+
+        # RabbitMQ
+        self.rabbitmq_repository = rabbitmq_repository
+        self.rabbitmq_version = rabbitmq_version
+        self._rabbitmq_password = base64.b64encode(
+            rabbitmq_password.encode()).decode()
 
         # Storage secrets
         self.storage_type = storage_type
         self.storage_bucket_name = storage_bucket_name
 
         # Kong disk for postgres deploy
+        self.kong_repository = kong_repository
         self.kong_version = kong_version
         self.kong_db_username = kong_db_username
         self.kong_db_database = kong_db_database
@@ -255,26 +254,24 @@ class StandardMicroservices:
             msg = "storage_type not implemented: {}".format(storage_type)
             raise NotImplementedError(msg)
 
-    def create_deployment_file(self, kube_client=None):
+    def create_deployment_file(self) -> list[PumpwoodDeploy]:
         """Create and format the lists of Kubernetes manifests.
 
-        Args:
-            kube_client (Kubernets | None):
-                Kubernetes client helper. Defaults to None.
-
         Returns:
-            list:
+            list[PumpwoodDeploy]:
                 A list of deployment objects (secrets, deployments, and
                 config maps) to apply to the Kubernetes cluster.
         """
         # RabbitMQ
+        rabbitmq_deployment_formated = rabbitmq_deployment.format(
+            repository=self.rabbitmq_repository, version=self.rabbitmq_version)
         secrets_text_formated = rabbitmq_secrets.format(
-            password=self._rabbit_password)
+            password=self._rabbitmq_password)
 
         # Hash Salt
-        hash_salt_formated = hash_salt.format(
+        hash_salt_formated = secret__general.format(
             hash_salt=self._hash_salt,
-            crypto_pumpwood_key=self._crypto_pumpwood_key)
+            crypto_fernet_key=self._crypto_fernet_key)
 
         # Model microservice user
         microservice_model_secrets_formated = model_secrets.format(
@@ -315,7 +312,8 @@ class StandardMicroservices:
                 name='rabbitmq__secrets', content=secrets_text_formated,
                 sleep=5),
             PumpwoodDeployDeployment(
-                name='rabbitmq__deployment', content=rabbitmq_deployment,
+                name='rabbitmq__deployment',
+                content=rabbitmq_deployment_formated,
                 sleep=0),
 
             # Hash salt

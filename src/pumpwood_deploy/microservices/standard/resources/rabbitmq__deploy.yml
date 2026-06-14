@@ -50,7 +50,7 @@ spec:
                 - system
       containers:
       - name: rabbitmq-main
-        image: rabbitmq:3.8-management
+        image: {repository}/rabbitmq:{version}
         resources:
           requests:
             cpu: "1m"

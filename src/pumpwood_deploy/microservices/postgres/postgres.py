@@ -1,10 +1,24 @@
-"""Postgres deploy fuctions."""
+"""Postgres helper functions for Pumpwood deploy."""
 import os
 import subprocess # NOQA
 
 
 def create_ssl_key_ssl_crt():
-    """Create SSL key and Certificate for Postgres connections."""
+    """Create a self-signed SSL key and certificate for Postgres.
+
+    Generates temporary files under ``temp/``, reads their contents,
+    and removes the local files before returning.
+
+    Returns:
+        dict:
+            Mapping with ``ssl_key`` and ``ssl_crt`` PEM contents.
+
+    Raises:
+        OSError:
+            If temporary files cannot be created, read, or removed.
+        subprocess.SubprocessError:
+            If OpenSSL certificate generation fails.
+    """
     dir_temp_path = 'temp/'
     if not os.path.exists(dir_temp_path):
         os.makedirs(dir_temp_path)

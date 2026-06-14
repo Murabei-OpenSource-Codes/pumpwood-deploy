@@ -25,7 +25,7 @@ spec:
                 - system
       containers:
       - name: apigateway-kong
-        image: andrebaceti/autoboostrap-kong:{version}
+        image: {repository}/autoboostrap-kong:{version}
         resources:
           requests:
             cpu: "1m"

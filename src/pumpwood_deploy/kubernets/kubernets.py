@@ -1,53 +1,54 @@
-"""Interface with kubernets."""
+"""Kubernetes cluster interface for Pumpwood deploy."""
 import os
 import subprocess  # NOQA
 from importlib import resources
 from typing import List
 
 
-volume_gcp = str(
-    resources.files('pumpwood_deploy')
-    .joinpath('kubernets/resources/volume__gcp.yml'))
+volume_gcp = resources.files('pumpwood_deploy')\
+    .joinpath('kubernets/resources/volume__gcp.yml')\
+    .read_text(encoding='utf-8')
 """@private"""
-volume_azure = str(
-    resources.files('pumpwood_deploy')
-    .joinpath('kubernets/resources/volume__azure.yml'))
+volume_azure = resources.files('pumpwood_deploy')\
+    .joinpath('kubernets/resources/volume__azure.yml')\
+    .read_text(encoding='utf-8')
 """@private"""
-volume_aws = str(
-    resources.files('pumpwood_deploy')
-    .joinpath('kubernets/resources/volume__aws.yml'))
+volume_aws = resources.files('pumpwood_deploy')\
+    .joinpath('kubernets/resources/volume__aws.yml')\
+    .read_text(encoding='utf-8')
 """@private"""
 
 
 class Kubernets:
-    """Class to auxiliate kubernets interface."""
+    """Facade for provider-specific Kubernetes operations."""
 
     k8_namespace: str
-    """Namespace that will be used to deploy Pumpwood."""
+    """Namespace used to deploy Pumpwood resources."""
     k8_deploy_args: dict
-    """Arguments that will be used on deploy of the pods, it will be passed as
-       `**k8_deploy_args` to `KubernetsGCP`, `KubernetsAzure` or
-       `KubernetsAWS`."""
+    """Arguments passed as ``**k8_deploy_args`` to the provider client."""
     k8_provider: str
-    """K8s provider, possible values ['gcp', 'azure', 'aws']."""
+    """Kubernetes provider; one of ``gcp``, ``azure``, or ``aws``."""
     kube_client: object
-    """Object of the corresponding K8s class associated with `k8_provider`."""
+    """Provider client instance selected from ``k8_provider``."""
 
     def __init__(self, k8_provider: str, k8_deploy_args: dict,
                  k8_namespace: str = "default"):
-        """__init__.
+        """Initialize the Kubernetes facade and cluster context.
 
         Args:
             k8_provider (str):
-                Provider name.
+                Cloud provider identifier; one of ``gcp``, ``azure``,
+                or ``aws``.
             k8_deploy_args (dict):
-                Arguments to deploy k8s cluster.
+                Provider-specific cluster connection parameters passed
+                to the selected provider client.
             k8_namespace (str):
-                Name of the namespaces that will be used at deploy.
+                Namespace created and set as the active kubectl context.
+                Defaults to ``default``.
 
         Raises:
             NotImplementedError:
-                Error for not implemented deploy options.
+                If ``k8_provider`` is not supported.
         """
         self.k8_namespace = k8_namespace
         self.k8_deploy_args = k8_deploy_args
@@ -86,40 +87,38 @@ class Kubernets:
 
     def create_volume_yml(self, disk_name: str, disk_size: str,
                           volume_claim_name: str) -> str:
-        """Create volume yml using provider and k8_deploy_args.
+        """Build a persistent volume manifest for the active provider.
 
         Args:
             disk_name (str):
-                Disk name at the provider.
+                Provider disk identifier.
             disk_size (str):
-                Size of the disk that will be mapped to K8s
-                cluster.
+                Requested disk size mapped into the cluster.
             volume_claim_name (str):
-                Name of the volume claim.
+                Kubernetes persistent volume claim name.
 
         Returns:
-            Return the yml content of the deploy file.
+            str:
+                Rendered persistent volume manifest for the provider.
         """
         return self.kube_client.create_volume_yml(
             disk_name=disk_name, disk_size=disk_size,
             volume_claim_name=volume_claim_name)
 
     def run_deploy_commmands(self, cmds: List[dict]):
-        """Deploy commands.
+        """Run generated deploy shell scripts in sequence.
 
-        Create bash files to apply manifests to k8s cluster and run them. It is
-        set a sleep time after each deployment, permiting finishing of cluster
-        changes before move on.
+        Each command may include a sleep interval so cluster resources
+        can finish provisioning before the next apply.
 
         Args:
             cmds (List[dict]):
-                List of commands to be applied at the k8s cluster.
+                Deploy command descriptors with ``command``, ``file``,
+                and optional ``sleep`` keys.
 
         Raises:
             NotImplementedError:
-                'Command not implemented: %s'. Indicates that command
-                associated with deploy was not implemented yet. So far,
-                only `run` was implemented.
+                If a command type other than ``run`` is requested.
         """
         for c in cmds:
             if c['command'] == 'run':
@@ -146,35 +145,29 @@ class Kubernets:
 
 
 class KubernetsGCP:
-    """Class to auxiliate GCP Kubernets interface.
+    """Google Cloud Kubernetes helper for cluster access and volumes.
 
-    This class will help creation of disks and cluster conenction, creating
-    a default API for all providers.
+    Provides a shared API for disk creation and cluster connection across
+    cloud providers.
     """
 
     def __init__(self, cluster_name: str, zone: str, project: str,
                  **kwargs):
-        """Create a KubernetsGCP object.
-
-        Constructor will create object and connect to k8s cluster using
-        kubectl.
+        """Connect to a GKE cluster using gcloud credentials.
 
         Args:
             cluster_name (str):
-                Kubernets cluster name that will be connected and will
-                receive the K8s manifest application.
+                GKE cluster name that receives manifest applications.
             zone (str):
-                Zone location of the cluster.
+                GCP zone where the cluster is deployed.
             project (str):
-                Google project name.
+                Google Cloud project identifier.
             **kwargs (dict):
-                Other parameters for compatibility with other versions.
+                Extra parameters kept for backward compatibility.
 
         Raises:
             Exception:
-                '!! Error loging to k8s cluster, check logs !!'. Indicates
-                that it was not possible to connect with k8s cluster using
-                arguments passed.
+                If cluster credential retrieval fails.
         """
         self.cluster_name = cluster_name
         self.zone = zone
@@ -193,20 +186,19 @@ class KubernetsGCP:
 
     def create_volume_yml(self, disk_name: str, disk_size: str,
                           volume_claim_name: str) -> str:
-        """Create volume yml using provider and k8_deploy_args.
+        """Build a GCP persistent volume manifest.
 
         Args:
             disk_name (str):
-                Disk name at the provider.
+                GCP disk identifier.
             disk_size (str):
-                Size of the disk that will be mapped to K8s
-                cluster.
+                Requested disk size mapped into the cluster.
             volume_claim_name (str):
-                Name of the volume claim.
+                Kubernetes persistent volume claim name.
 
         Returns:
-            Return the yml manifest content of the deploy file to created
-            perissistent volumes on GCP.
+            str:
+                Rendered GCP persistent volume manifest content.
         """
         return volume_gcp.format(
             disk_name=disk_name, disk_size=disk_size,
@@ -214,49 +206,41 @@ class KubernetsGCP:
 
 
 class KubernetsAzure:
-    """Class to auxiliate Azure AKS Kubernets interface.
+    """Azure AKS Kubernetes cluster helper.
 
-    This class will help creation of disks and cluster conenction, creating
-    a default API for all providers.
+    Creates persistent volume manifests and connects to AKS using
+    ``az aks get-credentials``.
     """
 
     subscription: str
-    """Azure subscription."""
+    """Azure subscription identifier."""
     resource_group: str
-    """Resorce group used in k8s cluster."""
+    """Resource group that owns the AKS deployment."""
     k8s_resource_group: str
-    """Resorce group created by k8s cluster to deploy cluster components."""
+    """Resource group created by AKS for cluster components."""
     aks_resource: str
-    """Name of the K8s resource."""
+    """AKS cluster resource name."""
 
     def __init__(self, subscription: str, resource_group: str,
                  k8s_resource_group: str, aks_resource: str,
                  **kwargs):
-        """Create a KubernetsAzure object.
-
-        Constructor will create object and connect to k8s cluster using
-        kubectl.
+        """Connect to an Azure Kubernetes Service cluster.
 
         Args:
             subscription (str):
-                Azure subscription ID, something like
-                XXXXXXXX-XXXX-XXXX-XXXX-53b44c8776b0.
+                Azure subscription ID.
             resource_group (str):
-                Resorce group name used to deploy in k8s cluster. It is not
-                the resource group created by k8s do deploy cluster
-                components.
+                Resource group used to deploy the AKS cluster.
             k8s_resource_group (str):
-                Resorce group created by k8s cluster to deploy cluster
-                components.
+                Resource group created by AKS for cluster components.
             aks_resource (str):
-                Name of the K8s resource.
+                AKS cluster resource name.
             **kwargs (dict):
-                Other parameters for compatibility with other versions.
+                Extra parameters kept for backward compatibility.
 
         Raises:
             Exception:
-                '!! Error loging to k8s cluster, check logs !!'. Indicates that
-                it was not possible to connect with k8s cluster.
+                If subscription selection or credential retrieval fails.
         """
         self.subscription = subscription
         self.resource_group = resource_group
@@ -288,19 +272,19 @@ class KubernetsAzure:
 
     def create_volume_yml(self, disk_name: str, disk_size: str,
                           volume_claim_name: str) -> str:
-        """Create volume yml using provider and k8_deploy_args.
+        """Build an Azure persistent volume manifest.
 
         Args:
             disk_name (str):
-                Disk name at the provider.
+                Azure disk identifier.
             disk_size (str):
-                Size of the disk that will be mapped to K8s
-                cluster.
+                Requested disk size mapped into the cluster.
             volume_claim_name (str):
-                Name of the volume claim.
+                Kubernetes persistent volume claim name.
 
         Returns:
-            Return the yml content of the deploy file
+            str:
+                Rendered Azure persistent volume manifest content.
         """
         return volume_azure.format(
             subscription_id=self.subscription,
@@ -310,30 +294,31 @@ class KubernetsAzure:
 
 
 class KubernetsAWS:
-    """Class to auxiliate AWS EKS Kubernets interface.
+    """AWS EKS Kubernetes cluster helper.
 
-    This class will help creation of disks and cluster conenction, creating
-    a default API for all providers.
+    Creates persistent volume manifests and connects to EKS using
+    ``aws eks update-kubeconfig``.
     """
 
     region: str
-    """Region associated with K8s cluster."""
+    """AWS region associated with the EKS cluster."""
     cluster_name: str
-    """K8s cluster name."""
+    """EKS cluster name."""
 
     def __init__(self, region: str, cluster_name: str, **kwargs):
-        """Create a KubernetsAWS object.
-
-        Constructor will create object and connect to k8s cluster using
-        kubectl.
+        """Connect to an AWS Elastic Kubernetes Service cluster.
 
         Args:
             region (str):
-                EKS AWS Region.
+                AWS region where the cluster is deployed.
             cluster_name (str):
                 EKS cluster name.
             **kwargs (dict):
-                Other parameters for compatibility with other versions.
+                Extra parameters kept for backward compatibility.
+
+        Raises:
+            Exception:
+                If kubeconfig update fails.
         """
         self.region = region
         self.cluster_name = cluster_name
@@ -350,19 +335,19 @@ class KubernetsAWS:
 
     def create_volume_yml(self, disk_name: str, disk_size: str,
                           volume_claim_name: str) -> str:
-        """Create volume yml using provider and k8_deploy_args.
+        """Build an AWS persistent volume manifest.
 
         Args:
             disk_name (str):
-                Disk name at the provider.
+                AWS volume identifier.
             disk_size (str):
-                Size of the disk that will be mapped to K8s
-                cluster.
+                Requested disk size mapped into the cluster.
             volume_claim_name (str):
-                Name of the volume claim.
+                Kubernetes persistent volume claim name.
 
         Returns:
-            Return the yml content of the deploy file
+            str:
+                Rendered AWS persistent volume manifest content.
         """
         return volume_aws.format(
             aws_volume_id=disk_name,
