@@ -11,10 +11,11 @@ class PumpwoodDeployCMD(PumpwoodDeployDataclassMixin):
 
 @dataclass
 class PumpwoodDeployCMDRun(PumpwoodDeployCMD):
-    """Shell script command executed during deployment."""
+    """Audit shell script executed during deployment."""
     file: str
-    """Path to the generated deploy shell script."""
+    """Path to the generated audit shell script under ``outputs/``."""
     _type: str = "run"
+    """Command type identifier."""
     sleep: int = 5
     """Seconds to wait after the script finishes."""
     _RENAME_FIELDS: ClassVar[dict[str, str]] = {"_type": "type"}

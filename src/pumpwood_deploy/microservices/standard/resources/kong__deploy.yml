@@ -39,7 +39,7 @@ spec:
         - name: KONG_PG_HOST
           value: {kong_db_host}
         - name: KONG_PG_PORT
-          value: {kong_db_port}
+          value: "{kong_db_port}"
         - name: KONG_PG_USER
           value: {kong_db_username}
         - name: KONG_PG_DATABASE

@@ -32,9 +32,14 @@ def create_ssl_key_ssl_crt():
     bash_cmd_1 = bash_cmd_text.format(
         keyout=key_path, out=cert_path)
 
-    process = subprocess.Popen( # NOQA
-        bash_cmd_1.split(), stdout=subprocess.PIPE)
-    output, error = process.communicate()
+    process = subprocess.run(
+        bash_cmd_1.split(),
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        check=False)
+    if process.returncode != 0:
+        msg = "OpenSSL certificate generation failed"
+        raise subprocess.SubprocessError(msg)
 
     with open(key_path, 'r') as file:
         ssl_key = file.read()

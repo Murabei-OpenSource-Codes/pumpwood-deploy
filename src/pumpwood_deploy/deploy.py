@@ -4,10 +4,10 @@ import os
 import stat
 import shutil
 from loguru import logger
-from typing import List
 from importlib import resources
 from jinja2 import Template
 from pumpwood_deploy.kubernets.kubernets import Kubernets
+from pumpwood_deploy.abc import BasePumpwoodDeployMicroservice
 from pumpwood_deploy.type import (
     PumpwoodDeployK8sParameter,
     PumpwoodDeploySecret, PumpwoodDeployDeployment,
@@ -37,6 +37,32 @@ configmap_keyname_template = Template(
 """@private"""
 
 
+def _write_executable_script(script_path, body, sleep=0):
+    """Write a runnable audit shell script for manual deploy replay.
+
+    Args:
+        script_path (str):
+            Destination path for the shell script.
+        body (str):
+            Shell commands to include before the trailing sleep.
+        sleep (int):
+            Seconds to pause at the end of the script. Defaults to 0.
+
+    Returns:
+        None:
+            Always returns None.
+    """
+    template = (
+        "#!/bin/sh\n"
+        "set -eu\n"
+        "{body}\n"
+        "sleep {sleep}\n")
+    content = template.format(body=body.rstrip(), sleep=sleep)
+    with open(script_path, 'w') as file:
+        file.write(content)
+    os.chmod(script_path, stat.S_IRWXU)
+
+
 class DeployPumpWood():
     """Orchestrate Pumpwood microservice deployment on Kubernetes."""
 
@@ -44,19 +70,16 @@ class DeployPumpWood():
     """Kubernetes client for disk creation and provider operations."""
     namespace: str
     """Namespace used to deploy Pumpwood resources."""
-    microsservices_to_deploy: List
+    microsservices_to_deploy: list
     """Microservice objects registered for deployment."""
     base_path: str
     """Base path for generated manifest files and bash scripts."""
 
-    def __init__(self, k8_provider: Literal['gcp', 'azure', 'aws'],
-                 k8_namespace: str, k8_deploy_args: PumpwoodDeployK8sParameter
-                 ):
+    def __init__(self, k8_namespace: str,
+                 k8_deploy_args: PumpwoodDeployK8sParameter):
         """Initialize the Pumpwood deployment manager.
 
         Args:
-            k8_provider (Literal['gcp', 'azure', 'aws']):
-                Kubernetes cluster cloud provider.
             k8_namespace (str):
                 Target namespace for deployment resources.
             k8_deploy_args (PumpwoodDeployK8sParameter):
@@ -70,18 +93,21 @@ class DeployPumpWood():
         # Create an instance of the K8s object that will make the
         # communication with provider
         self.kube_client = Kubernets(
-            k8_namespace=k8_namespace, k8_provider=k8_provider,
-            k8_deploy_args=k8_deploy_args)
+            k8_namespace=k8_namespace, k8_deploy_args=k8_deploy_args)
         self.namespace = k8_namespace
         self.microsservices_to_deploy = []
         self.base_path = os.getcwd()
 
-    def add_microservice(self, microservice):
+    def add_microservice(self, microservice: BasePumpwoodDeployMicroservice):
         """Add a microservice to the deployment stack.
 
         Args:
             microservice (BasePumpwoodDeployMicroservice):
                 Microservice object whose manifests will be generated.
+
+        Returns:
+            None:
+                Always returns None.
         """
         self.microsservices_to_deploy.append(microservice)
 
@@ -116,13 +142,15 @@ class DeployPumpWood():
         # Use the template files to create bash scripts to deploy the
         # resources at k8s cluster
         logger.info('Creating microservices files:')
-        m = self.microsservices_to_deploy[0]
         for m in self.microsservices_to_deploy:
             class_name = type(m).__name__
             logger.info('# Processing: {class_name}', class_name=class_name)
             temp_deployments = m.create_deployment_file()
             for d in temp_deployments:
-                logger.info('### Creating deploy file: {d}', d=str(d.name))
+                deploy_name = getattr(d, 'name', type(d).__name__)
+                logger.info(
+                    '### Creating deploy file: {name}',
+                    name=str(deploy_name))
                 # Create a counter to order the files in the deploy
                 str_counter = "%03d" % (counter, )
                 str_service_counter = "%03d" % (service_counter, )
@@ -172,8 +200,10 @@ class DeployPumpWood():
                     continue
 
                 msg = (
-                    "Deployment type not implemented, check the Pumpwood "
-                    "deploy class {}").format(str(m))
+                    "Deployment type not implemented for microservice "
+                    "{microservice}: {deploy_type}").format(
+                        microservice=class_name,
+                        deploy_type=type(d).__name__)
                 raise NotImplementedError(msg)
 
         return {
@@ -209,15 +239,12 @@ class DeployPumpWood():
         file_name_sh = file_name_sh_temp.format(
             counter=str_counter, name=d.name)
 
-        # Create the bash file for the deployment
         deploy_namespace = d.namespace or self.namespace
-        with open(file_name_sh, 'w') as file:
-            content = create_kube_cmd.format(
-                file=file_name, namespace=deploy_namespace)
-            file.write(content)
-        os.chmod(file_name_sh, stat.S_IRWXU)
+        script_body = create_kube_cmd.format(
+            file=file_name, namespace=deploy_namespace)
+        _write_executable_script(
+            script_path=file_name_sh, body=script_body, sleep=d.sleep)
 
-        # Return an instance of the CMD run
         return PumpwoodDeployCMDRun(
             file=file_name_sh, sleep=d.sleep)
 
@@ -248,9 +275,8 @@ class DeployPumpWood():
         file_name = file_name_temp.format(
             counter=str_counter, name=d.name)
 
-        with open(file_name, 'w') as file:
-            file.write(command_formated)
-        os.chmod(file_name, stat.S_IRWXU)
+        _write_executable_script(
+            script_path=file_name, body=command_formated, sleep=d.sleep)
         return PumpwoodDeployCMDRun(
             file=file_name, sleep=d.sleep)
 
@@ -299,13 +325,12 @@ class DeployPumpWood():
         file_name = file_name_temp.format(
             counter=str_counter, name=d.name)
 
-        with open(file_name, 'w') as file:
-            file.write(command_formated)
-        os.chmod(file_name, stat.S_IRWXU)
+        _write_executable_script(
+            script_path=file_name, body=command_formated, sleep=d.sleep)
         return PumpwoodDeployCMDRun(
             file=file_name, sleep=d.sleep)
 
-    def process_volume(self, d: PumpwoodDeployService,
+    def process_volume(self, d: PumpwoodDeployVolume,
                        str_counter: str) -> PumpwoodDeployCMDRun:
         """Process volume deployment.
 
@@ -335,15 +360,12 @@ class DeployPumpWood():
         file_name_sh = file_name_sh_temp.format(
             counter=str_counter, name=d.name)
 
-        # Create the bash file for the deployment
         deploy_namespace = d.namespace or self.namespace
-        with open(file_name_sh, 'w') as file:
-            content = create_kube_cmd.format(
-                file=file_name, namespace=deploy_namespace)
-            file.write(content)
-        os.chmod(file_name_sh, stat.S_IRWXU)
+        script_body = create_kube_cmd.format(
+            file=file_name, namespace=deploy_namespace)
+        _write_executable_script(
+            script_path=file_name_sh, body=script_body, sleep=d.sleep)
 
-        # Return an instance of the CMD run
         return PumpwoodDeployCMDRun(
             file=file_name_sh, sleep=d.sleep)
 
@@ -377,12 +399,11 @@ class DeployPumpWood():
             name=d.name)
 
         deploy_namespace = d.namespace or self.namespace
-        with open(file_name_sh, 'w') as file:
-            content = create_kube_cmd.format(
-                file=file_name, namespace=deploy_namespace)
-            file.write(content)
+        script_body = create_kube_cmd.format(
+            file=file_name, namespace=deploy_namespace)
+        _write_executable_script(
+            script_path=file_name_sh, body=script_body, sleep=d.sleep)
 
-        os.chmod(file_name_sh, stat.S_IRWXU)
         return PumpwoodDeployCMDRun(
             file=file_name_sh, sleep=d.sleep)
 
@@ -391,12 +412,17 @@ class DeployPumpWood():
 
         Creates manifests under ``outputs/``, applies service manifests
         first, then microservice manifests in registration order.
+
+        Returns:
+            None:
+                Always returns None.
         """
         deploy_cmds = self.create_deploy_files()
+
         logger.info('Deploying Services:')
         self.kube_client.run_deploy_commmands(
-            deploy_cmds['service_cmds'])
+            cmds=deploy_cmds['service_cmds'])
 
         logger.info('Deploying Microservices:')
         self.kube_client.run_deploy_commmands(
-            deploy_cmds['microservice_cmds'])
+            cmds=deploy_cmds['microservice_cmds'])

@@ -7,15 +7,16 @@ class BasePumpwoodDeployMicroservice(ABC):
     """Base class for microservice deploy implementations in Kubernetes."""
 
     @abstractmethod
-    def create_deployment_file(self) -> list[PumpwoodDeploy] | list[dict]:
+    def create_deployment_file(self) -> list[PumpwoodDeploy]:
         """Build Kubernetes manifests for the microservice.
 
         Returns:
-            list[PumpwoodDeploy] | list[dict]:
-                Ordered deployment objects or legacy dict payloads.
+            list[PumpwoodDeploy]:
+                Ordered deployment objects to apply to the cluster.
 
         Raises:
             NotImplementedError:
                 If the subclass does not implement manifest generation.
         """
-        raise NotImplementedError("Create deployment file is not implemented")
+        raise NotImplementedError(
+            "Create deployment file is not implemented")

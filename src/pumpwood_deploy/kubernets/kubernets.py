@@ -1,8 +1,13 @@
 """Kubernetes cluster interface for Pumpwood deploy."""
 import os
 import subprocess  # NOQA
+from pathlib import Path
+from loguru import logger
 from importlib import resources
-from typing import List
+from pumpwood_deploy.type import (
+    PumpwoodDeployCMD, PumpwoodDeployCMDRun, PumpwoodDeployK8sParameter,
+    PumpwoodDeployK8sParameterGCP, PumpwoodDeployK8sParameterAzure,
+    PumpwoodDeployK8sParameterAWS)
 
 
 volume_gcp = resources.files('pumpwood_deploy')\
@@ -24,14 +29,12 @@ class Kubernets:
 
     k8_namespace: str
     """Namespace used to deploy Pumpwood resources."""
-    k8_deploy_args: dict
-    """Arguments passed as ``**k8_deploy_args`` to the provider client."""
-    k8_provider: str
-    """Kubernetes provider; one of ``gcp``, ``azure``, or ``aws``."""
+    k8_deploy_args: PumpwoodDeployK8sParameter
+    """Arguments passed as to the provider class."""
     kube_client: object
     """Provider client instance selected from ``k8_provider``."""
 
-    def __init__(self, k8_provider: str, k8_deploy_args: dict,
+    def __init__(self, k8_deploy_args: PumpwoodDeployK8sParameter,
                  k8_namespace: str = "default"):
         """Initialize the Kubernetes facade and cluster context.
 
@@ -39,7 +42,7 @@ class Kubernets:
             k8_provider (str):
                 Cloud provider identifier; one of ``gcp``, ``azure``,
                 or ``aws``.
-            k8_deploy_args (dict):
+            k8_deploy_args (PumpwoodDeployK8sParameter):
                 Provider-specific cluster connection parameters passed
                 to the selected provider client.
             k8_namespace (str):
@@ -52,21 +55,20 @@ class Kubernets:
         """
         self.k8_namespace = k8_namespace
         self.k8_deploy_args = k8_deploy_args
-        self.k8_provider = k8_provider
 
         self.kube_client = None
-        if k8_provider == "gcp":
-            self.kube_client = KubernetsGCP(**k8_deploy_args)
-        elif k8_provider == "azure":
-            self.kube_client = KubernetsAzure(**k8_deploy_args)
-        elif k8_provider == "aws":
-            self.kube_client = KubernetsAWS(**k8_deploy_args)
+        if isinstance(k8_deploy_args, PumpwoodDeployK8sParameterGCP):
+            self.kube_client = KubernetsGCP(k8_deploy_args=k8_deploy_args)
+        elif isinstance(k8_deploy_args, PumpwoodDeployK8sParameterAzure):
+            self.kube_client = KubernetsAzure(k8_deploy_args=k8_deploy_args)
+        elif isinstance(k8_deploy_args, PumpwoodDeployK8sParameterAWS):
+            self.kube_client = KubernetsAWS(k8_deploy_args=k8_deploy_args)
         else:
-            msg = "Kubernets Provider [{}] not implemented".format(
-                k8_provider)
+            msg = "Kubernetes provider not implemented: {provider}".format(
+                provider=type(k8_deploy_args).__name__)
             raise NotImplementedError(msg)
 
-        print('## Creating k8_namespace')
+        logger.info('## Creating k8_namespace')
         cmd = "kubectl create namespace {k8_namespace}"
         cmd_formated = cmd.format(k8_namespace=k8_namespace)
         # Commands associated with deploy are generated at the deploy package
@@ -74,8 +76,9 @@ class Kubernets:
             cmd_formated.split(), stdout=subprocess.PIPE)
         process.communicate()
 
-        print('## Setting new k8_namespace [{k8_namespace}] as default'.format(
-            k8_namespace=k8_namespace))
+        logger.info(
+            '## Setting new k8_namespace [{k8_namespace}] as default',
+            k8_namespace=k8_namespace)
         cmd = (
             "kubectl config set-context --current "
             "--namespace={k8_namespace}")
@@ -105,43 +108,50 @@ class Kubernets:
             disk_name=disk_name, disk_size=disk_size,
             volume_claim_name=volume_claim_name)
 
-    def run_deploy_commmands(self, cmds: List[dict]):
-        """Run generated deploy shell scripts in sequence.
+    def run_deploy_commmands(self, cmds: list[PumpwoodDeployCMD]):
+        """Run generated audit shell scripts in sequence.
 
-        Each command may include a sleep interval so cluster resources
-        can finish provisioning before the next apply.
+        Each script is written during file generation with a trailing
+        ``sleep`` so manual replay matches automated execution.
 
         Args:
-            cmds (List[dict]):
-                Deploy command descriptors with ``command``, ``file``,
-                and optional ``sleep`` keys.
+            cmds (list[PumpwoodDeployCMD]):
+                Deploy command objects. Only ``PumpwoodDeployCMDRun`` is
+                supported.
+
+        Returns:
+            None:
+                Always returns None.
 
         Raises:
             NotImplementedError:
-                If a command type other than ``run`` is requested.
+                If a command type other than ``PumpwoodDeployCMDRun`` is
+                requested.
+            ValueError:
+                If an audit script path is outside ``outputs/``.
+            subprocess.CalledProcessError:
+                If a deploy script exits with a non-zero status.
         """
+        outputs_root = Path('outputs').resolve()
         for c in cmds:
-            if c['command'] == 'run':
-                sleep_time = c.get('sleep', 5)
-                if sleep_time is None:
-                    sleep_time = 5
+            if isinstance(c, PumpwoodDeployCMDRun):
+                script_path = Path(c.file).resolve()
+                if outputs_root not in script_path.parents:
+                    msg = (
+                        "Audit script outside outputs/: {path}").format(
+                            path=script_path)
+                    raise ValueError(msg)
 
-                print('### Running file: ' + c['file'])
-                print('##### Slepping for %s seconds after' % (sleep_time, ))
-                with open(c['file'], 'r') as file:
-                    file_cmd = file.read()
-
-                # Colocando o shebangs no inicio do arquivo
-                with open(c['file'], 'w') as file:
-                    file.write(
-                        "#!/bin/sh\n" + file_cmd + "\nsleep %s" % (
-                            sleep_time, ))
-                # Commands associated with deploy are generated at the deploy
-                # package
-                subprocess.call(c['file']) # NOQA
+                logger.info(
+                    '### Running audit script: {file}',
+                    file=str(script_path))
+                subprocess.run(
+                    ['/bin/sh', str(script_path)],
+                    check=True)
             else:
-                raise NotImplementedError('Command not implemented: %s' % (
-                    c['command'],))
+                msg = 'Command not implemented: {cmd}'.format(
+                    cmd=type(c).__name__)
+                raise NotImplementedError(msg)
 
 
 class KubernetsGCP:
@@ -151,38 +161,33 @@ class KubernetsGCP:
     cloud providers.
     """
 
-    def __init__(self, cluster_name: str, zone: str, project: str,
-                 **kwargs):
+    def __init__(self, k8_deploy_args: PumpwoodDeployK8sParameterGCP):
         """Connect to a GKE cluster using gcloud credentials.
 
         Args:
-            cluster_name (str):
-                GKE cluster name that receives manifest applications.
-            zone (str):
-                GCP zone where the cluster is deployed.
-            project (str):
-                Google Cloud project identifier.
-            **kwargs (dict):
-                Extra parameters kept for backward compatibility.
+            k8_deploy_args (PumpwoodDeployK8sParameterGCP):
+                GCP cluster connection parameters.
 
         Raises:
-            Exception:
+            RuntimeError:
                 If cluster credential retrieval fails.
         """
-        self.cluster_name = cluster_name
-        self.zone = zone
-        self.project = project
+        self.cluster_name = k8_deploy_args.cluster_name
+        self.zone = k8_deploy_args.zone
+        self.project = k8_deploy_args.project
 
         cmd = (
             "gcloud container clusters get-credentials {cluster_name} "
             " --zone {zone} --project {project}")
         cmd_formated = cmd.format(
-            cluster_name=cluster_name, zone=zone, project=project)
+            cluster_name=self.cluster_name, zone=self.zone,
+            project=self.project)
 
-        print('## Loging to kubernets cluster')
-        status_code = os.system(cmd_formated) # NOQA
+        logger.info('## Loging to kubernets cluster')
+        status_code = os.system(cmd_formated)  # noqa: S605
         if status_code != 0:
-            raise Exception("!! Error loging to k8s cluster, check logs !!")
+            msg = "Error loging to k8s cluster, check logs"
+            raise RuntimeError(msg)
 
     def create_volume_yml(self, disk_name: str, disk_size: str,
                           volume_claim_name: str) -> str:
@@ -221,54 +226,42 @@ class KubernetsAzure:
     aks_resource: str
     """AKS cluster resource name."""
 
-    def __init__(self, subscription: str, resource_group: str,
-                 k8s_resource_group: str, aks_resource: str,
-                 **kwargs):
+    def __init__(self, k8_deploy_args: PumpwoodDeployK8sParameterAzure):
         """Connect to an Azure Kubernetes Service cluster.
 
         Args:
-            subscription (str):
-                Azure subscription ID.
-            resource_group (str):
-                Resource group used to deploy the AKS cluster.
-            k8s_resource_group (str):
-                Resource group created by AKS for cluster components.
-            aks_resource (str):
-                AKS cluster resource name.
-            **kwargs (dict):
-                Extra parameters kept for backward compatibility.
+            k8_deploy_args (PumpwoodDeployK8sParameterAzure):
+                Azure cluster connection parameters.
 
         Raises:
-            Exception:
+            RuntimeError:
                 If subscription selection or credential retrieval fails.
         """
-        self.subscription = subscription
-        self.resource_group = resource_group
-        self.k8s_resource_group = k8s_resource_group
-        self.aks_resource = aks_resource
+        self.subscription = k8_deploy_args.subscription
+        self.resource_group = k8_deploy_args.resource_group
+        self.k8s_resource_group = k8_deploy_args.k8s_resource_group
+        self.aks_resource = k8_deploy_args.aks_resource
 
-        print('## Setting az client subscription')
+        logger.info('## Setting az client subscription')
         cmd = "az account set --subscription {subscription}"
-        cmd_formated = cmd.format(subscription=subscription)
-        status_code = os.system(cmd_formated) # NOQA
+        cmd_formated = cmd.format(subscription=self.subscription)
+        status_code = os.system(cmd_formated)  # noqa: S605
         if status_code != 0:
-            raise Exception(
-                "!! Error setting Azure subscription, check logs !!")
+            msg = "Error setting Azure subscription, check logs"
+            raise RuntimeError(msg)
 
-        process = subprocess.Popen(cmd_formated.split()) # NOQA
-        process.communicate()
-
-        print('## Loging to kubernets cluster')
+        logger.info('## Loging to kubernets cluster')
         cmd = (
             "az aks get-credentials --overwrite-existing "
             "--resource-group {resource_group} "
             "--name {aks_resource} \n")
         cmd_formated = cmd.format(
-            resource_group=resource_group,
-            aks_resource=aks_resource)
-        status_code = os.system(cmd_formated)  # NOQA
+            resource_group=self.resource_group,
+            aks_resource=self.aks_resource)
+        status_code = os.system(cmd_formated)  # noqa: S605
         if status_code != 0:
-            raise Exception("!! Error loging to k8s cluster, check logs !!")
+            msg = "Error loging to k8s cluster, check logs"
+            raise RuntimeError(msg)
 
     def create_volume_yml(self, disk_name: str, disk_size: str,
                           volume_claim_name: str) -> str:
@@ -305,33 +298,31 @@ class KubernetsAWS:
     cluster_name: str
     """EKS cluster name."""
 
-    def __init__(self, region: str, cluster_name: str, **kwargs):
+    def __init__(self, k8_deploy_args: PumpwoodDeployK8sParameterAWS):
         """Connect to an AWS Elastic Kubernetes Service cluster.
 
         Args:
-            region (str):
-                AWS region where the cluster is deployed.
-            cluster_name (str):
-                EKS cluster name.
-            **kwargs (dict):
-                Extra parameters kept for backward compatibility.
+            k8_deploy_args (PumpwoodDeployK8sParameterAWS):
+                AWS cluster connection parameters.
 
         Raises:
-            Exception:
+            RuntimeError:
                 If kubeconfig update fails.
         """
-        self.region = region
-        self.cluster_name = cluster_name
+        self.region = k8_deploy_args.region
+        self.cluster_name = k8_deploy_args.cluster_name
 
-        print('## Loging to kubernets cluster')
+        logger.info('## Loging to kubernets cluster')
         cmd = (
             "aws eks --region {region} "
             "update-kubeconfig --name {cluster_name}")
         cmd_formated = cmd.format(
-            region=region, cluster_name=cluster_name)
-        status_code = os.system(cmd_formated)  # NOQA
+            region=k8_deploy_args.region,
+            cluster_name=k8_deploy_args.cluster_name)
+        status_code = os.system(cmd_formated)  # noqa: S605
         if status_code != 0:
-            raise Exception("!! Error loging to k8s cluster, check logs !!")
+            msg = "Error loging to k8s cluster, check logs"
+            raise RuntimeError(msg)
 
     def create_volume_yml(self, disk_name: str, disk_size: str,
                           volume_claim_name: str) -> str:

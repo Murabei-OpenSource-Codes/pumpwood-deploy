@@ -20,6 +20,10 @@ class PumpwoodDeployStorageGCP(PumpwoodDeployStorage):
             credential_file (str):
                 Path to the service account JSON file. The file must
                 be named ``key-storage.json`` for container mounts.
+
+        Returns:
+            None:
+                Always returns None.
         """
         self.credential_file = credential_file
 
@@ -35,6 +39,10 @@ class PumpwoodDeployStorageAzure(PumpwoodDeployStorage):
         Args:
             storage_connection_string (str):
                 Azure Blob Storage connection string.
+
+        Returns:
+            None:
+                Always returns None.
         """
         self.storage_connection_string = storage_connection_string
 
@@ -53,6 +61,10 @@ class PumpwoodDeployStorageAWS(PumpwoodDeployStorage):
                 Access key ID for the S3 service user.
             secret_access_key (str):
                 Secret access key for the S3 service user.
+
+        Returns:
+            None:
+                Always returns None.
         """
         self.access_key_id = access_key_id
         self.secret_access_key = secret_access_key

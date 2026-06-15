@@ -66,9 +66,8 @@ class StandardMicroservices(BasePumpwoodDeployMicroservice):
                  rabbitmq_password: str,
                  rabbitmq_version: str,
                  model_user_password: str,
-                 storage_type: str,
-                 storage_deploy_args: PumpwoodDeployStorage | None,
                  storage_bucket_name: str,
+                 storage_deploy_args: PumpwoodDeployStorage | None,
                  hash_salt: str,
                  crypto_fernet_key: str,
                  kong_version: str,
@@ -78,7 +77,7 @@ class StandardMicroservices(BasePumpwoodDeployMicroservice):
                  kong_db_host: str,
                  kong_db_port: str,
                  rabbitmq_repository: str = 'docker.io/library',
-                 kong_repository: str = 'docker.io/library/andrebaceti'):
+                 kong_repository: str = 'andrebaceti'):
         """Initialize StandardMicroservices deployment configuration.
 
         Args:
@@ -88,9 +87,6 @@ class StandardMicroservices(BasePumpwoodDeployMicroservice):
                 Container image tag for RabbitMQ.
             model_user_password (str):
                 Password for the model microservice user.
-            storage_type (str):
-                Storage provider; one of ``azure_storage``,
-                ``google_bucket``, or ``aws_s3``.
             storage_deploy_args (PumpwoodDeployStorage | None):
                 Storage arguments object, or ``None`` when credentials
                 are supplied by the Kubernetes provider role.
@@ -123,8 +119,7 @@ class StandardMicroservices(BasePumpwoodDeployMicroservice):
         self._gcp_credential_file = None
 
         # Set the storage configuration
-        self.set_storage_parameters(
-            storage_type=storage_type,
+        storage_type = self.set_storage_parameters(
             storage_deploy_args=storage_deploy_args)
 
         # General secrets
@@ -155,30 +150,22 @@ class StandardMicroservices(BasePumpwoodDeployMicroservice):
         self._kong_db_password = base64.b64encode(
             kong_db_password.encode()).decode()
 
-    def set_storage_parameters(self,
-                               storage_type: Literal["aws_s3", "gcp_bucket",
-                                                     "azure_storage"],
-                               storage_deploy_args: PumpwoodDeployStorage |
-                                                    None
-                               ) -> None:
+    def set_storage_parameters(
+                self, storage_deploy_args: PumpwoodDeployStorage | None
+                ) -> Literal["aws_s3", "google_bucket", "azure_storage"] | None: # NOQA
         """Set storage credentials and parameters based on storage type.
 
         Args:
-            storage_type (Literal["aws_s3", "gcp_bucket", "azure_storage"]):
-                The storage type used by standard microservices.
             storage_deploy_args (PumpwoodDeployStorage | None):
                 Deployment storage configuration arguments.
 
         Returns:
-            None:
-                Always returns None.
+            Literal["aws_s3", "google_bucket", "azure_storage"] | None:
+                The storage type used by standard microservices.
 
         Raises:
-            ValueError:
-                If the storage_deploy_args type does not match storage_type,
-                or if credential parameters are invalid.
             NotImplementedError:
-                If storage_type is not a supported/implemented provider.
+                If storage_deploy_args is not a supported/implemented provider.
         """
         # Set default values for the storage parameters
         self._azure_storage_connection_string = base64.b64encode(
@@ -188,71 +175,50 @@ class StandardMicroservices(BasePumpwoodDeployMicroservice):
         self._aws_secret_access_key = base64.b64encode(
             "not_configured".encode()).decode()
 
-        # Using Azure blob storage for flat files
         if storage_deploy_args is None:
             return None
 
-        if storage_type == "azure_storage":
-            is_valid = isinstance(
-                storage_deploy_args, PumpwoodDeployStorageAzure)
-            if not is_valid:
-                msg = (
-                    "Azure storage_deploy_args must be a "
-                    "PumpwoodDeployStorageAzure object.")
-                raise ValueError(msg)
-            self._azure_storage_connection_string = base64.b64encode(
-                storage_deploy_args
+        if isinstance(storage_deploy_args, PumpwoodDeployStorageAzure):
+            # It is possible to pass the credentials by the Kubernetes
+            # provider role. In this case, the credentials are not encoded.
+            storage_connection_string = storage_deploy_args\
                 .storage_connection_string
-                .encode()).decode()
-            return None
+            if storage_connection_string is None:
+                return "azure_storage"
 
-        # Using GCP Storage Buckets storage for flat files
-        elif storage_type == "google_bucket":
-            is_valid = isinstance(
-                storage_deploy_args, PumpwoodDeployStorageGCP)
-            if not is_valid:
-                msg = (
-                    "GCP storage_deploy_args must be a "
-                    "PumpwoodDeployStorageGCP object.")
-                raise ValueError(msg)
+            # If passed, set the credentials and return the storage type.
+            storage_connection_string = storage_connection_string.encode()
+            self._azure_storage_connection_string = base64.b64encode(
+                storage_connection_string).decode()
+            return "azure_storage"
 
+        if isinstance(storage_deploy_args, PumpwoodDeployStorageGCP):
             credential_file = storage_deploy_args.credential_file
-            if not isinstance(credential_file, str):
-                raise ValueError(
-                    "GCP storage must have credential_file args.")
-
-            # Deploy at containers will use a file named as
-            # key-storage.json using a different name for de the will
-            # result on deploy with not found file error.
-            is_valid = credential_file.endswith('key-storage.json')
-            if not is_valid:
-                msg = (
-                    "Key storage file must be named 'key-storage.json', "
-                    "change file name in order to deploy work.")
-                raise ValueError(msg)
             self._gcp_credential_file = credential_file
-            return None
+            return "google_bucket"
 
-        # Using AWS S3 for flat files
-        elif storage_type == "aws_s3":
-            is_valid = isinstance(
-                storage_deploy_args, PumpwoodDeployStorageAWS)
-            if not is_valid:
-                msg = (
-                    "AWS storage_deploy_args must be a "
-                    "PumpwoodDeployStorageAWS object.")
-                raise ValueError(msg)
+        if isinstance(storage_deploy_args, PumpwoodDeployStorageAWS):
+            # It is possible to pass the credentials by the Kubernetes
+            # provider role. In this case, the credentials are not encoded.
+            access_key_id = storage_deploy_args.access_key_id
+            secret_access_key = storage_deploy_args.secret_access_key
+            if access_key_id is None or secret_access_key is None:
+                return "aws_s3"
 
+            # If passed, set the credentials and return the storage type.
+            access_key_id = access_key_id.encode()
+            secret_access_key = secret_access_key.encode()
             self._aws_access_key_id = base64.b64encode(
-                storage_deploy_args.access_key_id.encode()).decode()
+                access_key_id).decode()
             self._aws_secret_access_key = base64.b64encode(
-                storage_deploy_args.secret_access_key.encode()).decode()
-            return None
+                secret_access_key).decode()
+            return "aws_s3"
 
         # Raise if another option is passed as arguments
-        else:
-            msg = "storage_type not implemented: {}".format(storage_type)
-            raise NotImplementedError(msg)
+        storage_type_name = storage_deploy_args.__class__.__name__
+        msg = "storage_deploy_args not implemented: {storage_type_name}"\
+            .format(storage_type_name=storage_type_name)
+        raise NotImplementedError(msg)
 
     def create_deployment_file(self) -> list[PumpwoodDeploy]:
         """Create and format the lists of Kubernetes manifests.
@@ -269,7 +235,7 @@ class StandardMicroservices(BasePumpwoodDeployMicroservice):
             password=self._rabbitmq_password)
 
         # Hash Salt
-        hash_salt_formated = secret__general.format(
+        secret_general_formated = secret__general.format(
             hash_salt=self._hash_salt,
             crypto_fernet_key=self._crypto_fernet_key)
 
@@ -281,7 +247,7 @@ class StandardMicroservices(BasePumpwoodDeployMicroservice):
         # Storages #
         storage_config_map_fmt = storage_config_map.format(
             storage_type=self.storage_type,
-            bucket_name=self.storage_bucket_name)
+            storage_bucket_name=self.storage_bucket_name)
 
         # Azure connection string secrets
         azure__storage_key_secrets_fmt = azure__storage_key_secrets.format(
@@ -316,37 +282,37 @@ class StandardMicroservices(BasePumpwoodDeployMicroservice):
                 content=rabbitmq_deployment_formated,
                 sleep=0),
 
-            # Hash salt
+            # General secrets
             PumpwoodDeploySecret(
-                name='hash_salt__secrets', content=hash_salt_formated,
-                sleep=5),
+                name='general__secrets', content=secret_general_formated,
+                sleep=0),
 
             # General secret for all models
             PumpwoodDeploySecret(
                 name='microsservice_model__secrets',
                 content=microservice_model_secrets_formated,
-                sleep=5),
+                sleep=0),
 
             # Kong service mesh
             PumpwoodDeploySecret(
                 name='kong__secrets', content=secret_kong_fmt,
-                sleep=5),
+                sleep=0),
             PumpwoodDeployDeployment(
                 name='kong__deployment', content=kong_deployment_fmt,
-                sleep=0),
+                sleep=5),
 
             # Storage secrets and config
             PumpwoodDeployConfigMap(
                 name='storage-config', content=storage_config_map_fmt,
-                sleep=5),
+                sleep=0),
             PumpwoodDeploySecret(
                 name='azure__storage_key',
                 content=azure__storage_key_secrets_fmt,
-                sleep=5),
+                sleep=0),
             PumpwoodDeploySecret(
                 name='aws__storage_key',
                 content=aws__storage_key_secrets_fmt,
-                sleep=5)
+                sleep=0)
         ]
 
         # Add deploy of the google credential file if set

@@ -186,7 +186,7 @@ class PGBouncerDatabase(BasePumpwoodDeployMicroservice):
 
         Returns:
             list[PumpwoodDeploy]:
-                Deployment object for the configured PgBouncer instance.
+                Single-element list with the PgBouncer deployment object.
         """
         deployment_postgres_text_f = pgbouncer_deploy.format(
             name=self.name, postgres_secret=self.postgres_secret,

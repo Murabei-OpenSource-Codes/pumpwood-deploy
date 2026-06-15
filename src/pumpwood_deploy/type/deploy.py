@@ -17,7 +17,7 @@ class PumpwoodDeploySecret(PumpwoodDeploy):
     content: str
     """Rendered YAML content."""
     _type: str = "secrets"
-    sleep: int = 5
+    sleep: int = 0
     """Seconds to wait after applying the manifest."""
     namespace: str | None = None
     """Optional target namespace override."""
@@ -29,10 +29,10 @@ class PumpwoodDeploySecretFile(PumpwoodDeploy):
     """Kubernetes Secret created from one or more local files."""
     name: str
     """Secret resource name."""
-    path: str
-    """Local file path or list of paths serialized for deploy."""
+    path: str | list[str]
+    """Local file path or list of paths used by kubectl."""
     _type: str = "secrets_file"
-    sleep: int = 5
+    sleep: int = 0
     """Seconds to wait after applying the secret."""
     namespace: str | None = None
     """Optional target namespace override."""
@@ -47,7 +47,7 @@ class PumpwoodDeployDeployment(PumpwoodDeploy):
     content: str
     """Rendered YAML content."""
     _type: str = "deploy"
-    sleep: int = 5
+    sleep: int = 0
     """Seconds to wait after applying the manifest."""
     namespace: str | None = None
     """Optional target namespace override."""
@@ -62,7 +62,7 @@ class PumpwoodDeployConfigMap(PumpwoodDeploy):
     content: str
     """Rendered YAML content."""
     _type: str = "configmap"
-    sleep: int = 5
+    sleep: int = 0
     """Seconds to wait after applying the manifest."""
     namespace: str | None = None
     """Optional target namespace override."""
@@ -85,7 +85,7 @@ class PumpwoodDeployConfigMapFile(PumpwoodDeploy):
     """Optional ConfigMap data key override."""
     namespace: str | None = None
     """Optional target namespace override."""
-    sleep: int = 5
+    sleep: int = 0
     """Seconds to wait after applying the manifest."""
     _RENAME_FIELDS: ClassVar[dict[str, str]] = {"_type": "type"}
 
