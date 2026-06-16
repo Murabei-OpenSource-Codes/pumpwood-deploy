@@ -25,10 +25,12 @@ from .type import (
 
     PumpwoodDeployCMD, PumpwoodDeployCMDRun)
 from .abc import BasePumpwoodDeployMicroservice
+from .cryptography import generate_fernet_key
 
 
 
 __all__ = [
+    generate_fernet_key,
     BasePumpwoodDeployMicroservice,
 
     PostgresDatabase, ExternalPostgresDatabaseSecret, PGBouncerDatabase, 
