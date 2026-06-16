@@ -16,7 +16,8 @@ classifiers = [
 dependencies = [
   'jinja2',
   'simplejson>=3.19.3',
-  'loguru'
+  'loguru',
+  'cryptography'
 ]
 
 [tool.poetry]
