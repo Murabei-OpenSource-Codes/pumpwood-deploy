@@ -1,145 +1,126 @@
-"""Pumpwood Deploy."""
+"""Orchestrate Pumpwood microservice deployment on Kubernetes."""
+from typing import Literal
 import os
 import stat
 import shutil
-import pkg_resources
-from typing import List
-from pumpwood_deploy.microservices.standard.deploy import (
-    StandardMicroservices)
-from pumpwood_deploy.kubernets.kubernets import Kubernets
+from loguru import logger
+from importlib import resources
 from jinja2 import Template
+from pumpwood_deploy.kubernets.kubernets import Kubernets
+from pumpwood_deploy.abc import BasePumpwoodDeployMicroservice
+from pumpwood_deploy.type import (
+    PumpwoodDeployK8sParameter,
+    PumpwoodDeploySecret, PumpwoodDeployDeployment,
+    PumpwoodDeployConfigMap, PumpwoodDeployVolume, PumpwoodDeployCMDRun,
+    PumpwoodDeploy, PumpwoodDeploySecretFile, PumpwoodDeployConfigMapFile,
+    PumpwoodDeployService)
 
 
-create_kube_cmd = pkg_resources.resource_stream(
-    'pumpwood_deploy',
-    'kubernets/bash_templates/kubectl_apply.sh').read().decode()
+create_kube_cmd = resources.files('pumpwood_deploy')\
+    .joinpath('kubernets/bash_templates/kubectl_apply.sh')\
+    .read_text(encoding='utf-8')
 """@private"""
-secret_file_template = Template(pkg_resources.resource_stream(
-    'pumpwood_deploy',
-    'kubernets/bash_templates/secret_file.sh').read().decode())
+secret_file_template = Template(
+    resources.files('pumpwood_deploy')
+    .joinpath('kubernets/bash_templates/secret_file.sh')
+    .read_text(encoding='utf-8'))
 """@private"""
-configmap_template = Template(pkg_resources.resource_stream(
-    'pumpwood_deploy',
-    'kubernets/bash_templates/configmap.sh').read().decode())
+configmap_template = Template(
+    resources.files('pumpwood_deploy')
+    .joinpath('kubernets/bash_templates/configmap.sh')
+    .read_text(encoding='utf-8'))
 """@private"""
-configmap_keyname_template = Template(pkg_resources.resource_stream(
-    'pumpwood_deploy',
-    'kubernets/bash_templates/configmap_keyname.sh').read().decode())
+configmap_keyname_template = Template(
+    resources.files('pumpwood_deploy')
+    .joinpath('kubernets/bash_templates/configmap_keyname.sh')
+    .read_text(encoding='utf-8'))
 """@private"""
+
+
+def _write_executable_script(script_path, body, sleep=0):
+    """Write a runnable audit shell script for manual deploy replay.
+
+    Args:
+        script_path (str):
+            Destination path for the shell script.
+        body (str):
+            Shell commands to include before the trailing sleep.
+        sleep (int):
+            Seconds to pause at the end of the script. Defaults to 0.
+
+    Returns:
+        None:
+            Always returns None.
+    """
+    template = (
+        "#!/bin/sh\n"
+        "set -eu\n"
+        "{body}\n"
+        "sleep {sleep}\n")
+    content = template.format(body=body.rstrip(), sleep=sleep)
+    with open(script_path, 'w') as file:
+        file.write(content)
+    os.chmod(script_path, stat.S_IRWXU)
 
 
 class DeployPumpWood():
-    """Class to perform PumpWood Deploy."""
+    """Orchestrate Pumpwood microservice deployment on Kubernetes."""
 
     kube_client: Kubernets
-    """Kubernets client reposible for creation of discs acording to provider
-       and other vendor specific operations."""
+    """Kubernetes client for disk creation and provider operations."""
     namespace: str
-    """Name space that will be used to deploy Pumpwood."""
-    microsservices_to_deploy: List
-    """List of microservice objects that will be used to deploy de
-       application."""
+    """Namespace used to deploy Pumpwood resources."""
+    microsservices_to_deploy: list
+    """Microservice objects registered for deployment."""
     base_path: str
-    """Base path that will be used to create manifest file and bash scripts."""
+    """Base path for generated manifest files and bash scripts."""
 
-    def __init__(self, model_user_password: str,
-                 rabbitmq_secret: str,
-                 hash_salt: str,
-                 kong_db_disk_name: str,
-                 kong_db_disk_size: str, k8_provider: str,
-                 k8_deploy_args: dict, storage_type: str,
-                 storage_deploy_args: str, k8_namespace="pumpwood",
-                 gateway_health_url: str = "health-check/pumpwood-auth-app/",
-                 kong_repository: str = "gcr.io/repositorio-geral-170012"):
-        """__init__.
+    def __init__(self, k8_namespace: str,
+                 k8_deploy_args: PumpwoodDeployK8sParameter):
+        """Initialize the Pumpwood deployment manager.
 
         Args:
-            model_user_password (str):
-                Password of models microservice.
-            rabbitmq_secret (str):
-                Password associated with RabbitMQ user.
-            hash_salt (str):
-                Salt for hashs in deployment.
-            cluster_zone (str):
-                Kubernets cluster zone.
-            cluster_project (str):
-                Kubernets project name.
-            k8_provider (str):
-                Kubernets provider, so far must be in `['gcp', 'azure',
-                'aws']`.
-            k8_deploy_args (dict):
-                Arguments to deploy k8s cluster it may
-                vary depending on the provider. Check classes
-                `KubernetsGCP`, `KubernetsAzure` and `KubernetsAWS`.
-            kong_db_disk_name (str):
-                Name of the disk for Postgres associated with Kong service
-                mesh.
-            kong_db_disk_size (str):
-                Size of the disk that will be attached to Kong Postgres.
-            storage_type (str):
-                Storage provider must be in `['azure_storage', 'google_bucket',
-                'aws_s3']`, correpond to the provider os the flat file
-                storage system.
-            storage_deploy_args (str):
-                Args used to access storage at the
-                pods. Each provider must have diferent arguments:<br>
-                **Azure:**
-                - storage_connection_string: Set conenction string to
-                    a blob storage.
-
-                **GCP:** <br>
-                - credential_file: Set a path to a credetial file of a service
-                    user with access to the bucket that will be used at the
-                    deployment.
-
-                **AWS:** <br>
-                - aws_access_key_id: Access key of the service user with
-                    access to the s3 used in deployment.
-                - aws_secret_access_key: Access secret of the service user with
-                    access to the s3 used in deployment.
             k8_namespace (str):
-                Which namespace to deploy the system.
-            gateway_health_url (str):
-                Health check url that will be used. Usually it is good to
-                set health check of auth microservice since it has a mandatory
-                deploy for Pumpwood.
-            kong_repository (str):
-                Kong service mesh custom image repository.
+                Target namespace for deployment resources.
+            k8_deploy_args (PumpwoodDeployK8sParameter):
+                Provider-specific cluster connection parameters.
+                Use ``PumpwoodDeployK8sParameterAWS`` for AWS,
+                ``PumpwoodDeployK8sParameterGCP`` for GCP, or
+                ``PumpwoodDeployK8sParameterAzure`` for Azure.
         """
         self.deploy = []
+
+        # Create an instance of the K8s object that will make the
+        # communication with provider
         self.kube_client = Kubernets(
-            k8_namespace=k8_namespace, k8_provider=k8_provider,
-            k8_deploy_args=k8_deploy_args)
+            k8_namespace=k8_namespace, k8_deploy_args=k8_deploy_args)
         self.namespace = k8_namespace
-
-        standard_microservices = StandardMicroservices(
-            hash_salt=hash_salt,
-            rabbit_password=rabbitmq_secret,
-            kong_db_disk_name=kong_db_disk_name,
-            kong_db_disk_size=kong_db_disk_size,
-            kong_repository=kong_repository,
-            model_user_password=model_user_password,
-            storage_type=storage_type,
-            storage_deploy_args=storage_deploy_args)
-
-        self.microsservices_to_deploy = [
-            standard_microservices]
+        self.microsservices_to_deploy = []
         self.base_path = os.getcwd()
 
-    def add_microservice(self, microservice):
-        """Add microservice to deploy stack.
+    def add_microservice(self, microservice: BasePumpwoodDeployMicroservice):
+        """Add a microservice to the deployment stack.
 
         Args:
-            microservice (Microservice object):
-                A microservice object to be added to deployment stack.
+            microservice (BasePumpwoodDeployMicroservice):
+                Microservice object whose manifests will be generated.
+
+        Returns:
+            None:
+                Always returns None.
         """
         self.microsservices_to_deploy.append(microservice)
 
     def create_deploy_files(self):
         """Create all deployment manifests and scripts.
 
-        Interate over `microsservices_to_deploy` creating deploy files at
+        Iterate over `microsservices_to_deploy` creating deploy files at
         `./outputs/` folder.
+
+        Returns:
+            dict:
+                A dictionary containing two lists of PumpwoodDeployCMDRun
+                objects: 'service_cmds' and 'microservice_cmds'.
         """
         sevice_cmds = []
         deploy_cmds = []
@@ -147,9 +128,7 @@ class DeployPumpWood():
         counter = 0
         service_counter = 0
 
-        ###################################################################
-        # Limpa o deploy anterior e cria as pastas para receber os arquivos
-        # do novo deploy
+        # Clear directory before creating deploy files
         if os.path.exists('outputs/deploy_output'):
             shutil.rmtree('outputs/deploy_output')
         os.makedirs('outputs/deploy_output')
@@ -159,163 +138,291 @@ class DeployPumpWood():
             shutil.rmtree('outputs/services_output')
         os.makedirs('outputs/services_output')
         os.makedirs('outputs/services_output/resources/')
-        ###################################################################
 
-        #####################################################################
-        # Usa os arqivos de template e subistitui com as variáveis para criar
-        # os templates de deploy
-        print('### Creating microservices files:')
-        # m = self.microsservices_to_deploy[0]
+        # Use the template files to create bash scripts to deploy the
+        # resources at k8s cluster
+        logger.info('Creating microservices files:')
         for m in self.microsservices_to_deploy:
-            print('\nProcessing: ' + str(m))
-            temp_deployments = m.create_deployment_file(
-                kube_client=self.kube_client)
+            class_name = type(m).__name__
+            logger.info('# Processing: {class_name}', class_name=class_name)
+            temp_deployments = m.create_deployment_file()
             for d in temp_deployments:
+                deploy_name = getattr(d, 'name', type(d).__name__)
+                logger.info(
+                    '### Creating deploy file: {name}',
+                    name=str(deploy_name))
                 # Create a counter to order the files in the deploy
                 str_counter = "%03d" % (counter, )
                 str_service_counter = "%03d" % (service_counter, )
 
-                # Create Kubernets deploy files using yml string content
-                if d['type'] in ['secrets', 'deploy', 'volume', 'configmap']:
-                    file_name_temp = 'resources/{counter}__{name}.yml'
-                    file_name = file_name_temp.format(
-                        counter=str_counter, name=d['name'])
-
-                    print('Creating deploy: ' + file_name)
-                    with open('outputs/deploy_output/' +
-                              file_name, 'w') as file:
-                        file.write(d['content'])
-
-                    file_name_sh_temp = (
-                        'outputs/deploy_output/{counter}__{name}.sh')
-                    file_name_sh = file_name_sh_temp.format(
-                        counter=str_counter, name=d['name'])
-
-                    deploy_namespace = d.get("namespace", self.namespace)
-                    with open(file_name_sh, 'w') as file:
-                        content = create_kube_cmd.format(
-                            file=file_name, namespace=deploy_namespace)
-                        file.write(content)
-                    os.chmod(file_name_sh, stat.S_IRWXU)
-
-                    deploy_cmds.append({
-                        'command': 'run', 'file': file_name_sh,
-                        'sleep': d.get('sleep')})
+                # Process de deployment according to the deployment
+                # class
+                simple_types = (
+                    PumpwoodDeploySecret, PumpwoodDeployDeployment,
+                    PumpwoodDeployConfigMap)
+                if isinstance(d, simple_types):
+                    simple_deploy = self.process_simple_deploy(
+                        d=d, str_counter=str_counter)
+                    deploy_cmds.append(simple_deploy)
                     counter = counter + 1
+                    continue
 
-                # Create a secret from a file
-                elif d['type'] == 'secrets_file':
-                    # Legacy path set as string
-                    if type(d["path"]) is str:
-                        d["path"] = [d["path"]]
-
-                    deploy_namespace = d.get("namespace", self.namespace)
-                    command_formated = secret_file_template.render(
-                        name=d["name"], paths=d["path"],
-                        namespace=deploy_namespace)
-                    file_name_temp = (
-                        'outputs/deploy_output/{counter}__{name}.sh')
-                    file_name = file_name_temp.format(
-                        counter=str_counter, name=d['name'])
-
-                    print('Creating secrets_file: ' + file_name)
-                    with open(file_name, 'w') as file:
-                        file.write(command_formated)
-                    os.chmod(file_name, stat.S_IRWXU)
-                    deploy_cmds.append({
-                        'command': 'run', 'file': file_name,
-                        'sleep': d.get('sleep')})
+                # Process secret files
+                if isinstance(d, PumpwoodDeploySecretFile):
+                    deploy_cmd = self.process_secrets_file(
+                        d=d, str_counter=str_counter)
+                    deploy_cmds.append(deploy_cmd)
                     counter = counter + 1
+                    continue
 
-                # Create ConfigMap from a file
-                elif d['type'] == 'configmap_file':
-                    file_name_resource_temp = 'resources/{name}'
-                    file_name_resource = file_name_resource_temp.format(
-                        name=d['file_name'])
-
-                    if 'content' in d.keys():
-                        with open('outputs/deploy_output/' +
-                                  file_name_resource, 'w') as file:
-                            file.write(d['content'])
-                    elif 'file_path' in d.keys():
-                        with open(d['file_path'], 'rb') as file:
-                            file_data = file.read()
-                        with open('outputs/deploy_output/' +
-                                  file_name_resource, 'wb') as file:
-                            file.write(file_data)
-
-                    command_formated = None
-                    deploy_namespace = d.get("namespace", self.namespace)
-                    if d.get('keyname') is None:
-                        command_formated = configmap_template.format(
-                            name=d['name'], file_name=file_name_resource,
-                            namespace=deploy_namespace)
-                    else:
-                        command_formated = configmap_keyname_template.format(
-                            name=d['name'], file_name=file_name_resource,
-                            keyname=d['keyname'], namespace=deploy_namespace)
-
-                    file_name_temp = (
-                        'outputs/deploy_output/{counter}__{name}.sh')
-                    file_name = file_name_temp.format(
-                        counter=str_counter, name=d['name'])
-
-                    print('Creating configmap: ' + file_name)
-                    with open(file_name, 'w') as file:
-                        file.write(command_formated)
-                    deploy_cmds.append({
-                        'command': 'run', 'file': file_name,
-                        'sleep': d.get('sleep')})
-                    os.chmod(file_name, stat.S_IRWXU)
+                # Process config maps files
+                if isinstance(d, PumpwoodDeployConfigMapFile):
+                    deploy_cmd = self.process_configmap_file(
+                        d=d, str_counter=str_counter)
+                    deploy_cmds.append(deploy_cmd)
                     counter = counter + 1
+                    continue
 
-                # Create services and load-balacers
-                elif d['type'] == 'services':
-                    file_name_temp = 'resources/{service_counter}__{name}.yml'
-                    file_name = file_name_temp.format(
-                        service_counter=str_service_counter,
-                        name=d['name'])
+                # Process volume
+                if isinstance(d, PumpwoodDeployVolume):
+                    deploy_cmd = self.process_volume(
+                        d=d, str_counter=str_counter)
+                    deploy_cmds.append(deploy_cmd)
+                    counter = counter + 1
+                    continue
 
-                    print('Creating services: ' + file_name)
-                    with open('outputs/services_output/' +
-                              file_name, 'w') as file:
-                        file.write(d['content'])
-
-                    file_name_sh_temp = \
-                        'outputs/services_output/' +\
-                        '{service_counter}__{name}.sh'
-                    file_name_sh = file_name_sh_temp .format(
-                        service_counter=str_service_counter,
-                        name=d['name'])
-
-                    deploy_namespace = d.get("namespace", self.namespace)
-                    with open(file_name_sh, 'w') as file:
-                        content = create_kube_cmd.format(
-                            file=file_name, namespace=deploy_namespace)
-                        file.write(content)
-
-                    os.chmod(file_name_sh, stat.S_IRWXU)
-                    sevice_cmds.append({
-                        'command': 'run', 'file': file_name_sh,
-                        'sleep': d.get('sleep')})
+                # Process services
+                if isinstance(d, PumpwoodDeployService):
+                    deploy_cmd = self.process_service(
+                        d=d, str_service_counter=str_service_counter)
+                    sevice_cmds.append(deploy_cmd)
                     service_counter = service_counter + 1
+                    continue
 
-                elif d['type'] == 'endpoint_services':
-                    raise Exception('Not used anymore')
-                else:
-                    raise Exception('Type not implemented: %s' % (d['type'], ))
+                msg = (
+                    "Deployment type not implemented for microservice "
+                    "{microservice}: {deploy_type}").format(
+                        microservice=class_name,
+                        deploy_type=type(d).__name__)
+                raise NotImplementedError(msg)
 
         return {
             'service_cmds': sevice_cmds,
             'microservice_cmds': deploy_cmds}
 
-    def deploy_microservices(self):
-        """Create deploy files and apply them to de cluster."""
-        deploy_cmds = self.create_deploy_files()
-        print('\n\n###Deploying Services:')
-        self.kube_client.run_deploy_commmands(
-            deploy_cmds['service_cmds'])
+    def process_simple_deploy(self, d: PumpwoodDeploy,
+                              str_counter: str) -> PumpwoodDeployCMDRun:
+        """Process simple deployments.
 
-        print('\n\n###Deploying Microservices:')
+        Handles secrets, deployments, and config maps written as YAML
+        files plus matching ``kubectl apply`` shell scripts.
+
+        Args:
+            d (PumpwoodDeploy):
+                Deployment object to process.
+            str_counter (str):
+                Formatted counter string for ordering files.
+
+        Returns:
+            PumpwoodDeployCMDRun:
+                Command runner for the generated deploy script.
+        """
+        file_name_temp = 'resources/{counter}__{name}.yml'
+        file_name = file_name_temp.format(
+            counter=str_counter, name=d.name)
+
+        with open('outputs/deploy_output/' +
+                    file_name, 'w') as file:
+            file.write(d.content)
+        file_name_sh_temp = (
+            'outputs/deploy_output/{counter}__{name}.sh')
+        file_name_sh = file_name_sh_temp.format(
+            counter=str_counter, name=d.name)
+
+        deploy_namespace = d.namespace or self.namespace
+        script_body = create_kube_cmd.format(
+            file=file_name, namespace=deploy_namespace)
+        _write_executable_script(
+            script_path=file_name_sh, body=script_body, sleep=d.sleep)
+
+        return PumpwoodDeployCMDRun(
+            file=file_name_sh, sleep=d.sleep)
+
+    def process_secrets_file(self, d: PumpwoodDeploySecretFile,
+                             str_counter: str) -> PumpwoodDeployCMDRun:
+        """Process secret files deployment.
+
+        Args:
+            d (PumpwoodDeploySecretFile):
+                The secret file deployment object to process.
+            str_counter (str):
+                Formatted counter string for ordering files.
+
+        Returns:
+            PumpwoodDeployCMDRun:
+                Command runner for the generated secret script.
+        """
+        # Legacy path set as string
+        if isinstance(d.path, str):
+            d.path = [d.path]
+
+        deploy_namespace = d.namespace or self.namespace
+        command_formated = secret_file_template.render(
+            name=d.name, paths=d.path,
+            namespace=deploy_namespace)
+        file_name_temp = (
+            'outputs/deploy_output/{counter}__{name}.sh')
+        file_name = file_name_temp.format(
+            counter=str_counter, name=d.name)
+
+        _write_executable_script(
+            script_path=file_name, body=command_formated, sleep=d.sleep)
+        return PumpwoodDeployCMDRun(
+            file=file_name, sleep=d.sleep)
+
+    def process_configmap_file(self, d: PumpwoodDeployConfigMapFile,
+                               str_counter: str) -> PumpwoodDeployCMDRun:
+        """Process configmap file deployment.
+
+        Args:
+            d (PumpwoodDeployConfigMapFile):
+                The config map file object.
+            str_counter (str):
+                Formatted counter string for ordering files.
+
+        Returns:
+            PumpwoodDeployCMDRun:
+                Command runner for the generated config map script.
+        """
+        file_name_resource_temp = 'resources/{name}'
+        file_name_resource = file_name_resource_temp.format(
+            name=d.file_name)
+
+        if d.content is not None:
+            with open('outputs/deploy_output/' +
+                        file_name_resource, 'w') as file:
+                file.write(d.content)
+        else:
+            with open(d.file_path, 'rb') as file:
+                file_data = file.read()
+            with open('outputs/deploy_output/' +
+                        file_name_resource, 'wb') as file:
+                file.write(file_data)
+
+        command_formated = None
+        deploy_namespace = d.namespace or self.namespace
+        if d.keyname is None:
+            command_formated = configmap_template.format(
+                name=d.name, file_name=file_name_resource,
+                namespace=deploy_namespace)
+        else:
+            command_formated = configmap_keyname_template.format(
+                name=d.name, file_name=file_name_resource,
+                keyname=d.keyname, namespace=deploy_namespace)
+
+        file_name_temp = (
+            'outputs/deploy_output/{counter}__{name}.sh')
+        file_name = file_name_temp.format(
+            counter=str_counter, name=d.name)
+
+        _write_executable_script(
+            script_path=file_name, body=command_formated, sleep=d.sleep)
+        return PumpwoodDeployCMDRun(
+            file=file_name, sleep=d.sleep)
+
+    def process_volume(self, d: PumpwoodDeployVolume,
+                       str_counter: str) -> PumpwoodDeployCMDRun:
+        """Process volume deployment.
+
+        Args:
+            d (PumpwoodDeployVolume):
+                Volume deployment object.
+            str_counter (str):
+                Formatted counter string for ordering deploy files.
+
+        Returns:
+            PumpwoodDeployCMDRun:
+                Command runner for the generated volume script.
+        """
+        volume_postgres_text_f = self.kube_client.create_volume_yml(
+            disk_name=d.disk_name, disk_size=d.disk_size,
+            volume_claim_name=d.volume_claim_name)
+
+        file_name_temp = 'resources/{counter}__{name}.yml'
+        file_name = file_name_temp.format(
+            counter=str_counter, name=d.name)
+
+        with open('outputs/deploy_output/' +
+                    file_name, 'w') as file:
+            file.write(volume_postgres_text_f)
+        file_name_sh_temp = (
+            'outputs/deploy_output/{counter}__{name}.sh')
+        file_name_sh = file_name_sh_temp.format(
+            counter=str_counter, name=d.name)
+
+        deploy_namespace = d.namespace or self.namespace
+        script_body = create_kube_cmd.format(
+            file=file_name, namespace=deploy_namespace)
+        _write_executable_script(
+            script_path=file_name_sh, body=script_body, sleep=d.sleep)
+
+        return PumpwoodDeployCMDRun(
+            file=file_name_sh, sleep=d.sleep)
+
+    def process_service(self, d: PumpwoodDeployService,
+                        str_service_counter: str) -> PumpwoodDeployCMDRun:
+        """Process service deployment.
+
+        Args:
+            d (PumpwoodDeployService):
+                The service deployment object.
+            str_service_counter (str):
+                Formatted counter string for ordering service files.
+
+        Returns:
+            PumpwoodDeployCMDRun:
+                Command runner for the generated service script.
+        """
+        file_name_temp = 'resources/{service_counter}__{name}.yml'
+        file_name = file_name_temp.format(
+            service_counter=str_service_counter,
+            name=d.name)
+
+        with open('outputs/services_output/' +
+                    file_name, 'w') as file:
+            file.write(d.content)
+        file_name_sh_temp = \
+            'outputs/services_output/' +\
+            '{service_counter}__{name}.sh'
+        file_name_sh = file_name_sh_temp .format(
+            service_counter=str_service_counter,
+            name=d.name)
+
+        deploy_namespace = d.namespace or self.namespace
+        script_body = create_kube_cmd.format(
+            file=file_name, namespace=deploy_namespace)
+        _write_executable_script(
+            script_path=file_name_sh, body=script_body, sleep=d.sleep)
+
+        return PumpwoodDeployCMDRun(
+            file=file_name_sh, sleep=d.sleep)
+
+    def deploy_microservices(self):
+        """Generate deployment files and apply them to the cluster.
+
+        Creates manifests under ``outputs/``, applies service manifests
+        first, then microservice manifests in registration order.
+
+        Returns:
+            None:
+                Always returns None.
+        """
+        deploy_cmds = self.create_deploy_files()
+
+        logger.info('Deploying Services:')
         self.kube_client.run_deploy_commmands(
-            deploy_cmds['microservice_cmds'])
+            cmds=deploy_cmds['service_cmds'])
+
+        logger.info('Deploying Microservices:')
+        self.kube_client.run_deploy_commmands(
+            cmds=deploy_cmds['microservice_cmds'])
