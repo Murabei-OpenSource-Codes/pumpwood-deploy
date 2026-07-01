@@ -1,2 +1,2 @@
 SCRIPTPATH="$( cd "$(dirname "$0")" ; pwd -P )"
-kubectl apply -f $SCRIPTPATH/{file} --namespace={namespace}
+kubectl apply --namespace={namespace} -f "$SCRIPTPATH/{file}"
