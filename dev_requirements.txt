@@ -1,7 +1,0 @@
-requests
-simplejson
-pandas
-python-slugify
-jinja2
-pdoc
-setuptools

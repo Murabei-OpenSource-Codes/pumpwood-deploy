@@ -8,3 +8,5 @@ setuptools
 diskcache
 pdoc
 orjson
+loguru
+cryptography
